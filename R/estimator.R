@@ -1,6 +1,6 @@
 
-rmst <- function(data, trt, status, baseline, time, id, coarsen = 1,
-                 horizon, estimator = c("tmle", "aipw", "ipw", "km"),
+rmst <- function(data, trt, status, baseline, time, id, horizon,
+                 coarsen = 1, estimator = c("tmle", "aipw", "ipw", "km"),
                  learners_trt = NULL, learners_cens = NULL, learners_hazard = NULL) {
 
   # prepare data
@@ -14,6 +14,9 @@ rmst <- function(data, trt, status, baseline, time, id, coarsen = 1,
   psi <- compute_rmst(meta, nuis, estimator)
 
   # return estimates
-  # need to add extra print stuff here?
-  return(psi)
+  out <- list(estimator = estimator,
+              horizon = horizon,
+              estimates = psi)
+  class(out) <- "rct_rmst"
+  return(out)
 }

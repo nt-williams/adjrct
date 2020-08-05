@@ -8,7 +8,6 @@ Meta <- R6::R6Class(
     covar = NULL,
     time = NULL,
     tau = NULL,
-    horizon = NULL,
     id = NULL,
     learners_trt = NULL,
     learners_cens = NULL,
@@ -22,6 +21,9 @@ Meta <- R6::R6Class(
                           coarsen, estimator, learners_trt, learners_cens, learners_hazard) {
 
       # checks
+      # check_correct_trt() i.e., trt is 0 and 1
+      # check_time_horizon() i.e., less than maximum time
+      # check_status() i.e., status is 0 and 1
 
       # data prep
       tfd       <- prepare_data(data, time, status, coarsen)
@@ -32,8 +34,7 @@ Meta <- R6::R6Class(
       self$covar   <- baseline
       self$id      <- id
       self$time    <- time
-      self$tau     <- max(tfd$data[[time]])
-      self$horizon <- horizon
+      self$tau     <- horizon
       self$n       <- length(unique(tfd$data[[id]]))
       self$m       <- tfd$m
       self$k       <- max(tfd$m)
