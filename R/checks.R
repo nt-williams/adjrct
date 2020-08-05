@@ -41,3 +41,8 @@ check_sl3_usage.hazard <- function(estimator, learners) {
 asymp_warning <- function(param, estimator) {
   warning(param, " provided with estimator = ", estimator, ". Defaulting back to GLM.", call. = FALSE)
 }
+
+check_na_coef <- function(coefs) {
+  coefs[is.na(coefs)] <- 0
+  return(coefs)
+}

@@ -6,6 +6,8 @@ Meta <- R6::R6Class(
     trt = NULL,
     status = NULL,
     covar = NULL,
+    time = NULL,
+    tau = NULL,
     horizon = NULL,
     id = NULL,
     learners_trt = NULL,
@@ -13,6 +15,7 @@ Meta <- R6::R6Class(
     learners_hazard = NULL,
     n = NULL,
     m = NULL,
+    k = NULL,
     im = NULL,
     jm = NULL,
     initialize = function(data, trt, status, baseline, id, time, horizon,
@@ -28,9 +31,12 @@ Meta <- R6::R6Class(
       self$trt     <- trt
       self$covar   <- baseline
       self$id      <- id
+      self$time    <- time
+      self$tau     <- max(tfd$data[[time]])
       self$horizon <- horizon
-      self$n       <- tfd$n
+      self$n       <- length(unique(tfd$data[[id]]))
       self$m       <- tfd$m
+      self$k       <- max(tfd$m)
       self$im      <- tfd$im
       self$jm      <- tfd$jm
 
@@ -62,7 +68,6 @@ prepare_data <- function(data, time, status, coarsen) {
   }
 
   list(data = data.frame(data[as.numeric(gl(n, k)), ], lm, rm),
-       n = n,
        m = m,
        im = im,
        jm = jm)
@@ -78,3 +83,44 @@ turn_off <- function(data, trt) {
   data[[trt]] <- rep(0, nrow(data))
   return(data)
 }
+
+prodlag <- function(x) {
+  cumprod(c(1, x[-length(x)]))
+}
+
+cumprod_by_id <- function(x, id) {
+  tapply(x, id, cumprod, simplify = FALSE)
+}
+
+prodlag_by_id <- function(x, id) {
+  tapply(x, id, prodlag, simplify = FALSE)
+}
+
+access_meta_var <- function(meta, var) {
+  meta$data[[meta[[var]]]]
+}
+
+compute_z <- function(ind, time, id, S, A, R) {
+  -rowSums((ind * do.call("rbind", S[id]))[, 1:(time - 1)]) / bound(unlist(S) * A[id] * unlist(R))
+}
+
+sum_by_id <- function(x, id) {
+  tapply(x, id, sum)
+}
+
+compute_m <- function(S1, S0, A1, A0, m, time, id) {
+  (sum_by_id(unlist(S1) / bound(A1[id]) * (m <= time - 1), id) +
+    sum_by_id(unlist(S0) / bound(A0[id]) * (m <= time - 1), id))[id]
+}
+
+bound <- function(x, lower = 0.001){
+  x[x < lower] <- lower
+  return(as.numeric(x))
+}
+
+bound01 <- function(x, bound = 1e-10){
+  x[x < bound] <- bound
+  x[x > 1 - bound] <- 1 - bound
+  return(as.numeric(x))
+}
+

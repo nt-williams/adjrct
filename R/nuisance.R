@@ -35,6 +35,7 @@ nuisance.dr <- function(meta) {
     H1 = predict_sl3(fit_H, pred_H1, envir = environment()),
     R0 = predict_sl3(fit_R, pred_R0, envir = environment()),
     R1 = predict_sl3(fit_R, pred_R1, envir = environment()),
+    A0 = 1 - predict_sl3(fit_A, pred_A1, envir = environment()),
     A1 = predict_sl3(fit_A, pred_A1, envir = environment())
   )
 
@@ -44,3 +45,44 @@ nuisance.ua <- function(meta) {
 
 
 }
+
+tilt_params <- function(data, nuisance) {
+  switch(nuisance,
+         epsilon = tilt_params.epsilon(data),
+         gamma   = tilt_params.gamma(data),
+         nu      = tilt_params.nu(data))
+}
+
+tilt_params.epsilon <- function(data) {
+  check_na_coef(coef(
+    glm2::glm2(
+      lm ~ 0 + offset(qlogis(lh)) + I(A * z1) + I((1 - A) * z0),
+      family = binomial,
+      subset = im == 1,
+      data = data
+    )
+  ))
+}
+
+tilt_params.gamma <- function(data) {
+  check_na_coef(coef(
+    glm2::glm2(
+      rm ~ 0 + offset(qlogis(gr)) + h,
+      family = binomial,
+      subset = jm == 1,
+      data = data
+    )
+  ))
+}
+
+tilt_params.nu <- function(data) {
+  check_na_coef(coef(
+    glm2::glm2(
+      A ~ 0 + offset(qlogis(a1)) + M,
+      family = binomial,
+      subset = m == 1,
+      data = data
+    )
+  ))
+}
+

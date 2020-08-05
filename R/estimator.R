@@ -11,5 +11,9 @@ rmst <- function(data, trt, status, baseline, time, id, coarsen = 1,
   nuis <- estimate_nuisance(meta, estimator)
 
   # compute estimator
-  compute_rmst(meta, nuis, estimator)
+  psi <- compute_rmst(meta, nuis, estimator)
+
+  # return estimates
+  # need to add extra print stuff here?
+  return(psi)
 }
