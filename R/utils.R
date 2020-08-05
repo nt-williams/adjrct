@@ -68,7 +68,7 @@ prepare_data <- function(data, time, status, coarsen) {
       (data[[time]] >= t) * (1 - data[[status]])
   }
 
-  list(data = data.frame(data[as.numeric(gl(n, k)), ], lm, rm),
+  list(data = data.frame(data[as.numeric(gl(n, k)), ], m, lm, rm),
        m = m,
        im = im,
        jm = jm)

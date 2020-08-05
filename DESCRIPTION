@@ -1,13 +1,23 @@
-Package: efficient
+Package: rctSurv
 Type: Package
-Title: What the Package Does (Title Case)
-Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
+Title: Efficient Estimators for Survival Analysis in RCTs Without Proportional Hazards
+Version: 0.1.0.9000
+Authors@R: 
+    c(person(given = "Iván", 
+             family = "Díaz", 
+             email = "ild2005@med.cornell.edu",
+             role = c("aut", "cph"),
+             comment = c(ORCID = "0000-0001-9056-2047")), 
+      person(given = "Nicholas",
+             family = "Williams",
+             role = c("cre", "aut", "cph"),
+             email = "niw4001@med.cornell.edu", 
+             comment = c(ORCID = "0000-0002-1378-4831")))
+Description: Estimators for restriced mean survival time and survival probability in randomized
+  controlled trials. 
+License: GPL-3
 Encoding: UTF-8
 LazyData: true
 Imports: 
     glm2
+RoxygenNote: 7.1.0

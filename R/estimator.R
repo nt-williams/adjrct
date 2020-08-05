@@ -1,4 +1,23 @@
 
+#' Title
+#'
+#' @param data
+#' @param trt
+#' @param status
+#' @param baseline
+#' @param time
+#' @param id
+#' @param horizon
+#' @param coarsen
+#' @param estimator
+#' @param learners_trt
+#' @param learners_cens
+#' @param learners_hazard
+#'
+#' @return
+#' @export
+#'
+#' @examples
 rmst <- function(data, trt, status, baseline, time, id, horizon,
                  coarsen = 1, estimator = c("tmle", "aipw", "ipw", "km"),
                  learners_trt = NULL, learners_cens = NULL, learners_hazard = NULL) {

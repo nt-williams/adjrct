@@ -10,13 +10,13 @@ estimate_nuisance <- function(meta, estimator) {
 nuisance.dr <- function(meta) {
 
   # create sl3 tasks
-  task_H  <- initiate_sl3_task(meta$data[meta$im == 1, ], "lm", c(meta$trt, meta$covar), "binomial", meta$id)
-  task_R  <- initiate_sl3_task(meta$data[meta$jm == 1, ], "rm", c(meta$trt, meta$covar), "binomial", meta$id)
+  task_H  <- initiate_sl3_task(meta$data[meta$im == 1, ], "lm", c("m", meta$trt, meta$covar), "binomial", meta$id)
+  task_R  <- initiate_sl3_task(meta$data[meta$jm == 1, ], "rm", c("m", meta$trt, meta$covar), "binomial", meta$id)
   task_A  <- initiate_sl3_task(meta$data[meta$m == 1, ], meta$trt, meta$covar, "binomial", meta$id)
-  pred_H0 <- initiate_sl3_task(turn_off(meta$data, meta$trt), "lm", c(meta$trt, meta$covar), "binomial", meta$id)
-  pred_H1 <- initiate_sl3_task(turn_on(meta$data, meta$trt), "lm", c(meta$trt, meta$covar), "binomial", meta$id)
-  pred_R0 <- initiate_sl3_task(turn_off(meta$data, meta$trt), "rm", c(meta$trt, meta$covar), "binomial", meta$id)
-  pred_R1 <- initiate_sl3_task(turn_on(meta$data, meta$trt), "rm", c(meta$trt, meta$covar), "binomial", meta$id)
+  pred_H0 <- initiate_sl3_task(turn_off(meta$data, meta$trt), "lm", c("m", meta$trt, meta$covar), "binomial", meta$id)
+  pred_H1 <- initiate_sl3_task(turn_on(meta$data, meta$trt), "lm", c("m", meta$trt, meta$covar), "binomial", meta$id)
+  pred_R0 <- initiate_sl3_task(turn_off(meta$data, meta$trt), "rm", c("m", meta$trt, meta$covar), "binomial", meta$id)
+  pred_R1 <- initiate_sl3_task(turn_on(meta$data, meta$trt), "rm", c("m", meta$trt, meta$covar), "binomial", meta$id)
   pred_A1 <- initiate_sl3_task(turn_on(meta$data, meta$trt), meta$trt, meta$covar, "binomial", meta$id) # not so sure about this
 
   # create learners
