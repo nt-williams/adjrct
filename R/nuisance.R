@@ -2,7 +2,7 @@
 estimate_nuisance <- function(meta, estimator) {
   switch(estimator,
          tmle = nuisance.dr(meta),
-         aipw = nusiance.dr(meta),
+         aipw = nuisance.dr(meta),
          ipw  = nuisance.ua(meta),
          km   = nuisance.ua(meta))
 }

@@ -1,7 +1,8 @@
 
 compute_rmst <- function(meta, nuis, estimator) {
   switch(estimator,
-         tmle = rmst_tmle(meta, nuis))
+         tmle = rmst_tmle(meta, nuis),
+         aipw = rmst_aipw(meta, nuis))
 }
 
 rmst_tmle <- function(meta, nuis) {
@@ -82,6 +83,24 @@ rmst_tmle <- function(meta, nuis) {
   z1 <- compute_z(ind, meta$tau, id, s1, nuis$A1, g1)
   z0 <- compute_z(ind, meta$tau, id, s0, nuis$A0, g0)
 
-  rmst_eif(meta, trt, z1, z0, s1, s0, lh, id)
+  rmst_eif(meta, "tmle", trt, z1, z0, s1, s0, lh, id)
+
+}
+
+rmst_aipw <- function(meta, nuis) {
+
+  id  <- access_meta_var(meta, "id")
+  trt <- access_meta_var(meta, "trt")
+  lh  <- trt*nuis$H1 + (1 - trt)*nuis$H0
+  gr  <- trt*nuis$R1 + (1 - trt)*nuis$R0
+  ind <- outer(meta$m, 1:meta$k, '<=')
+  s1  <- cumprod_by_id(1 - nuis$H1, id)
+  s0  <- cumprod_by_id(1 - nuis$H0, id)
+  g1  <- cumprod_by_id(1 - nuis$R1, id)
+  g0  <- cumprod_by_id(1 - nuis$R0, id)
+  z1  <- compute_z(ind, meta$tau, id, s1, nuis$A1, g1)
+  z0  <- compute_z(ind, meta$tau, id, s0, nuis$A0, g0)
+
+  rmst_eif(meta, "aipw", trt, z1, z0, s1, s0, lh, id)
 
 }
