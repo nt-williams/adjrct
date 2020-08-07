@@ -11,7 +11,7 @@ rmst(
   baseline,
   time,
   id,
-  horizon,
+  horizon = NULL,
   coarsen = 1,
   estimator = c("tmle", "aipw", "ipw", "km"),
   learners_trt = NULL,

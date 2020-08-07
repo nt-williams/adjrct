@@ -12,7 +12,7 @@ check_sl3_usage <- function(param, estimator, learners) {
 }
 
 check_sl3_usage.trt <- function(estimator, learners) {
-  if (estimator %in% c("ipw", "km")) {
+  if (estimator %in% c("km")) {
     asymp_warning("learners_trt", estimator)
     return(NULL)
   } else {
@@ -21,7 +21,7 @@ check_sl3_usage.trt <- function(estimator, learners) {
 }
 
 check_sl3_usage.cens <- function(estimator, learners) {
-  if (estimator %in% c("ipw", "km")) {
+  if (estimator %in% c("km")) {
     asymp_warning("learners_cens", estimator)
     return(NULL)
   } else {
@@ -30,7 +30,7 @@ check_sl3_usage.cens <- function(estimator, learners) {
 }
 
 check_sl3_usage.hazard <- function(estimator, learners) {
-  if (estimator %in% c("ipw", "km")) {
+  if (estimator %in% c("km")) {
     asymp_warning("learners_hazard", estimator)
     return(NULL)
   } else {

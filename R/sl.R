@@ -41,7 +41,15 @@ initiate_sl3_task <- function(data, Y, X, outcome_type, id = NULL, drop = FALSE)
 
 run_ensemble <- function(ensemble, task, envir) {
   if (!is.null(ensemble)) {
-    ensemble$train(task)
+    ensemble <- sl3::delayed_learner_train(ensemble, task)
+    if (check_future_job()) {
+      sched <- delayed::Scheduler$new(ensemble, delayed::FutureJob, nworkers = get_workers())
+    } else {
+      sched <- delayed::Scheduler$new(ensemble, delayed::SequentialJob)
+    }
+
+    sched$compute()
+    # ensemble$train(task)
   } else {
     sw(eval(task, envir = envir))
   }

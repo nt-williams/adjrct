@@ -18,7 +18,7 @@
 #' @export
 #'
 #' @examples
-rmst <- function(data, trt, status, baseline, time, id, horizon,
+rmst <- function(data, trt, status, baseline, time, id, horizon = NULL,
                  coarsen = 1, estimator = c("tmle", "aipw", "ipw", "km"),
                  learners_trt = NULL, learners_cens = NULL, learners_hazard = NULL) {
 
@@ -34,8 +34,8 @@ rmst <- function(data, trt, status, baseline, time, id, horizon,
 
   # return estimates
   out <- list(estimator = estimator,
-              horizon = horizon,
+              horizon   = meta$tau,
               estimates = psi)
-  class(out) <- "rct_rmst"
-  return(out)
+  class(out) <- "rmst"
+  out
 }

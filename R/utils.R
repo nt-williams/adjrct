@@ -34,7 +34,7 @@ Meta <- R6::R6Class(
       self$covar   <- baseline
       self$id      <- id
       self$time    <- time
-      self$tau     <- horizon
+      self$tau     <- evaluate_horizon(max(tfd$m), horizon)
       self$n       <- length(unique(tfd$data[[id]]))
       self$m       <- tfd$m
       self$k       <- max(tfd$m)
@@ -102,7 +102,10 @@ access_meta_var <- function(meta, var) {
 }
 
 compute_z <- function(ind, time, id, S, A, R) {
-  -rowSums((ind * do.call("rbind", S[id]))[, 1:(time - 1)]) / bound(unlist(S) * A[id] * unlist(R))
+  -rowSums(matrix((ind * do.call("rbind", S[id]))[, 1:(time - 1)],
+                  nrow = length(id),
+                  ncol = time - 1)) /
+    bound(unlist(S) * A[id] * unlist(R))
 }
 
 sum_by_id <- function(x, id) {
@@ -125,3 +128,30 @@ bound01 <- function(x, bound = 1e-10){
   return(as.numeric(x))
 }
 
+sw <- function(x) {
+  suppressWarnings(x)
+}
+
+evaluate_horizon <- function(time, horizon) {
+  if (is.null(horizon)) {
+    2:max(time)
+  } else {
+    horizon
+  }
+}
+
+get_workers <- function() {
+  workers <- formals(plan("next"))$workers
+  if (is.null(workers)) {
+    workers <- 1
+  }
+  return(workers)
+}
+
+check_future_job <- function() {
+  if (get_workers() == 1) {
+    FALSE
+  } else {
+    TRUE
+  }
+}
