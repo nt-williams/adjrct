@@ -1,20 +1,19 @@
 
-compute_rmst <- function(meta, nuis, estimator) {
+compute_survprob <- function(meta, nuis, estimator) {
   switch(estimator,
-         tmle = rmst_tmle(meta, nuis),
-         aipw = rmst_aipw(meta, nuis),
-         ipw  = rmst_ipw(meta, nuis))
+         tmle = survprob_tmle(meta, nuis))
 }
 
-rmst_tmle <- function(meta, nuis) {
+survprob_tmle <- function(meta, nuis) {
 
   id   <- access_meta_var(meta, "id")
   trt  <- access_meta_var(meta, "trt")
   ind  <- outer(meta$m, 1:meta$k, '<=')
   res  <- list()
 
-  for (j in 2:length(meta$tau)) {
+  for (j in 1:length(meta$tau)) {
 
+    time         <- meta$tau[j]
     updated_nuis <- nuis
     lh           <- trt*updated_nuis$hazard_on + (1 - trt)*updated_nuis$hazard_off
     gr           <- trt*updated_nuis$cens_on + (1 - trt)*updated_nuis$cens_off
@@ -30,12 +29,12 @@ rmst_tmle <- function(meta, nuis) {
       s0_lag <- prodlag_by_id(1 - updated_nuis$hazard_off, id)
       g1     <- cumprod_by_id(1 - updated_nuis$cens_on, id)
       g0     <- cumprod_by_id(1 - updated_nuis$cens_off, id)
-      z1     <- compute_z(ind, meta$tau[j], id, s1, updated_nuis$treat_on, g1)
-      z0     <- compute_z(ind, meta$tau[j], id, s0, updated_nuis$treat_off, g0)
-      h1     <- compute_z(ind, meta$tau[j], id, s1_lag, updated_nuis$treat_on, g1)
-      h0     <- compute_z(ind, meta$tau[j], id, s0_lag, updated_nuis$treat_off, g0)
-      h      <- trt * h1 - (1 - trt) * h0
-      M      <- compute_m(s1, s0, updated_nuis$treat_on, updated_nuis$treat_off, meta$m, meta$tau[j], id)
+      z1     <- compute_z_survprob(ind, id, time, s1, updated_nuis$treat_on, g1)
+      z0     <- compute_z_survprob(ind, id, time, s0, updated_nuis$treat_off, g0)
+      h1     <- compute_h_survprob(id, time, s1_lag, updated_nuis$treat_on, g1)
+      h0     <- compute_h_survprob(id, time, s0_lag, updated_nuis$treat_off, g0)
+      h      <-  trt * h1 - (1 - trt) * h0
+      M      <- compute_m_survprob(s1, s0, updated_nuis$treat_on, updated_nuis$treat_off, meta$m, time, id)
 
       # update H
       eps <-
@@ -68,7 +67,7 @@ rmst_tmle <- function(meta, nuis) {
                         "nu")
 
       updated_nuis$treat_on  <- bound01(plogis(qlogis(updated_nuis$treat_on) + nu * M))
-      updated_nuis$treat_off <- 1 - nuis$treat_on
+      updated_nuis$treat_off <- 1 - updated_nuis$treat_on
 
       lh <- trt*updated_nuis$hazard_on + (1 - trt)*updated_nuis$hazard_off
       gr <- trt*updated_nuis$cens_on + (1 - trt)*updated_nuis$cens_off
@@ -83,41 +82,14 @@ rmst_tmle <- function(meta, nuis) {
     s0 <- cumprod_by_id(1 - updated_nuis$hazard_off, id)
     g1 <- cumprod_by_id(1 - updated_nuis$cens_on, id)
     g0 <- cumprod_by_id(1 - updated_nuis$cens_off, id)
-    z1 <- compute_z(ind, meta$tau[j], id, s1, updated_nuis$treat_on, g1)
-    z0 <- compute_z(ind, meta$tau[j], id, s0, updated_nuis$treat_off, g0)
+    z1 <- compute_z_survprob(ind, id, time, s1, updated_nuis$treat_on, g1)
+    z0 <- compute_z_survprob(ind, id, time, s0, updated_nuis$treat_off, g0)
 
-    res[[j - 1]] <- rmst_eif(meta, "tmle", trt, meta$tau[j], z1, z0, s1, s0, lh, id)
+    res[[j]] <- survprob_eif(meta, "tmle", trt, time, z1, z0, s1, s0, lh, id)
+
   }
   # multiplier bootstrap
   res <- compute_simulband(res, meta$n)
 
   return(res)
-}
-
-rmst_aipw <- function(meta, nuis) {
-  id  <- access_meta_var(meta, "id")
-  trt <- access_meta_var(meta, "trt")
-  lh  <- trt*nuis$hazard_on + (1 - trt)*nuis$hazard_off
-  gr  <- trt*nuis$cens_on + (1 - trt)*nuis$cens_off
-  ind <- outer(meta$m, 1:meta$k, '<=')
-  s1  <- cumprod_by_id(1 - nuis$hazard_on, id)
-  s0  <- cumprod_by_id(1 - nuis$hazard_off, id)
-  g1  <- cumprod_by_id(1 - nuis$cens_on, id)
-  g0  <- cumprod_by_id(1 - nuis$cens_off, id)
-  z1  <- compute_z(ind, meta$tau, id, s1, nuis$treat_on, g1)
-  z0  <- compute_z(ind, meta$tau, id, s0, nuis$treat_off, g0)
-
-  rmst_eif(meta, "aipw", trt, z1, z0, s1, s0, lh, id)
-}
-
-rmst_ipw <- function(meta, nuis) {
-  id  <- access_meta_var(meta, "id")
-  trt <- access_meta_var(meta, "trt")
-  ind <- outer(meta$m, 1:meta$k, '<=')
-  g1  <- cumprod_by_id(1 - nuis$cens_on, id)
-  g0  <- cumprod_by_id(1 - nuis$cens_off, id)
-  z1  <- -rowSums(ind[, 1:(meta$tau - 1)]) / bound(nuis$treat_on * unlist(g1))
-  z0  <- -rowSums(ind[, 1:(meta$tau - 1)]) / bound(nuis$treat_off * unlist(g0))
-
-  rmst_eif(meta, "ipw", trt, z1, z0, NULL, NULL, NULL, id)
 }

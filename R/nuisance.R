@@ -17,7 +17,7 @@ nuisance.dr <- function(meta) {
   pred_H1 <- sw(initiate_sl3_task(turn_on(meta$data, meta$trt), "lm", c("m", meta$trt, meta$covar), "binomial", meta$id))
   pred_R0 <- sw(initiate_sl3_task(turn_off(meta$data, meta$trt), "rm", c("m", meta$trt, meta$covar), "binomial", meta$id))
   pred_R1 <- sw(initiate_sl3_task(turn_on(meta$data, meta$trt), "rm", c("m", meta$trt, meta$covar), "binomial", meta$id))
-  pred_A1 <- sw(initiate_sl3_task(turn_on(meta$data, meta$trt), meta$trt, meta$covar, "binomial", meta$id)) # not so sure about this
+  pred_A1 <- sw(initiate_sl3_task(turn_on(meta$data, meta$trt), meta$trt, meta$covar, "binomial", meta$id))
 
   # create learners
   ensm_H <- initiate_ensemble("binomial", meta$learners_hazard)
@@ -31,12 +31,12 @@ nuisance.dr <- function(meta) {
 
   # generate predictions
   list(
-    H0 = predict_sl3(fit_H, pred_H0, envir = environment()),
-    H1 = predict_sl3(fit_H, pred_H1, envir = environment()),
-    R0 = predict_sl3(fit_R, pred_R0, envir = environment()),
-    R1 = predict_sl3(fit_R, pred_R1, envir = environment()),
-    A0 = 1 - predict_sl3(fit_A, pred_A1, envir = environment()),
-    A1 = predict_sl3(fit_A, pred_A1, envir = environment())
+    hazard_off = predict_sl3(fit_H, pred_H0, envir = environment()),
+    hazard_on  = predict_sl3(fit_H, pred_H1, envir = environment()),
+    cens_off   = predict_sl3(fit_R, pred_R0, envir = environment()),
+    cens_on    = predict_sl3(fit_R, pred_R1, envir = environment()),
+    treat_off  = 1 - predict_sl3(fit_A, pred_A1, envir = environment()),
+    treat_on   = predict_sl3(fit_A, pred_A1, envir = environment())
   )
 
 }

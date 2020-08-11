@@ -8,8 +8,8 @@ rmst_eif <- function(meta, estimator, trt, tau, z1, z0, s1, s0, lh, id) {
 
   se <- sqrt(var(vals$eif) / meta$n)
 
-  list(rmst1     = vals$theta1,
-       rmst0     = vals$theta0,
+  list(arm1      = vals$theta1,
+       arm0      = vals$theta0,
        theta     = vals$theta,
        eif       = vals$eif,
        std.error = se,
@@ -61,4 +61,35 @@ rmst_eif.ipw <- function(meta, trt, z1, z0, id) {
        theta0 = theta0,
        theta  = theta1 - theta0,
        eif    = NULL)
+}
+
+survprob_eif <- function(meta, estimator, trt, tau, z1, z0, s1, s0, lh, id) {
+
+  vals <- switch(estimator,
+                 tmle = survprob_eif.tmle(meta, trt, tau, z1, z0, s1, s0, lh, id))
+
+  se <- sqrt(var(vals$eif) / meta$n)
+
+  list(arm1            = vals$theta1,
+       arm0            = vals$theta0,
+       theta           = vals$theta,
+       eif             = vals$eif,
+       std.error       = se,
+       theta.conf.low  = vals$theta - qnorm(0.975)*se,
+       theta.conf.high = vals$theta + qnorm(0.975)*se)
+
+}
+
+survprob_eif.tmle <- function(meta, trt, tau, z1, z0, s1, s0, lh, id) {
+  dt     <- sum_by_id(meta$im * (trt*z1 - (1 - trt)*z0) * (meta$data[["lm"]] - lh), id)
+  dw1    <- do.call('rbind', s1[id])[meta$m == 1, tau]
+  dw0    <- do.call('rbind', s0[id])[meta$m == 1, tau]
+  theta1 <- mean(dw1)
+  theta0 <- mean(dw0)
+  eif    <- as.vector(dt + dw1 - dw0)
+
+  list(theta1 = theta1,
+       theta0 = theta0,
+       theta  = theta1 - theta0,
+       eif    = eif)
 }
