@@ -9,9 +9,9 @@ nuisance.dr <- function(self) {
   pred_R1 <- sw(initiate_sl3_task(turn_on(self$data, self$trt), "rm", c("m", self$trt, self$covar), "binomial", self$id))
   pred_A1 <- sw(initiate_sl3_task(turn_on(self$data, self$trt), self$trt, self$covar, "binomial", self$id))
 
-  ensm_H <- initiate_ensemble("binomial", self$learners_hazard)
-  ensm_R <- initiate_ensemble("binomial", self$learners_cens)
-  ensm_A <- initiate_ensemble("binomial", self$learners_trt)
+  ensm_H <- initiate_ensemble("binomial", self$lrnrs_hazard)
+  ensm_R <- initiate_ensemble("binomial", self$lrnrs_cens)
+  ensm_A <- initiate_ensemble("binomial", self$lrnrs_trt)
 
   fit_H <- run_ensemble(ensm_H, task_H, envir = environment())
   fit_R <- run_ensemble(ensm_R, task_R, envir = environment())

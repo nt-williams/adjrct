@@ -1,96 +1,85 @@
 
-compute_rmst <- function(meta, nuis, estimator) {
-  switch(estimator,
-         tmle = rmst_tmle(meta, nuis),
-         aipw = rmst_aipw(meta, nuis),
-         ipw  = rmst_ipw(meta, nuis))
+compute_rmst <- function(metadat) {
+  switch(metadat$estimator,
+         tmle = rmst_tmle(metadat),
+         aipw = rmst_aipw(metadat),
+         ipw  = rmst_ipw(metadat))
 }
 
-rmst_tmle <- function(meta, nuis) {
+rmst_tmle <- function(metadat) {
 
-  id   <- access_meta_var(meta, "id")
-  trt  <- access_meta_var(meta, "trt")
-  ind  <- outer(meta$m, 1:meta$k, '<=')
+  id   <- access_meta_var(metadat, "id")
+  trt  <- access_meta_var(metadat, "trt")
+  ind  <- outer(metadat$m, 1:metadat$k, '<=')
   res  <- list()
 
-  for (j in 2:length(meta$tau)) {
-
-    updated_nuis <- nuis
+  for (j in 1:length(metadat$horizon)) {
+    updated_nuis <- metadat$nuisance
+    time         <- metadat$horizon[j]
     lh           <- trt*updated_nuis$hazard_on + (1 - trt)*updated_nuis$hazard_off
     gr           <- trt*updated_nuis$cens_on + (1 - trt)*updated_nuis$cens_off
     crit         <- TRUE
     i            <- 1
-
-    # iterative process
     while (crit && i <= 20) {
-      # EIF components
       s1     <- cumprod_by_id(1 - updated_nuis$hazard_on, id)
       s0     <- cumprod_by_id(1 - updated_nuis$hazard_off, id)
       s1_lag <- prodlag_by_id(1 - updated_nuis$hazard_on, id)
       s0_lag <- prodlag_by_id(1 - updated_nuis$hazard_off, id)
       g1     <- cumprod_by_id(1 - updated_nuis$cens_on, id)
       g0     <- cumprod_by_id(1 - updated_nuis$cens_off, id)
-      z1     <- compute_z(ind, meta$tau[j], id, s1, updated_nuis$treat_on, g1)
-      z0     <- compute_z(ind, meta$tau[j], id, s0, updated_nuis$treat_off, g0)
-      h1     <- compute_z(ind, meta$tau[j], id, s1_lag, updated_nuis$treat_on, g1)
-      h0     <- compute_z(ind, meta$tau[j], id, s0_lag, updated_nuis$treat_off, g0)
+      z1     <- compute_z(ind, time, id, s1, updated_nuis$treat_on, g1)
+      z0     <- compute_z(ind, time, id, s0, updated_nuis$treat_off, g0)
+      h1     <- compute_z(ind, time, id, s1_lag, updated_nuis$treat_on, g1)
+      h0     <- compute_z(ind, time, id, s0_lag, updated_nuis$treat_off, g0)
       h      <- trt * h1 - (1 - trt) * h0
-      M      <- compute_m(s1, s0, updated_nuis$treat_on, updated_nuis$treat_off, meta$m, meta$tau[j], id)
+      M      <- compute_m(s1, s0, updated_nuis$treat_on, updated_nuis$treat_off, metadat$m, time, id)
 
-      # update H
       eps <-
-        tilt_params(data.frame(lm = meta$data[["lm"]],
+        tilt_params(data.frame(lm = metadat$data[["lm"]],
                                lh = lh,
-                               A = access_meta_var(meta, "trt"),
+                               A = trt,
                                z1 = z1,
                                z0 = z0,
-                               im = meta$im),
+                               im = metadat$im),
                     "epsilon")
 
       updated_nuis$hazard_on  <- bound01(plogis(qlogis(updated_nuis$hazard_on) + eps[1] * z1))
       updated_nuis$hazard_off <- bound01(plogis(qlogis(updated_nuis$hazard_off) + eps[2] * z0))
 
-      # update R
-      gamma <- tilt_params(data.frame(rm = meta$data[["rm"]],
+      gamma <- tilt_params(data.frame(rm = metadat$data[["rm"]],
                                       gr = gr,
                                       h = h,
-                                      jm = meta$jm),
+                                      jm = metadat$jm),
                            "gamma")
 
       updated_nuis$cens_on  <- bound01(plogis(qlogis(updated_nuis$cens_on) + gamma * h1))
       updated_nuis$cens_off <- bound01(plogis(qlogis(updated_nuis$cens_off) - gamma * h0))
 
-      # update A
-      nu <- tilt_params(data.frame(A = access_meta_var(meta, "trt"),
+      nu <- tilt_params(data.frame(A = trt,
                                    a1 = updated_nuis$treat_on,
                                    M = M,
-                                   m = meta$m),
+                                   m = metadat$m),
                         "nu")
 
       updated_nuis$treat_on  <- bound01(plogis(qlogis(updated_nuis$treat_on) + nu * M))
-      updated_nuis$treat_off <- 1 - nuis$treat_on
+      updated_nuis$treat_off <- 1 - updated_nuis$treat_on
 
-      lh <- trt*updated_nuis$hazard_on + (1 - trt)*updated_nuis$hazard_off
-      gr <- trt*updated_nuis$cens_on + (1 - trt)*updated_nuis$cens_off
-
-      # stop criteria update
+      lh   <- trt*updated_nuis$hazard_on + (1 - trt)*updated_nuis$hazard_off
+      gr   <- trt*updated_nuis$cens_on + (1 - trt)*updated_nuis$cens_off
       i    <-  i + 1
-      crit <- any(abs(c(eps, gamma, nu)) > 1e-3/meta$n^(0.6))
+      crit <- any(abs(c(eps, gamma, nu)) > 1e-3/metadat$n^(0.6))
     }
 
-    # compute EIF
     s1 <- cumprod_by_id(1 - updated_nuis$hazard_on, id)
     s0 <- cumprod_by_id(1 - updated_nuis$hazard_off, id)
     g1 <- cumprod_by_id(1 - updated_nuis$cens_on, id)
     g0 <- cumprod_by_id(1 - updated_nuis$cens_off, id)
-    z1 <- compute_z(ind, meta$tau[j], id, s1, updated_nuis$treat_on, g1)
-    z0 <- compute_z(ind, meta$tau[j], id, s0, updated_nuis$treat_off, g0)
+    z1 <- compute_z(ind, time, id, s1, updated_nuis$treat_on, g1)
+    z0 <- compute_z(ind, time, id, s0, updated_nuis$treat_off, g0)
 
-    res[[j - 1]] <- rmst_eif(meta, "tmle", trt, meta$tau[j], z1, z0, s1, s0, lh, id)
+    res[[j]] <- rmst_eif(metadat, "tmle", trt, time, z1, z0, s1, s0, lh, id)
   }
-  # multiplier bootstrap
-  res <- compute_simulband(res, meta$n)
-
+  res <- compute_simulband(res, metadat$n)
   return(res)
 }
 

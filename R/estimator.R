@@ -22,7 +22,7 @@ fit_nuisance <- function(data, trt, status, baseline, time, id,
                          lrnrs_trt = NULL, lrnrs_cens = NULL, lrnrs_hazard = NULL) {
   metadata <- Survival$new(data, trt, status, baseline, id,
                            time, coarsen, match.arg(estimator),
-                           lrnrss_trt, lrnrs_cens, lrnrs_hazard)
+                           lrnrs_trt, lrnrs_cens, lrnrs_hazard)
   metadata$estimate_nuisance()
 }
 
@@ -38,10 +38,9 @@ fit_nuisance <- function(data, trt, status, baseline, time, id,
 #' @examples
 rmst <- function(metadata, horizon = NULL) {
   metadata$evaluate_horizon(horizon)
-  psi <- compute_rmst(metadata)
-  out <- list(estimator = estimator,
-              horizon   = meta$tau,
-              estimates = psi)
+  out <- list(estimator = metadata$estimator,
+              horizon   = metadata$horizon,
+              estimates = compute_rmst(metadata))
   class(out) <- "rmst"
   out
 }
@@ -57,10 +56,9 @@ rmst <- function(metadata, horizon = NULL) {
 #' @examples
 survprob <- function(metadata, horizon = NULL) {
   metadata$evaluate_horizon(horizon)
-  psi <- compute_survprob(metadata)
   out <- list(estimator = estimator,
-              horizon   = meta$tau,
-              estimates = psi)
+              horizon   = metadata$horizon,
+              estimates = compute_survprob(metadata))
   class(out) <- "survprob"
   out
 }
