@@ -56,7 +56,7 @@ rmst <- function(metadata, horizon = NULL) {
 #' @examples
 survprob <- function(metadata, horizon = NULL) {
   metadata$evaluate_horizon(horizon)
-  out <- list(estimator = estimator,
+  out <- list(estimator = metadata$estimator,
               horizon   = metadata$horizon,
               estimates = compute_survprob(metadata))
   class(out) <- "survprob"

@@ -1,28 +1,28 @@
 
-compute_rmst <- function(metadat) {
-  switch(metadat$estimator,
-         tmle = rmst_tmle(metadat),
-         aipw = rmst_aipw(metadat),
-         ipw  = rmst_ipw(metadat))
+compute_rmst <- function(meta) {
+  switch(meta$estimator,
+         tmle = rmst_tmle(meta),
+         aipw = rmst_aipw(meta),
+         ipw  = rmst_ipw(meta))
 }
 
-rmst_tmle <- function(metadat) {
+rmst_tmle <- function(meta) {
 
-  nobs      <- metadat$nobs
-  id        <- metadat$get_var("id")
-  trt       <- metadat$get_var("trt")
-  ind       <- metadat$time_indicator()
-  evnt      <- metadat$surv_data[["evnt"]]
-  cens      <- metadat$surv_data[["cens"]]
-  risk_evnt <- metadat$risk_evnt
-  risk_cens <- metadat$risk_cens
-  all_time  <- metadat$all_time
+  nobs      <- meta$nobs
+  id        <- meta$get_var("id")
+  trt       <- meta$get_var("trt")
+  ind       <- meta$time_indicator()
+  evnt      <- meta$surv_data[["evnt"]]
+  cens      <- meta$surv_data[["cens"]]
+  risk_evnt <- meta$risk_evnt
+  risk_cens <- meta$risk_cens
+  all_time  <- meta$all_time
   res       <- listenv::listenv()
 
-  for (j in 1:length(metadat$horizon)) {
+  for (j in 1:length(meta$horizon)) {
     res[[j]] %<-% {
-      time <- metadat$horizon[j]
-      aux <- Auxiliary$new(metadat$nuisance, metadat$horizon[j])
+      time <- meta$horizon[j]
+      aux <- Auxiliary$new(meta$nuisance, meta$horizon[j])
       while (aux$crit && aux$iter <= 20) {
         aux$
           compute_LHGR(trt)$
@@ -43,12 +43,10 @@ rmst_tmle <- function(metadat) {
         compute_Z_rmst(ind, id)$
         compute_LHGR(trt)
 
-      rmst_eif("tmle", metadat, aux)
+      rmst_eif("tmle", meta, aux)
     }
   }
-
-  res <- compute_simulband(as.list(res), nobs)
-  return(res)
+  compute_simulband(as.list(res), nobs)
 }
 
 rmst_aipw <- function(meta, nuis) {
