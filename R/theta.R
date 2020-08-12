@@ -6,7 +6,7 @@ rmst_eif <- function(meta, estimator, trt, tau, z1, z0, s1, s0, lh, id) {
                  aipw = rmst_eif.aipw(meta, trt, tau, z1, z0, s1, s0, lh, id),
                  ipw  = rmst_eif.ipw(meta, trt, z1, z0, id))
 
-  se <- sqrt(var(vals$eif) / meta$n)
+  se <- sqrt(var(vals$eif) / meta$nobs)
 
   list(arm1      = vals$theta1,
        arm0      = vals$theta0,
@@ -19,11 +19,11 @@ rmst_eif <- function(meta, estimator, trt, tau, z1, z0, s1, s0, lh, id) {
 }
 
 rmst_eif.tmle <- function(meta, trt, tau, z1, z0, s1, s0, lh, id) {
-  dt     <- sum_by_id(meta$im * (trt*z1 - (1 - trt)*z0) * (meta$data[["lm"]] - lh), id)
-  dw1    <- rowSums(matrix(do.call('rbind', s1[id])[meta$m == 1, 1:(tau - 1)],
+  dt     <- sum_by_id(meta$risk_evnt * (trt*z1 - (1 - trt)*z0) * (meta$surv_data[["evnt"]] - lh), id)
+  dw1    <- rowSums(matrix(do.call('rbind', s1[id])[meta$all_time == 1, 1:(tau - 1)],
                            nrow = length(unique(id)),
                            ncol = tau - 1))
-  dw0    <- rowSums(matrix(do.call('rbind', s0[id])[meta$m == 1, 1:(tau - 1)],
+  dw0    <- rowSums(matrix(do.call('rbind', s0[id])[meta$all_time == 1, 1:(tau - 1)],
                            nrow = length(unique(id)),
                            ncol = tau - 1))
   theta1 <- 1 + mean(dw1)

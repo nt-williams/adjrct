@@ -1,39 +1,4 @@
 
-prepare_data <- function(data, time, status, coarsen) {
-
-  if (coarsen > 1) data[[time]] <- data[[time]] %/% coarsen + 1
-
-  n <- nrow(data)
-  k <- max(data[[time]])
-  m <- rep(1:k, n)
-  lm <- rm <- rep(NA, n*k)
-  im <- jm <- 1*(m == 1)
-
-  for (t in 1:k) {
-    rm[m == t] <- (1 - data[[status]]) * (data[[time]] == t)
-    lm[m == t] <- data[[status]] * (data[[time]] == t)
-    im[m == t] <- (data[[time]] >= t)
-    jm[m == t] <- (data[[time]] > t) * data[[status]] +
-      (data[[time]] >= t) * (1 - data[[status]])
-  }
-
-  list(data = data.frame(data[as.numeric(gl(n, k)), ], m, lm, rm),
-       m = m,
-       im = im,
-       jm = jm)
-
-}
-
-turn_on <- function(data, trt) {
-  data[[trt]] <- rep(1, nrow(data))
-  return(data)
-}
-
-turn_off <- function(data, trt) {
-  data[[trt]] <- rep(0, nrow(data))
-  return(data)
-}
-
 prodlag <- function(x) {
   cumprod(c(1, x[-length(x)]))
 }
@@ -44,10 +9,6 @@ cumprod_by_id <- function(x, id) {
 
 prodlag_by_id <- function(x, id) {
   tapply(x, id, prodlag, simplify = FALSE)
-}
-
-access_meta_var <- function(meta, var) {
-  meta$data[[meta[[var]]]]
 }
 
 compute_z <- function(ind, time, id, S, A, R) {
@@ -94,14 +55,6 @@ bound01 <- function(x, bound = 1e-10){
 
 sw <- function(x) {
   suppressWarnings(x)
-}
-
-evaluate_horizon <- function(time, horizon) {
-  if (is.null(horizon)) {
-    1:max(time)
-  } else {
-    horizon
-  }
 }
 
 get_workers <- function() {

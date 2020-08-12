@@ -8,7 +8,7 @@ check_sl3_usage <- function(param, estimator, learners) {
   switch(param,
          cens   = check_sl3_usage.cens(estimator, learners),
          trt    = check_sl3_usage.trt(estimator, learners),
-         hazard = check_sl3_usage.hazard(estimator, learners))
+         hzrd = check_sl3_usage.hazard(estimator, learners))
 }
 
 check_sl3_usage.trt <- function(estimator, learners) {

@@ -1,5 +1,5 @@
 
-#' Fit Nuisance Parameters and Create Metadata
+#' Create RCT Survival Metadata
 #'
 #' @param data
 #' @param trt
@@ -9,23 +9,23 @@
 #' @param id
 #' @param coarsen
 #' @param estimator
-#' @param learners_trt
-#' @param learners_cens
-#' @param learners_hazard
+#' @param lrnrs_trt
+#' @param lrnrs_cens
+#' @param lrnrs_hzrd
 #'
 #' @return
 #' @export
 #'
 #' @examples
-fit_nuisance <- function(data, trt, status, baseline, time, id,
-                         coarsen = 1, estimator = c("tmle", "aipw", "km"),
-                         lrnrs_trt = NULL, lrnrs_cens = NULL, lrnrs_hazard = NULL) {
-  metadata <- Survival$new(data, trt, status, baseline, id,
-                           time, coarsen, match.arg(estimator),
-                           lrnrs_trt, lrnrs_cens, lrnrs_hazard)
-  metadata$estimate_nuisance()
+metadata <- function(data, trt, status, baseline, time, id,
+                     coarsen = 1, estimator = c("tmle", "aipw", "km"),
+                     lrnrs_trt = NULL, lrnrs_cens = NULL, lrnrs_hzrd = NULL) {
+  Survival$
+    new(data, trt, status, baseline, id, time, match.arg(estimator),
+        lrnrs_trt, lrnrs_cens, lrnrs_hzrd)$
+    prepare_data(coarsen)$
+    estimate_nuisance()
 }
-
 
 #' Estimate Restricted Mean Survival Time
 #'
