@@ -90,11 +90,11 @@ all_estimates <- function(x) {
 
 pretty_print_estimates <- function(x) {
   x <- all_estimates(x)
-  x$`Treatment Arm` = round(x$treatment, 2)
-  x$`Control Arm` = round(x$control, 2)
-  x$Theta = round(x$theta, 2)
-  x$`Point-wise 95% CI` = paste0("(", paste(round(x$theta.conf.low, 2), "to", round(x$theta.conf.high, 2)), ")")
-  x$`Uniform 95% CI` = paste0("(", paste(round(x$unif.conf.low, 2), "to", round(x$unif.conf.high, 2)), ")")
+  x$`Treatment Arm` = format_digits(x$treatment, 2)
+  x$`Control Arm` = format_digits(x$control, 2)
+  x$Theta = format_digits(x$theta, 2)
+  x$`Point-wise 95% CI` = paste0("(", paste(format_digits(x$theta.conf.low, 2), "to", format_digits(x$theta.conf.high, 2)), ")")
+  x$`Uniform 95% CI` = paste0("(", paste(format_digits(x$unif.conf.low, 2), "to", format_digits(x$unif.conf.high, 2)), ")")
   x[, c(1, 9:13)]
 }
 

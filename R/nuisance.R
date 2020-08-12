@@ -1,17 +1,18 @@
 
-nuisance.dr <- function(self) {
-  task_H  <- sw(initiate_sl3_task(self$surv_data[self$risk_evnt == 1, ], "evnt", c("all_time", self$trt, self$covar), "binomial", self$id))
-  task_R  <- sw(initiate_sl3_task(self$surv_data[self$risk_cens == 1, ], "cens", c("all_time", self$trt, self$covar), "binomial", self$id))
-  task_A  <- sw(initiate_sl3_task(self$surv_data[self$all_time == 1, ], self$trt, self$covar, "binomial", self$id))
-  pred_H0 <- sw(initiate_sl3_task(self$turn_off(), "evnt", c("all_time", self$trt, self$covar), "binomial", self$id))
-  pred_H1 <- sw(initiate_sl3_task(self$turn_on(), "evnt", c("all_time", self$trt, self$covar), "binomial", self$id))
-  pred_R0 <- sw(initiate_sl3_task(self$turn_off(), "cens", c("all_time", self$trt, self$covar), "binomial", self$id))
-  pred_R1 <- sw(initiate_sl3_task(self$turn_on(), "cens", c("all_time", self$trt, self$covar), "binomial", self$id))
-  pred_A1 <- sw(initiate_sl3_task(self$turn_on(), self$trt, self$covar, "binomial", self$id))
+nuis_dr <- function(self) {
+  task_H <- new_sl3(self$at_risk_evnt(), "evnt", self$predictors(), self$id)
+  task_R <- new_sl3(self$at_risk_cens(), "cens", self$predictors(), self$id)
+  task_A <- new_sl3(self$at_risk_trt(), self$trt, self$covar, self$id)
 
-  ensm_H <- initiate_ensemble("binomial", self$lrnrs_hzrd)
-  ensm_R <- initiate_ensemble("binomial", self$lrnrs_cens)
-  ensm_A <- initiate_ensemble("binomial", self$lrnrs_trt)
+  pred_H0 <- new_sl3(self$turn_off(), "evnt", self$predictors(), self$id)
+  pred_H1 <- new_sl3(self$turn_on(), "evnt", self$predictors(), self$id)
+  pred_R0 <- new_sl3(self$turn_off(), "cens", self$predictors(), self$id)
+  pred_R1 <- new_sl3(self$turn_on(), "cens", self$predictors(), self$id)
+  pred_A1 <- new_sl3(self$turn_on(), self$trt, self$covar, self$id)
+
+  ensm_H <- new_ensemble(self$lrnrs_hzrd)
+  ensm_R <- new_ensemble(self$lrnrs_cens)
+  ensm_A <- new_ensemble(self$lrnrs_trt)
 
   fit_H <- run_ensemble(ensm_H, task_H, envir = environment())
   fit_R <- run_ensemble(ensm_R, task_R, envir = environment())
@@ -27,7 +28,7 @@ nuisance.dr <- function(self) {
   )
 }
 
-nuisance.ua <- function(meta) {
+nuis_ua <- function(meta) {
 
 
 }

@@ -64,11 +64,11 @@ Survival <- R6::R6Class(
       self$risk_cens <- risk_cens
       invisible(self)
     },
-    estimate_nuisance = function(...) {
+    fit_nuis = function(...) {
       self$nuisance <- switch(self$estimator,
-                              tmle = nuisance.dr(self),
-                              aipw = nuisance.dr(self),
-                              km   = nuisance.ua(self))
+                              tmle = nuis_dr(self),
+                              aipw = nuis_dr(self),
+                              km   = nuis_ua(self))
       invisible(self)
     },
     evaluate_horizon = function(horizon = NULL) {
@@ -78,6 +78,15 @@ Survival <- R6::R6Class(
         self$horizon <- horizon
       }
       invisible(self)
+    },
+    at_risk_evnt = function() {
+      self$surv_data[self$risk_evnt == 1, ]
+    },
+    at_risk_cens = function() {
+      self$surv_data[self$risk_cens == 1, ]
+    },
+    at_risk_trt = function() {
+      self$surv_data[self$all_time == 1, ]
     },
     turn_on = function() {
       out <- self$surv_data
@@ -89,6 +98,9 @@ Survival <- R6::R6Class(
       out[[self$trt]] <- rep(0, nrow(self$surv_data))
       return(out)
     },
+    predictors = function() {
+      c("all_time", self$trt, self$covar)
+    },
     get_var = function(var) {
       self$surv_data[[self[[var]]]]
     },
@@ -96,10 +108,17 @@ Survival <- R6::R6Class(
       outer(self$all_time, 1:self$max_time, "<=")
     },
     print = function(...) {
-      cat("rctSurv metadata \n")
+      cli::cli_text("{.strong rctSurv} metadata")
+      cat("\n")
       cli::cli_ul(c("Estimate RMST with `rmst()`",
                     "Estimate survival probability with `survprob()`",
                     "Inspect SuperLearner weights with `get_weights()`"))
+      cat("\n")
+      cli::cli_text(cat("         "), "Estimator: {self$estimator}")
+      cli::cli_text(cat("  "), "Treatment status: {self$trt}")
+      cli::cli_text(cat("  "), "Censoring status: {self$status}")
+      cli::cli_text(cat("    "), "Adjustment set: {self$covar}")
+      cli::cli_text("Max coarsened time: {self$max_time}")
     }
   )
 )

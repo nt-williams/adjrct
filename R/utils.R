@@ -72,3 +72,11 @@ check_future_job <- function() {
     TRUE
   }
 }
+
+format_digits <- function(x, n) {
+  format(round(as.double(x), digits = n), nsmall = n, trim = TRUE)
+}
+
+do_rbind <- function(bind, id) {
+  do.call("rbind", bind[id])
+}

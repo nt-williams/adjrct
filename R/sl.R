@@ -1,6 +1,6 @@
 
 # initiates an sl3 task and corresponding learner stack
-initiate_ensemble <- function(outcome_type, learners = NULL) {
+new_ensemble <- function(learners = NULL) {
 
   #if (getOption("efficient.engine") == "sl3") {
 
@@ -19,17 +19,17 @@ initiate_ensemble <- function(outcome_type, learners = NULL) {
 }
 
 # general initiator of an sl3 task
-initiate_sl3_task <- function(data, Y, X, outcome_type, id = NULL, drop = FALSE) {
+new_sl3 <- function(data, Y, X, id = NULL) {
 
   #if (getOption("efficient.engine") == "sl3") {
-      sl3::sl3_Task$new(
+      sw(sl3::sl3_Task$new(
         data = data,
         covariates = X,
         outcome = Y,
-        outcome_type = outcome_type,
+        outcome_type = "binomial",
         id = id,
-        drop_missing_outcome = drop
-      )
+        drop_missing_outcome = FALSE
+      ))
   # } else {
   #   call_form     <- as.formula(paste(Y, " ~ ", paste(X, collapse = " + ")))
   #   call_data     <- substitute(data)

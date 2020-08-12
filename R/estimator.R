@@ -24,7 +24,7 @@ metadata <- function(data, trt, status, baseline, time, id,
     new(data, trt, status, baseline, id, time, match.arg(estimator),
         lrnrs_trt, lrnrs_cens, lrnrs_hzrd)$
     prepare_data(coarsen)$
-    estimate_nuisance()
+    fit_nuis()
 }
 
 #' Estimate Restricted Mean Survival Time
