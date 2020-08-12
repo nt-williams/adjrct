@@ -1,13 +1,14 @@
 
-Meta <- R6::R6Class(
-  "Meta",
+Survival <- R6::R6Class(
+  "Survival",
   public = list(
     data = NULL,
+    estimator = NULL,
     trt = NULL,
     status = NULL,
     covar = NULL,
     time = NULL,
-    tau = NULL,
+    horizon = list(),
     id = NULL,
     learners_trt = NULL,
     learners_cens = NULL,
@@ -17,6 +18,7 @@ Meta <- R6::R6Class(
     k = NULL,
     im = NULL,
     jm = NULL,
+    nuisance = list(),
     initialize = function(data, trt, status, baseline, id, time, horizon,
                           coarsen, estimator, learners_trt, learners_cens, learners_hazard) {
 
@@ -25,27 +27,41 @@ Meta <- R6::R6Class(
       # check_time_horizon() i.e., less than maximum time
       # check_status() i.e., status is 0 and 1
 
-      # data prep
-      tfd       <- prepare_data(data, time, status, coarsen)
-      self$data <- tfd$data
-
-      # necessary parameters
-      self$trt     <- trt
-      self$covar   <- baseline
-      self$id      <- id
-      self$time    <- time
-      self$tau     <- evaluate_horizon(max(tfd$m), horizon)
-      self$n       <- length(unique(tfd$data[[id]]))
-      self$m       <- tfd$m
-      self$k       <- max(tfd$m)
-      self$im      <- tfd$im
-      self$jm      <- tfd$jm
-
-      # initiate sl3 if too be used
+      tfd            <- prepare_data(data, time, status, coarsen)
+      self$data      <- tfd$data
+      self$trt       <- trt
+      self$covar     <- baseline
+      self$id        <- id
+      self$time      <- time
+      self$tau       <- evaluate_horizon(max(tfd$m), horizon)
+      self$n         <- length(unique(tfd$data[[id]]))
+      self$m         <- tfd$m
+      self$k         <- max(tfd$m)
+      self$im        <- tfd$im
+      self$jm        <- tfd$jm
+      self$estimator <- estimator
       self$learners_trt    <- check_sl3_usage("trt", estimator, learners_trt)
       self$learners_cens   <- check_sl3_usage("cens", estimator, learners_cens)
       self$learners_hazard <- check_sl3_usage("hazard", estimator, learners_hazard)
 
+    },
+    estimate_nuisance = function(...) {
+      self$nuisance <- switch(self$estimator,
+                              tmle = nuisance.dr(self),
+                              aipw = nuisance.dr(self),
+                              km   = nuisance.ua(self))
+      invisible(self)
+    },
+    evaluate_horizon = function(horizon = NULL) {
+        if (is.null(horizon)) {
+          self$horizon <- 1:max(self$time)
+        } else {
+          self$horizon <- horizon
+        }
+      invisible(self)
+    },
+    print = function(...) {
+      cat("rctSurv metadata")
     }
   )
 )

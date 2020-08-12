@@ -1,35 +1,22 @@
 
-estimate_nuisance <- function(meta, estimator) {
-  switch(estimator,
-         tmle = nuisance.dr(meta),
-         aipw = nuisance.dr(meta),
-         ipw  = nuisance.ua(meta),
-         km   = nuisance.ua(meta))
-}
+nuisance.dr <- function(self) {
+  task_H  <- sw(initiate_sl3_task(self$data[self$im == 1, ], "lm", c("m", self$trt, self$covar), "binomial", self$id))
+  task_R  <- sw(initiate_sl3_task(self$data[self$jm == 1, ], "rm", c("m", self$trt, self$covar), "binomial", self$id))
+  task_A  <- sw(initiate_sl3_task(self$data[self$m == 1, ], self$trt, self$covar, "binomial", self$id))
+  pred_H0 <- sw(initiate_sl3_task(turn_off(self$data, self$trt), "lm", c("m", self$trt, self$covar), "binomial", self$id))
+  pred_H1 <- sw(initiate_sl3_task(turn_on(self$data, self$trt), "lm", c("m", self$trt, self$covar), "binomial", self$id))
+  pred_R0 <- sw(initiate_sl3_task(turn_off(self$data, self$trt), "rm", c("m", self$trt, self$covar), "binomial", self$id))
+  pred_R1 <- sw(initiate_sl3_task(turn_on(self$data, self$trt), "rm", c("m", self$trt, self$covar), "binomial", self$id))
+  pred_A1 <- sw(initiate_sl3_task(turn_on(self$data, self$trt), self$trt, self$covar, "binomial", self$id))
 
-nuisance.dr <- function(meta) {
+  ensm_H <- initiate_ensemble("binomial", self$learners_hazard)
+  ensm_R <- initiate_ensemble("binomial", self$learners_cens)
+  ensm_A <- initiate_ensemble("binomial", self$learners_trt)
 
-  # create sl3 tasks
-  task_H  <- sw(initiate_sl3_task(meta$data[meta$im == 1, ], "lm", c("m", meta$trt, meta$covar), "binomial", meta$id))
-  task_R  <- sw(initiate_sl3_task(meta$data[meta$jm == 1, ], "rm", c("m", meta$trt, meta$covar), "binomial", meta$id))
-  task_A  <- sw(initiate_sl3_task(meta$data[meta$m == 1, ], meta$trt, meta$covar, "binomial", meta$id))
-  pred_H0 <- sw(initiate_sl3_task(turn_off(meta$data, meta$trt), "lm", c("m", meta$trt, meta$covar), "binomial", meta$id))
-  pred_H1 <- sw(initiate_sl3_task(turn_on(meta$data, meta$trt), "lm", c("m", meta$trt, meta$covar), "binomial", meta$id))
-  pred_R0 <- sw(initiate_sl3_task(turn_off(meta$data, meta$trt), "rm", c("m", meta$trt, meta$covar), "binomial", meta$id))
-  pred_R1 <- sw(initiate_sl3_task(turn_on(meta$data, meta$trt), "rm", c("m", meta$trt, meta$covar), "binomial", meta$id))
-  pred_A1 <- sw(initiate_sl3_task(turn_on(meta$data, meta$trt), meta$trt, meta$covar, "binomial", meta$id))
-
-  # create learners
-  ensm_H <- initiate_ensemble("binomial", meta$learners_hazard)
-  ensm_R <- initiate_ensemble("binomial", meta$learners_cens)
-  ensm_A <- initiate_ensemble("binomial", meta$learners_trt)
-
-  # run sl3
   fit_H <- run_ensemble(ensm_H, task_H, envir = environment())
   fit_R <- run_ensemble(ensm_R, task_R, envir = environment())
   fit_A <- run_ensemble(ensm_A, task_A, envir = environment())
 
-  # generate predictions
   list(
     hazard_off = predict_sl3(fit_H, pred_H0, envir = environment()),
     hazard_on  = predict_sl3(fit_H, pred_H1, envir = environment()),
@@ -38,7 +25,6 @@ nuisance.dr <- function(meta) {
     treat_off  = 1 - predict_sl3(fit_A, pred_A1, envir = environment()),
     treat_on   = predict_sl3(fit_A, pred_A1, envir = environment())
   )
-
 }
 
 nuisance.ua <- function(meta) {
