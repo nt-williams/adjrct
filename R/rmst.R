@@ -47,7 +47,7 @@ rmst_tmle <- function(metadat) {
     }
   }
 
-  res <- compute_simulband(as.list(res), metadat$nobs)
+  res <- compute_simulband(as.list(res), nobs)
   return(res)
 }
 

@@ -28,48 +28,7 @@ nuis_dr <- function(self) {
   )
 }
 
-nuis_ua <- function(meta) {
+nuis_ua <- function(self) {
 
 
 }
-
-tilt_params <- function(data, nuisance) {
-  switch(nuisance,
-         epsilon = tilt_params.epsilon(data),
-         gamma   = tilt_params.gamma(data),
-         nu      = tilt_params.nu(data))
-}
-
-tilt_params.epsilon <- function(data) {
-  check_na_coef(coef(
-    glm2::glm2(
-      evnt ~ 0 + offset(qlogis(offset)) + I(trt * z1) + I((1 - trt) * z0),
-      family = binomial,
-      subset = risk_evnt == 1,
-      data = data
-    )
-  ))
-}
-
-tilt_params.gamma <- function(data) {
-  check_na_coef(coef(
-    glm2::glm2(
-      cens ~ 0 + offset(qlogis(offset)) + h,
-      family = binomial,
-      subset = risk_cens == 1,
-      data = data
-    )
-  ))
-}
-
-tilt_params.nu <- function(data) {
-  check_na_coef(coef(
-    glm2::glm2(
-      trt ~ 0 + offset(qlogis(offset)) + M,
-      family = binomial,
-      subset = time == 1,
-      data = data
-    )
-  ))
-}
-
