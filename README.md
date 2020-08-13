@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# rctSurv
+# survrct
 
 <!-- badges: start -->
 
@@ -24,7 +24,7 @@ devtools::install_github("nt-williams/rctSurv")
 
 # Scope
 
-`rctSurv` implements efficient estimators for the restricted mean
+`survrct` implements efficient estimators for the restricted mean
 survival time (RMST) and survival probability in randomized controlled
 trials (RCT) without the proportional hazards assumption. The provided
 estimators are non-parametric and can incorporate flexible,
@@ -36,7 +36,7 @@ package) for nuisance parameters while remaining root-n consistent.
 Using the `veteran` dataset provided by the `survival` package…
 
 ``` r
-library(rctSurv)
+library(survrct)
 
 veteran <- survival::veteran
 veteran$trt <- veteran$trt - 1
@@ -115,6 +115,8 @@ survprob(surv)
 ```
 
 # Citation
+
+Please include the following citations after use:
 
 # References
 

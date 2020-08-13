@@ -1,9 +1,4 @@
 
-# Survival$
-#   new(formula, target, data, estimator, lrnrs_trt, lrnrs_cens, lrnrs_hzrd)$
-#   prepare_data(coarsen)$
-#   fit_nuis()
-
 Survival <- R6::R6Class(
   "Survival",
   public = list(

@@ -13,7 +13,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-# rctSurv
+# survrct
 
 <!-- badges: start -->
 [![Project Status: WIP – Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip)
@@ -31,14 +31,14 @@ devtools::install_github("nt-williams/rctSurv")
 
 # Scope
 
-`rctSurv` implements efficient estimators for the restricted mean survival time (RMST) and survival probability in randomized controlled trials (RCT) without the proportional hazards assumption. The provided estimators are non-parametric and can incorporate flexible, data-adaptive estimation (provided using the SuperLearner from the `sl3` package) for nuisance parameters while remaining root-n consistent.
+`survrct` implements efficient estimators for the restricted mean survival time (RMST) and survival probability in randomized controlled trials (RCT) without the proportional hazards assumption. The provided estimators are non-parametric and can incorporate flexible, data-adaptive estimation (provided using the SuperLearner from the `sl3` package) for nuisance parameters while remaining root-n consistent.
 
 # Example
 
 Using the `veteran` dataset provided by the `survival` package...
 
 ```{r eval = FALSE}
-library(rctSurv)
+library(survrct)
 
 veteran <- survival::veteran
 veteran$trt <- veteran$trt - 1
@@ -117,6 +117,8 @@ survprob(surv)
 ```
 
 # Citation
+
+Please include the following citations after use:
 
 # References
 

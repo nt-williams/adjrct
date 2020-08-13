@@ -1,4 +1,4 @@
-Package: rctSurv
+Package: survrct
 Type: Package
 Title: Efficient Estimators for Survival Analysis in RCTs Without Proportional Hazards
 Version: 0.1.0.9000
