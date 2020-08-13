@@ -42,7 +42,7 @@ print.survprob <- function(x, ...) {
     cat(" Test of no effect, p-value:\n")
     cat("      First 6 time horizons:\n")
     cat("\n")
-    print(head(all_estimates(x)))
+    print(head(pretty_print_estimates(x)))
     cli::cli_text(cli::col_red("Access all estimates with `all_estimates()`"))
   } else {
     cli::cli_text(cat("  "), "{.strong Time horizon}: {x$horizon}")
@@ -90,11 +90,11 @@ all_estimates <- function(x) {
 
 pretty_print_estimates <- function(x) {
   x <- all_estimates(x)
-  x$`Treatment Arm` = format_digits(x$treatment, 2)
-  x$`Control Arm` = format_digits(x$control, 2)
-  x$Theta = format_digits(x$theta, 2)
-  x$`Point-wise 95% CI` = paste0("(", paste(format_digits(x$theta.conf.low, 2), "to", format_digits(x$theta.conf.high, 2)), ")")
-  x$`Uniform 95% CI` = paste0("(", paste(format_digits(x$unif.conf.low, 2), "to", format_digits(x$unif.conf.high, 2)), ")")
+  x$`Treatment` <- format_digits(x$treatment, 2)
+  x$`Control` <- format_digits(x$control, 2)
+  x$Theta <- format_digits(x$theta, 2)
+  x$`Point-wise 95% CI` <- paste0("(", paste(format_digits(x$theta.conf.low, 2), "to", format_digits(x$theta.conf.high, 2)), ")")
+  x$`Uniform 95% CI` <- paste0("(", paste(format_digits(x$unif.conf.low, 2), "to", format_digits(x$unif.conf.high, 2)), ")")
   x[, c(1, 9:13)]
 }
 

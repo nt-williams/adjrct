@@ -3,5 +3,6 @@
 S3method(print,rmst)
 S3method(print,survprob)
 export(all_estimates)
+export(metadata)
 export(rmst)
 export(survprob)

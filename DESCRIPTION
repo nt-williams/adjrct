@@ -13,12 +13,15 @@ Authors@R:
              role = c("cre", "aut", "cph"),
              email = "niw4001@med.cornell.edu", 
              comment = c(ORCID = "0000-0002-1378-4831")))
-Description: Estimators for restriced mean survival time and survival probability in randomized
-  controlled trials. 
+Description: Adjusted and unadjusted estimators for the restriced mean survival 
+  time and survival probability in randomized controlled trials without the 
+  proportional hazards assumptions. 
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
 Imports: 
     glm2,
-    cli
+    cli,
+    listenv,
+    future
 RoxygenNote: 7.1.0
