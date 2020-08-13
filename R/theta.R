@@ -15,7 +15,7 @@ rmst_eif <- function(estimator, meta, aux) {
 
 rmst_eif_dr <- function(meta, aux) {
   trt <- meta$get_var("trt")
-  id <- meta$get_var("id")
+  id <- meta$surv_data[["rctSurvId"]]
   dt <- sum_by_id(meta$risk_evnt * (trt*aux$Z1 - (1 - trt)*aux$Z0) * (meta$surv_data[["evnt"]] - aux$LH), id)
   dw1 <- rowSums(matrix(do_rbind(aux$S1, id)[meta$all_time == 1, 1:(aux$time - 1)],
                         nrow = length(unique(id)),
@@ -59,7 +59,7 @@ survprob_eif <- function(estimator, meta, aux) {
 
 survprob_eif_tmle <- function(meta, aux) {
   trt <- meta$get_var("trt")
-  id <- meta$get_var("id")
+  id <- meta$surv_data[["rctSurvId"]]
   dt <- sum_by_id(meta$risk_evnt * (trt*aux$Z1 - (1 - trt)*aux$Z0) * (meta$surv_data[["evnt"]] - aux$LH), id)
   dw1 <- do_rbind(aux$S1, id)[meta$all_time == 1, aux$time]
   dw0 <- do_rbind(aux$S0, id)[meta$all_time == 1, aux$time]

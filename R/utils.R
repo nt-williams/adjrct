@@ -31,7 +31,7 @@ sw <- function(x) {
 }
 
 get_workers <- function() {
-  workers <- formals(plan("next"))$workers
+  workers <- formals(future::plan("next"))$workers
   if (is.null(workers)) {
     workers <- 1
   }
@@ -53,3 +53,16 @@ format_digits <- function(x, n) {
 do_rbind <- function(bind, id) {
   do.call("rbind", bind[id])
 }
+
+get_status <- function(formula) {
+  all.vars(formula[[2]])[[2]]
+}
+
+get_time <- function(formula) {
+  all.vars(formula[[2]])[[1]]
+}
+
+get_covar <- function(formula, target) {
+  setdiff(all.vars(formula[[3]]), target)
+}
+

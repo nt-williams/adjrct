@@ -7,7 +7,7 @@ compute_survprob <- function(meta, nuis, estimator) {
 survprob_tmle <- function(meta, nuis) {
 
   nobs      <- meta$nobs
-  id        <- meta$get_var("id")
+  id        <- meta$surv_data[["rctSurvId"]]
   trt       <- meta$get_var("trt")
   ind       <- meta$time_indicator()
   evnt      <- meta$surv_data[["evnt"]]

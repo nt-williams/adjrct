@@ -1,14 +1,14 @@
 
 nuis_dr <- function(self) {
-  task_H <- new_sl3(self$at_risk_evnt(), "evnt", self$predictors(), self$id)
-  task_R <- new_sl3(self$at_risk_cens(), "cens", self$predictors(), self$id)
-  task_A <- new_sl3(self$at_risk_trt(), self$trt, self$covar, self$id)
+  task_H <- new_sl3(self$at_risk_evnt(), "evnt", self$predictors(), "rctSurvId")
+  task_R <- new_sl3(self$at_risk_cens(), "cens", self$predictors(), "rctSurvId")
+  task_A <- new_sl3(self$at_risk_trt(), self$trt, self$covar, "rctSurvId")
 
-  pred_H0 <- new_sl3(self$turn_off(), "evnt", self$predictors(), self$id)
-  pred_H1 <- new_sl3(self$turn_on(), "evnt", self$predictors(), self$id)
-  pred_R0 <- new_sl3(self$turn_off(), "cens", self$predictors(), self$id)
-  pred_R1 <- new_sl3(self$turn_on(), "cens", self$predictors(), self$id)
-  pred_A1 <- new_sl3(self$turn_on(), self$trt, self$covar, self$id)
+  pred_H0 <- new_sl3(self$turn_off(), "evnt", self$predictors(), "rctSurvId")
+  pred_H1 <- new_sl3(self$turn_on(), "evnt", self$predictors(), "rctSurvId")
+  pred_R0 <- new_sl3(self$turn_off(), "cens", self$predictors(), "rctSurvId")
+  pred_R1 <- new_sl3(self$turn_on(), "cens", self$predictors(), "rctSurvId")
+  pred_A1 <- new_sl3(self$turn_on(), self$trt, self$covar, "rctSurvId")
 
   ensm_H <- new_ensemble(self$lrnrs_hzrd)
   ensm_R <- new_ensemble(self$lrnrs_cens)

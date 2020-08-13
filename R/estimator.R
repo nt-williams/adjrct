@@ -1,12 +1,9 @@
 
 #' Create RCT Survival Metadata
 #'
+#' @param formula
+#' @param target
 #' @param data
-#' @param trt
-#' @param status
-#' @param baseline
-#' @param time
-#' @param id
 #' @param coarsen
 #' @param estimator
 #' @param lrnrs_trt
@@ -17,12 +14,10 @@
 #' @export
 #'
 #' @examples
-metadata <- function(data, trt, status, baseline, time, id,
-                     coarsen = 1, estimator = c("tmle", "aipw", "km"),
-                     lrnrs_trt = NULL, lrnrs_cens = NULL, lrnrs_hzrd = NULL) {
+survrct <- function(formula, target, data, coarsen, estimator,
+                    lrnrs_trt = NULL, lrnrs_cens = NULL, lrnrs_hzrd = NULL) {
   Survival$
-    new(data, trt, status, baseline, id, time, match.arg(estimator),
-        lrnrs_trt, lrnrs_cens, lrnrs_hzrd)$
+    new(formula, target, data, estimator, lrnrs_trt, lrnrs_cens, lrnrs_hzrd)$
     prepare_data(coarsen)$
     fit_nuis()
 }

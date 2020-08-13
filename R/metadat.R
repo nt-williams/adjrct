@@ -1,7 +1,13 @@
 
+# Survival$
+#   new(formula, target, data, estimator, lrnrs_trt, lrnrs_cens, lrnrs_hzrd)$
+#   prepare_data(coarsen)$
+#   fit_nuis()
+
 Survival <- R6::R6Class(
   "Survival",
   public = list(
+    formula = NULL,
     data = NULL,
     surv_data = NULL,
     estimator = NULL,
@@ -20,19 +26,13 @@ Survival <- R6::R6Class(
     risk_evnt = NULL,
     risk_cens = NULL,
     nuisance = list(),
-    initialize = function(data, trt, status, baseline, id, time,
-                          estimator, lrnrs_trt, lrnrs_cens, lrnrs_hzrd) {
+    initialize = function(formula, target, data, estimator, lrnrs_trt, lrnrs_cens, lrnrs_hzrd) {
 
       # check_correct_trt() i.e., trt is 0 and 1
-      # check_time_horizon() i.e., less than maximum time
-      # check_status() i.e., status is 0 and 1
 
+      self$formula    <- formula
       self$data       <- data
-      self$trt        <- trt
-      self$covar      <- baseline
-      self$status     <- status
-      self$id         <- id
-      self$time       <- time
+      self$trt        <- target
       self$estimator  <- estimator
       self$lrnrs_trt  <- check_sl3_usage("trt", estimator, lrnrs_trt)
       self$lrnrs_cens <- check_sl3_usage("cens", estimator, lrnrs_cens)
@@ -40,28 +40,32 @@ Survival <- R6::R6Class(
 
     },
     prepare_data = function(coarsen = 1) {
+
+      # check_status() i.e., status is 0 and 1
+
+      self$time   <- get_time(self$formula)
+      self$status <- get_status(self$formula)
+      self$covar  <- get_covar(self$formula, self$trt)
+
       if (coarsen > 1) self$data[[self$time]] <- self$data[[self$time]] %/% coarsen + 1
 
-      nobs      <- nrow(self$data)
-      max_time  <- max(self$data[[self$time]])
-      all_time  <- rep(1:max_time, nobs)
-      evnt      <- cens <- rep(NA, nobs*max_time)
-      risk_evnt <- risk_cens <- 1*(all_time == 1)
+      self$nobs <- nrow(self$data)
+      self$max_time <- max(self$data[[self$time]])
+      self$all_time <- rep(1:self$max_time, self$nobs)
+      evnt <- cens <- rep(NA, self$nobs*self$max_time)
+      self$risk_evnt <- self$risk_cens <- 1*(self$all_time == 1)
 
-      for (t in 1:max_time) {
-        cens[all_time == t] <- (1 - self$data[[self$status]]) * (self$data[[self$time]] == t)
-        evnt[all_time == t] <- self$data[[self$status]] * (self$data[[self$time]] == t)
-        risk_evnt[all_time == t] <- (self$data[[self$time]] >= t)
-        risk_cens[all_time == t] <- (self$data[[self$time]] > t) * self$data[[self$status]] +
+      for (t in 1:self$max_time) {
+        cens[self$all_time == t] <- (1 - self$data[[self$status]]) * (self$data[[self$time]] == t)
+        evnt[self$all_time == t] <- self$data[[self$status]] * (self$data[[self$time]] == t)
+        self$risk_evnt[self$all_time == t] <- (self$data[[self$time]] >= t)
+        self$risk_cens[self$all_time == t] <- (self$data[[self$time]] > t) * self$data[[self$status]] +
           (self$data[[self$time]] >= t) * (1 - self$data[[self$status]])
       }
 
-      self$surv_data <- data.frame(self$data[as.numeric(gl(nobs, max_time)), ], all_time, evnt, cens)
-      self$nobs      <- nobs
-      self$max_time  <- max_time
-      self$all_time  <- all_time
-      self$risk_evnt <- risk_evnt
-      self$risk_cens <- risk_cens
+      self$surv_data <- data.frame(rctSurvId = rep(1:self$nobs, each = self$max_time),
+                                   self$data[as.numeric(gl(self$nobs, self$max_time)), ],
+                                   all_time = self$all_time, evnt, cens)
       invisible(self)
     },
     fit_nuis = function(...) {
@@ -72,6 +76,9 @@ Survival <- R6::R6Class(
       invisible(self)
     },
     evaluate_horizon = function(horizon = NULL, estimand) {
+
+      # check_time_horizon() i.e., less than maximum time
+
       if (is.null(horizon)) {
         if (estimand == "rmst") {
           self$horizon <- 2:self$max_time
@@ -112,15 +119,17 @@ Survival <- R6::R6Class(
       outer(self$all_time, 1:self$max_time, "<=")
     },
     print = function(...) {
-      cli::cli_text("{.strong rctSurv} metadata")
+      cli::cli_text("{.strong survrct} metadata")
+      cat("\n")
+      print(self$formula)
       cat("\n")
       cli::cli_ul(c("Estimate RMST with `rmst()`",
                     "Estimate survival probability with `survprob()`",
                     "Inspect SuperLearner weights with `get_weights()`"))
       cat("\n")
       cli::cli_text(cat("         "), "Estimator: {self$estimator}")
-      cli::cli_text(cat("  "), "Treatment status: {self$trt}")
-      cli::cli_text(cat("  "), "Censoring status: {self$status}")
+      cli::cli_text(cat("   "), "Target variable: {self$trt}")
+      cli::cli_text(cat("  "), "Status Indicator: {self$status}")
       cli::cli_text(cat("    "), "Adjustment set: {self$covar}")
       cli::cli_text("Max coarsened time: {self$max_time}")
     }
