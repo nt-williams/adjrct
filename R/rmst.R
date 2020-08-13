@@ -9,7 +9,7 @@ compute_rmst <- function(meta) {
 rmst_tmle <- function(meta) {
 
   nobs      <- meta$nobs
-  id        <- meta$surv_data[["rctSurvId"]]
+  id        <- meta$surv_data[["survrctId"]]
   trt       <- meta$get_var("trt")
   ind       <- meta$time_indicator()
   evnt      <- meta$surv_data[["evnt"]]
@@ -51,7 +51,7 @@ rmst_tmle <- function(meta) {
 
 rmst_aipw <- function(meta) {
 
-  id  <- meta$get_var("id")
+  id  <- meta$surv_data[["survrctId"]]
   trt <- meta$get_var("trt")
   ind <- meta$time_indicator()
   res <- listenv::listenv()

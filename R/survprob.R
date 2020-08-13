@@ -1,13 +1,14 @@
 
 compute_survprob <- function(meta, nuis, estimator) {
   switch(meta$estimator,
-         tmle = survprob_tmle(meta, nuis))
+         tmle = survprob_tmle(meta, nuis),
+         aipw = survprob_aipw(meta, nuis))
 }
 
 survprob_tmle <- function(meta, nuis) {
 
   nobs      <- meta$nobs
-  id        <- meta$surv_data[["rctSurvId"]]
+  id        <- meta$surv_data[["survrctId"]]
   trt       <- meta$get_var("trt")
   ind       <- meta$time_indicator()
   evnt      <- meta$surv_data[["evnt"]]
@@ -45,4 +46,26 @@ survprob_tmle <- function(meta, nuis) {
     }
   }
   compute_simulband(as.list(res), nobs)
+}
+
+survprob_aipw <- function(meta, nuis) {
+
+  id  <- meta$surv_data[["survrctId"]]
+  trt <- meta$get_var("trt")
+  ind <- meta$time_indicator()
+  res <- listenv::listenv()
+
+  for (j in 1:length(meta$horizon)) {
+    res[[j]] %<-% {
+      aux <- Auxiliary$
+        new(meta$nuisance, meta$horizon[j])$
+        compute_LHGR(trt)$
+        compute_S(id)$
+        compute_G(id)$
+        compute_Z_survprob(ind, id)
+
+      survprob_eif("aipw", meta, aux)
+    }
+  }
+  compute_simulband(as.list(res), meta$nobs)
 }

@@ -19,7 +19,7 @@ The development version can be installed from
 [GitHub](https://github.com) with:
 
 ``` r
-devtools::install_github("nt-williams/rctSurv")
+devtools::install_github("nt-williams/survrct")
 ```
 
 # Scope

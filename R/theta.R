@@ -15,7 +15,7 @@ rmst_eif <- function(estimator, meta, aux) {
 
 rmst_eif_dr <- function(meta, aux) {
   trt <- meta$get_var("trt")
-  id <- meta$surv_data[["rctSurvId"]]
+  id <- meta$surv_data[["survrctId"]]
   dt <- sum_by_id(meta$risk_evnt * (trt*aux$Z1 - (1 - trt)*aux$Z0) * (meta$surv_data[["evnt"]] - aux$LH), id)
   dw1 <- rowSums(matrix(do_rbind(aux$S1, id)[meta$all_time == 1, 1:(aux$time - 1)],
                         nrow = length(unique(id)),
@@ -46,7 +46,8 @@ rmst_eif.ipw <- function(meta, trt, z1, z0, id) {
 
 survprob_eif <- function(estimator, meta, aux) {
   vals <- switch(estimator,
-                 tmle = survprob_eif_tmle(meta, aux))
+                 tmle = survprob_eif_tmle(meta, aux),
+                 aipw = survprob_eif_aipw(meta, aux))
   se <- sqrt(var(vals$eif) / meta$nobs)
   list(arm1            = vals$theta1,
        arm0            = vals$theta0,
@@ -59,13 +60,29 @@ survprob_eif <- function(estimator, meta, aux) {
 
 survprob_eif_tmle <- function(meta, aux) {
   trt <- meta$get_var("trt")
-  id <- meta$surv_data[["rctSurvId"]]
+  id <- meta$surv_data[["survrctId"]]
   dt <- sum_by_id(meta$risk_evnt * (trt*aux$Z1 - (1 - trt)*aux$Z0) * (meta$surv_data[["evnt"]] - aux$LH), id)
   dw1 <- do_rbind(aux$S1, id)[meta$all_time == 1, aux$time]
   dw0 <- do_rbind(aux$S0, id)[meta$all_time == 1, aux$time]
   theta1 <- mean(dw1)
   theta0 <- mean(dw0)
   eif <- as.vector(dt + dw1 - dw0)
+  list(theta1 = theta1,
+       theta0 = theta0,
+       theta  = theta1 - theta0,
+       eif    = eif)
+}
+
+survprob_eif_aipw <- function(meta, aux) {
+  trt <- meta$get_var("trt")
+  id <- meta$surv_data[["survrctId"]]
+  dt1 <- sum_by_id(meta$risk_evnt * trt * aux$Z1 * (meta$surv_data[["evnt"]] - aux$LH), id)
+  dt0 <- sum_by_id(meta$risk_evnt * (1 - trt) * aux$Z0 * (meta$surv_data[["evnt"]] - aux$LH), id)
+  dw1 <- do_rbind(aux$S1, id)[meta$all_time == 1, aux$time]
+  dw0 <- do_rbind(aux$S0, id)[meta$all_time == 1, aux$time]
+  theta1 <- mean(dt1 + dw1)
+  theta0 <- mean(dt0 + dw0)
+  eif <- as.vector(dt1 - dt0 + dw1 - dw0)
   list(theta1 = theta1,
        theta0 = theta0,
        theta  = theta1 - theta0,

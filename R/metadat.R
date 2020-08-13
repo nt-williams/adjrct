@@ -58,7 +58,7 @@ Survival <- R6::R6Class(
           (self$data[[self$time]] >= t) * (1 - self$data[[self$status]])
       }
 
-      self$surv_data <- data.frame(rctSurvId = rep(1:self$nobs, each = self$max_time),
+      self$surv_data <- data.frame(survrctId = rep(1:self$nobs, each = self$max_time),
                                    self$data[as.numeric(gl(self$nobs, self$max_time)), ],
                                    all_time = self$all_time, evnt, cens)
       invisible(self)
