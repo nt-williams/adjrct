@@ -15,9 +15,9 @@
 #'
 #' @examples
 survrct <- function(formula, target, data, coarsen, estimator,
-                    lrnrs_trt = NULL, lrnrs_cens = NULL, lrnrs_hzrd = NULL) {
+                    lrnrs_cens = NULL, lrnrs_hzrd = NULL) {
   Survival$
-    new(formula, target, data, estimator, lrnrs_trt, lrnrs_cens, lrnrs_hzrd)$
+    new(formula, target, data, estimator, lrnrs_cens, lrnrs_hzrd)$
     prepare_data(coarsen)$
     fit_nuis()
 }

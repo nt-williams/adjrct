@@ -23,5 +23,6 @@ Imports:
     glm2,
     cli,
     listenv,
-    future
+    future,
+    delayed
 RoxygenNote: 7.1.0

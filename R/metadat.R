@@ -12,7 +12,7 @@ Survival <- R6::R6Class(
     time = NULL,
     horizon = list(),
     id = NULL,
-    lrnrs_trt = NULL,
+    engine = "sl3",
     lrnrs_cens = NULL,
     lrnrs_hzrd = NULL,
     nobs = NULL,
@@ -21,22 +21,20 @@ Survival <- R6::R6Class(
     risk_evnt = NULL,
     risk_cens = NULL,
     nuisance = list(),
-    initialize = function(formula, target, data, estimator, lrnrs_trt, lrnrs_cens, lrnrs_hzrd) {
+    initialize = function(formula, target, data, estimator, lrnrs_cens, lrnrs_hzrd) {
 
-      # check_correct_trt() i.e., trt is 0 and 1
+      # TODO check_correct_trt() i.e., trt is 0 and 1
 
       self$formula    <- formula
       self$data       <- data
       self$trt        <- target
       self$estimator  <- estimator
-      self$lrnrs_trt  <- check_sl3_usage("trt", estimator, lrnrs_trt)
       self$lrnrs_cens <- check_sl3_usage("cens", estimator, lrnrs_cens)
       self$lrnrs_hzrd <- check_sl3_usage("hzrd", estimator, lrnrs_hzrd)
-
     },
     prepare_data = function(coarsen = 1) {
 
-      # check_status() i.e., status is 0 and 1
+      # TODO check_status() i.e., status is 0 and 1
 
       self$time   <- get_time(self$formula)
       self$status <- get_status(self$formula)
@@ -67,12 +65,12 @@ Survival <- R6::R6Class(
       self$nuisance <- switch(self$estimator,
                               tmle = nuis_dr(self),
                               aipw = nuis_dr(self),
-                              km   = nuis_ua(self))
+                              km   = nuis_glm(self))
       invisible(self)
     },
     evaluate_horizon = function(horizon = NULL, estimand) {
 
-      # check_time_horizon() i.e., less than maximum time
+      # TODO check_time_horizon() i.e., less than maximum time
 
       if (is.null(horizon)) {
         if (estimand == "rmst") {
@@ -112,6 +110,27 @@ Survival <- R6::R6Class(
     },
     time_indicator = function() {
       outer(self$all_time, 1:self$max_time, "<=")
+    },
+    formula_trt = function() {
+      if (self$estimator %in% c("tmle", "aipw")) {
+        formula(paste(self$trt, "~", paste(self$covar, collapse = "+")))
+      } else {
+        formula(paste(self$trt, "~ 1"))
+      }
+    },
+    formula_cens = function() {
+      if (self$estimator %in% c("tmle", "aipw")) {
+        formula(paste("cens ~", self$trt, "* (all_time + ", paste(self$covar, collapse = "+"), ")"))
+      } else {
+        formula(paste("cens ~ all_time * ", self$trt))
+      }
+    },
+    formula_hzrd = function() {
+      if (self$estimator %in% c("tmle", "aipw")) {
+        formula(paste("evnt ~", self$trt, "* (all_time + ", paste(self$covar, collapse = "+"), ")"))
+      } else {
+        formula(paste("evnt ~ all_time * ", self$trt))
+      }
     },
     print = function(...) {
       cli::cli_text("{.strong survrct} metadata")

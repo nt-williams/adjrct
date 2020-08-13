@@ -1,42 +1,20 @@
 
-# initiates an sl3 task and corresponding learner stack
 new_ensemble <- function(learners = NULL) {
-
-  #if (getOption("efficient.engine") == "sl3") {
-
-    # building learner stack
-    out <- sl3::make_learner(sl3::Lrnr_sl,
-                             learners = learners,
-                             metalearner = sl3::make_learner("Lrnr_nnls", convex = TRUE),
-                             keep_extra = FALSE)
-
-    # returns
-    return(out)
-  # } else {
-  #   return(NULL)
-  # }
-
+  sl3::make_learner(sl3::Lrnr_sl,
+                    learners = learners,
+                    metalearner = sl3::make_learner("Lrnr_nnls", convex = TRUE),
+                    keep_extra = FALSE)
 }
 
-# general initiator of an sl3 task
 new_sl3 <- function(data, Y, X, id = NULL) {
-
-  #if (getOption("efficient.engine") == "sl3") {
-      sw(sl3::sl3_Task$new(
-        data = data,
-        covariates = X,
-        outcome = Y,
-        outcome_type = "binomial",
-        id = id,
-        drop_missing_outcome = FALSE
-      ))
-  # } else {
-  #   call_form     <- as.formula(paste(Y, " ~ ", paste(X, collapse = " + ")))
-  #   call_data     <- substitute(data)
-  #   call_out_type <- check_glm_outcome(outcome_type)
-  #   return(call("glm", call_form, family = call_out_type, data = call_data))
-  # }
-
+  sw(sl3::sl3_Task$new(
+    data = data,
+    covariates = X,
+    outcome = Y,
+    outcome_type = "binomial",
+    id = id,
+    drop_missing_outcome = FALSE
+  ))
 }
 
 run_ensemble <- function(ensemble, task, envir) {
@@ -47,9 +25,7 @@ run_ensemble <- function(ensemble, task, envir) {
     } else {
       sched <- delayed::Scheduler$new(ensemble, delayed::SequentialJob)
     }
-
     sched$compute()
-    # ensemble$train(task)
   } else {
     sw(eval(task, envir = envir))
   }
