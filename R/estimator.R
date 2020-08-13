@@ -37,7 +37,7 @@ metadata <- function(data, trt, status, baseline, time, id,
 #'
 #' @examples
 rmst <- function(metadata, horizon = NULL) {
-  metadata$evaluate_horizon(horizon)
+  metadata$evaluate_horizon(horizon, "rmst")
   out <- list(estimator = metadata$estimator,
               horizon   = metadata$horizon,
               estimates = compute_rmst(metadata))
@@ -55,7 +55,7 @@ rmst <- function(metadata, horizon = NULL) {
 #'
 #' @examples
 survprob <- function(metadata, horizon = NULL) {
-  metadata$evaluate_horizon(horizon)
+  metadata$evaluate_horizon(horizon, "survprob")
   out <- list(estimator = metadata$estimator,
               horizon   = metadata$horizon,
               estimates = compute_survprob(metadata))

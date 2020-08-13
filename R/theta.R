@@ -1,7 +1,8 @@
 
 rmst_eif <- function(estimator, meta, aux) {
   vals <- switch(estimator,
-                 tmle = rmst_eif_tmle(meta, aux))
+                 tmle = rmst_eif_dr(meta, aux),
+                 aipw = rmst_eif_dr(meta, aux))
   se <- sqrt(var(vals$eif) / meta$nobs)
   list(arm1            = vals$theta1,
        arm0            = vals$theta0,
@@ -12,7 +13,7 @@ rmst_eif <- function(estimator, meta, aux) {
        theta.conf.high = vals$theta + qnorm(0.975)*se)
 }
 
-rmst_eif_tmle <- function(meta, aux) {
+rmst_eif_dr <- function(meta, aux) {
   trt <- meta$get_var("trt")
   id <- meta$get_var("id")
   dt <- sum_by_id(meta$risk_evnt * (trt*aux$Z1 - (1 - trt)*aux$Z0) * (meta$surv_data[["evnt"]] - aux$LH), id)
@@ -25,21 +26,6 @@ rmst_eif_tmle <- function(meta, aux) {
   theta1 <- 1 + mean(dw1)
   theta0 <- 1 + mean(dw0)
   eif <- as.vector(dt + dw1 - dw0)
-  list(theta1 = theta1,
-       theta0 = theta0,
-       theta  = theta1 - theta0,
-       eif    = eif)
-}
-
-rmst_eif.aipw <- function(meta, trt, z1, z0, s1, s0, lh, id) {
-  dt1    <- sum_by_id(meta$im * trt*z1 * (meta$data[["lm"]] - lh), id)
-  dt0    <- sum_by_id(meta$im * (1 - trt)*z0 * (meta$data[["lm"]] - lh), id)
-  dw1    <- rowSums(do.call('rbind', s1[id])[meta$m == 1, 1:(meta$tau - 1)])
-  dw0    <- rowSums(do.call('rbind', s0[id])[meta$m == 1, 1:(meta$tau - 1)])
-  theta1 <- 1 + mean(dt1 + dw1)
-  theta0 <- 1 + mean(dt0 + dw0)
-  eif    <- as.vector(dt1 - dt0 + dw1 - dw0)
-
   list(theta1 = theta1,
        theta0 = theta0,
        theta  = theta1 - theta0,

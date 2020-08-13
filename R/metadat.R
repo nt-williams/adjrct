@@ -71,9 +71,13 @@ Survival <- R6::R6Class(
                               km   = nuis_ua(self))
       invisible(self)
     },
-    evaluate_horizon = function(horizon = NULL) {
+    evaluate_horizon = function(horizon = NULL, estimand) {
       if (is.null(horizon)) {
-        self$horizon <- 1:self$max_time
+        if (estimand == "rmst") {
+          self$horizon <- 2:self$max_time
+        } else {
+          self$horizon <- 1:self$max_time
+        }
       } else {
         self$horizon <- horizon
       }
