@@ -41,17 +41,6 @@ library(rctSurv)
 veteran <- survival::veteran
 veteran$trt <- veteran$trt - 1
 veteran$celltype <- factor(veteran$celltype)
-veteran$id <- 1:nrow(veteran)
-```
-
-Defining data structure…
-
-``` r
-trt <- "trt"
-time <- "time"
-cens <- "status"
-covar <- c("celltype", "karno", "diagtime", "age", "prior")
-id <- "id"
 ```
 
 Setting up the SuperLearner for estimation…
@@ -64,61 +53,64 @@ lrnrs <- sl3::make_learner_stack(sl3::Lrnr_glm_fast,
 Estimate nuisance parameters and establish metadata…
 
 ``` r
-meta <- metadata(veteran, trt, cens, covar, time, id,
-                 coarsen = 30, estimator = "tmle", 
-                 lrnrs_trt = lrnrs, lrnrs_cens = lrnrs, lrnrs_hzrd = lrnrs)
-meta
-#> rctSurv metadata
+surv <- survrct(Surv(time, status) ~ trt + celltype + karno + diagtime + age + prior, 
+                target = "trt", data = veteran, coarsen = 7, estimator = "tmle", 
+                lrnrs_trt = lrnrs, lrnrs_cens = lrnrs, lrnrs_hzrd = lrnrs)
+#> survrct metadata
+#> 
+#> Surv(time, status) ~ trt + celltype + karno + diagtime + age + 
+#>     prior
 #> 
 #> ● Estimate RMST with `rmst()`
 #> ● Estimate survival probability with `survprob()`
 #> ● Inspect SuperLearner weights with `get_weights()`
 #> 
 #>          Estimator: tmle
-#>   Treatment status: trt
-#>   Censoring status: status
+#>    Target variable: trt
+#>   Status Indicator: status
 #>     Adjustment set: celltype, karno, diagtime, age, and prior
-#> Max coarsened time: 34
+#> Max coarsened time: 143
 ```
 
 We can compute restricted mean survival time…
 
 ``` r
-rmst(meta)
+rmst(surv)
 #> RMST Estimator: tmle
 #> 
 #>            Confidence level: 95%
-#>      Multiplier Bootstrap C: 2.401891 
+#>      Multiplier Bootstrap C: 2.530097 
 #>  Test of no effect, p-value:
 #>       First 6 time horizons:
 #> 
 #>   horizon Treatment Control Theta Point-wise 95% CI  Uniform 95% CI
-#> 1       2      1.69    1.73 -0.03   (-0.17 to 0.10) (-0.20 to 0.13)
-#> 2       3      2.19    2.29 -0.11   (-0.35 to 0.14) (-0.41 to 0.19)
-#> 3       4      2.59    2.82 -0.23   (-0.59 to 0.13) (-0.67 to 0.21)
-#> 4       5      2.87    3.22 -0.34   (-0.80 to 0.12) (-0.91 to 0.23)
-#> 5       6      3.12    3.52 -0.40   (-0.97 to 0.17) (-1.10 to 0.30)
-#> 6       7      3.35    3.74 -0.39   (-1.05 to 0.27) (-1.20 to 0.42)
+#> 1       2      1.96    1.97 -0.01   (-0.08 to 0.05) (-0.09 to 0.07)
+#> 2       3      2.84    2.80  0.04   (-0.11 to 0.20) (-0.16 to 0.24)
+#> 3       4      3.65    3.58  0.07   (-0.19 to 0.33) (-0.26 to 0.40)
+#> 4       5      4.36    4.30  0.06   (-0.30 to 0.42) (-0.41 to 0.53)
+#> 5       6      5.02    5.00  0.02   (-0.46 to 0.49) (-0.60 to 0.63)
+#> 6       7      5.66    5.68 -0.02   (-0.62 to 0.57) (-0.79 to 0.74)
+#> Access all estimates with `all_estimates()`
 ```
 
 We can also compute survival probabilities…
 
 ``` r
-survprob(meta)
+survprob(surv)
 #> Survival Probability Estimator: tmle
 #> 
 #>            Confidence level: 95%
-#>      Multiplier Bootstrap C: 2.699171 
+#>      Multiplier Bootstrap C: 2.877887 
 #>  Test of no effect, p-value:
 #>       First 6 time horizons:
 #> 
 #>   horizon Treatment Control Theta Point-wise 95% CI  Uniform 95% CI
-#> 1       2      0.69    0.73 -0.03   (-0.17 to 0.10) (-0.22 to 0.15)
-#> 2       3      0.49    0.57 -0.08   (-0.22 to 0.07) (-0.28 to 0.13)
-#> 3       4      0.40    0.52 -0.12   (-0.26 to 0.03) (-0.32 to 0.08)
-#> 4       5      0.29    0.40 -0.11   (-0.27 to 0.04) (-0.32 to 0.10)
-#> 5       6      0.25    0.31 -0.06   (-0.21 to 0.09) (-0.27 to 0.15)
-#> 6       7      0.23    0.22  0.01   (-0.12 to 0.14) (-0.17 to 0.19)
+#> 1       2      0.96    0.97 -0.01   (-0.08 to 0.05) (-0.11 to 0.08)
+#> 2       3      0.89    0.83  0.05   (-0.07 to 0.17) (-0.12 to 0.23)
+#> 3       4      0.80    0.77  0.03   (-0.10 to 0.15) (-0.16 to 0.21)
+#> 4       5      0.71    0.73 -0.01   (-0.15 to 0.12) (-0.21 to 0.18)
+#> 5       6      0.66    0.70 -0.04   (-0.18 to 0.10) (-0.25 to 0.16)
+#> 6       7      0.64    0.68 -0.04   (-0.18 to 0.10) (-0.24 to 0.16)
 #> Access all estimates with `all_estimates()`
 ```
 
