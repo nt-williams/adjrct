@@ -84,7 +84,7 @@ all_estimates <- function(x) {
       unif.conf.low   = x$unif.conf.low,
       unif.conf.high  = x$unif.conf.high
     )))
-  out$horizon <- 1 + (1:(length(x$estimates) - 1))
+  out$horizon <- x$horizon
   out[, c(8, 1:7)]
 }
 
