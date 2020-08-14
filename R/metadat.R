@@ -13,8 +13,6 @@ Survival <- R6::R6Class(
     horizon = list(),
     id = NULL,
     engine = NULL,
-    lrnrs_cens = NULL,
-    lrnrs_hzrd = NULL,
     nobs = NULL,
     all_time = NULL,
     max_time = NULL,
