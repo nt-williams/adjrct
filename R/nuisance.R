@@ -18,6 +18,10 @@ Engine <- R6::R6Class(
         }
       } else {
         if (is.null(self$lrnrs_cens) || is.null(self$lrnrs_hzrd)) {
+          if (!(is.null(self$lrnrs_cens) && is.null(self$lrnrs_hzrd))) {
+            warning("If using sl3, supply learner stacks to both `lrnrs_cens` and `lrnrs_hzrd`. Using glm() instead.",
+                    call. = FALSE)
+          }
           self$engine <- "glm"
         } else {
           has_sl3 <- check_sl3()

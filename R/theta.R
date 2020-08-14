@@ -25,7 +25,8 @@ rmst_eif <- function(meta, aux) {
 survprob_eif <- function(estimator, meta, aux) {
   vals <- switch(estimator,
                  tmle = survprob_eif_tmle(meta, aux),
-                 aipw = survprob_eif_aipw(meta, aux))
+                 aipw = survprob_eif_aipw(meta, aux),
+                 km = survprob_eif_tmle(meta, aux))
   se <- sqrt(var(vals$eif) / meta$nobs)
   list(arm1            = vals$theta1,
        arm0            = vals$theta0,
@@ -58,7 +59,7 @@ survprob_eif_aipw <- function(meta, aux) {
   dt0 <- sum_by_id(meta$risk_evnt * (1 - trt) * aux$Z0 * (meta$surv_data[["evnt"]] - aux$LH), id)
   dw1 <- do_rbind(aux$S1, id)[meta$all_time == 1, aux$time]
   dw0 <- do_rbind(aux$S0, id)[meta$all_time == 1, aux$time]
-  theta1 <- mean(dt1 + dw1)
+  theta1 <- mean(dt1 + dw1) # TODO ASK IVAN WHY WE ARE ADDING THESE HERE!
   theta0 <- mean(dt0 + dw0)
   eif <- as.vector(dt1 - dt0 + dw1 - dw0)
   list(theta1 = theta1,

@@ -139,6 +139,7 @@ Survival <- R6::R6Class(
                     "Inspect SuperLearner weights with `get_weights()`"))
       cat("\n")
       cli::cli_text(cat("         "), "Estimator: {self$estimator}")
+      cli::cli_text(cat("            "), "Engine: {self$engine$engine}")
       cli::cli_text(cat("   "), "Target variable: {self$trt}")
       cli::cli_text(cat("  "), "Status Indicator: {self$status}")
       cli::cli_text(cat("    "), "Adjustment set: {self$covar}")

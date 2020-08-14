@@ -2,7 +2,8 @@
 compute_survprob <- function(meta, nuis, estimator) {
   switch(meta$estimator,
          tmle = survprob_tmle(meta, nuis),
-         aipw = survprob_aipw(meta, nuis))
+         aipw = survprob_ee(meta, nuis),
+         km = survprob_ee(meta, nuis))
 }
 
 survprob_tmle <- function(meta, nuis) {
@@ -48,7 +49,7 @@ survprob_tmle <- function(meta, nuis) {
   compute_simulband(as.list(res), nobs)
 }
 
-survprob_aipw <- function(meta, nuis) {
+survprob_ee <- function(meta, nuis) {
 
   id  <- meta$surv_data[["survrctId"]]
   trt <- meta$get_var("trt")
@@ -64,7 +65,7 @@ survprob_aipw <- function(meta, nuis) {
         compute_G(id)$
         compute_Z_survprob(ind, id)
 
-      survprob_eif("aipw", meta, aux)
+      survprob_eif(meta$estimator, meta, aux)
     }
   }
   compute_simulband(as.list(res), meta$nobs)
