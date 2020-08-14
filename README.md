@@ -13,6 +13,10 @@ public.](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostat
 > Efficient Estimators for Survival Analysis in RCTs Without
 > Proportional Hazards
 
+Nick Williams and Ivan Diaz
+
+-----
+
 # Installation
 
 The development version can be installed from
@@ -30,6 +34,10 @@ trials (RCT) without the proportional hazards assumption. The provided
 estimators are non-parametric and can incorporate flexible,
 data-adaptive estimation (provided using the SuperLearner from the `sl3`
 package) for nuisance parameters while remaining root-n consistent.
+
+<!-- insert some quick blurb on the efficiency gains that come from adjusting even in an RCT -->
+
+<!-- insert some blurb on using an interface that will be familiar to users of the survival pacakge -->
 
 # Example
 
@@ -55,7 +63,7 @@ Estimate nuisance parameters and establish metadata…
 ``` r
 surv <- survrct(Surv(time, status) ~ trt + celltype + karno + diagtime + age + prior, 
                 target = "trt", data = veteran, coarsen = 7, estimator = "tmle", 
-                lrnrs_trt = lrnrs, lrnrs_cens = lrnrs, lrnrs_hzrd = lrnrs)
+                lrnrs_cens = lrnrs, lrnrs_hzrd = lrnrs)
 #> survrct metadata
 #> 
 #> Surv(time, status) ~ trt + celltype + karno + diagtime + age + 
