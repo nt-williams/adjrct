@@ -10,7 +10,6 @@ survrct(
   data,
   coarsen,
   estimator,
-  lrnrs_trt = NULL,
   lrnrs_cens = NULL,
   lrnrs_hzrd = NULL
 )

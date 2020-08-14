@@ -24,5 +24,7 @@ Imports:
     cli,
     listenv,
     future,
-    delayed
+    delayed,
+    ggplot2,
+    patchwork
 RoxygenNote: 7.1.0
