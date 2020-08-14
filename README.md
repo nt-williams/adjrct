@@ -9,9 +9,9 @@
 has not yet been a stable, usable release suitable for the
 public.](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip)
 [![Travis build
-status](https://travis-ci.com/nt-williams/rctSurv.svg?branch=master)](https://travis-ci.com/nt-williams/rctSurv)
+status](https://travis-ci.com/nt-williams/survrct.svg?branch=master)](https://travis-ci.com/nt-williams/survrct)
 [![Codecov test
-coverage](https://codecov.io/gh/nt-williams/rctSurv/branch/master/graph/badge.svg)](https://codecov.io/gh/nt-williams/rctSurv?branch=master)
+coverage](https://codecov.io/gh/nt-williams/rctSurv/branch/master/graph/badge.svg)](https://codecov.io/gh/nt-williams/survrct?branch=master)
 [![License: GPL
 v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 <!-- badges: end -->
