@@ -2,8 +2,8 @@
 compute_rmst <- function(meta) {
   switch(meta$estimator,
          tmle = rmst_tmle(meta),
-         aipw = rmst_aipw(meta),
-         ipw  = rmst_ipw(meta))
+         aipw = rmst_ee(meta),
+         km   = rmst_ee(meta))
 }
 
 rmst_tmle <- function(meta) {
@@ -43,13 +43,13 @@ rmst_tmle <- function(meta) {
         compute_Z_rmst(ind, id)$
         compute_LHGR(trt)
 
-      rmst_eif("tmle", meta, aux)
+      rmst_eif(meta, aux)
     }
   }
   compute_simulband(as.list(res), nobs)
 }
 
-rmst_aipw <- function(meta) {
+rmst_ee <- function(meta) {
 
   id  <- meta$surv_data[["survrctId"]]
   trt <- meta$get_var("trt")
@@ -58,15 +58,14 @@ rmst_aipw <- function(meta) {
 
   for (j in 1:length(meta$horizon)) {
     res[[j]] %<-% {
-      aux  <- Auxiliary$
+      aux <- Auxiliary$
         new(meta$nuisance, meta$horizon[j])$
         compute_LHGR(trt)$
         compute_S(id)$
-        compute_SL(id)$
         compute_G(id)$
         compute_Z_rmst(ind, id)
 
-      rmst_eif("aipw", meta, aux)
+      rmst_eif(meta, aux)
     }
   }
   compute_simulband(as.list(res), meta$nobs)
