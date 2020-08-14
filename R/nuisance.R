@@ -52,15 +52,18 @@ nuis_sl3 <- function(self) {
   ensm_H <- new_ensemble(self$engine$lrnrs_hzrd)
   ensm_R <- new_ensemble(self$engine$lrnrs_cens)
 
-  fit_H <- run_ensemble(ensm_H, task_H, envir = environment())
-  fit_R <- run_ensemble(ensm_R, task_R, envir = environment())
+  fit_H <- run_ensemble(ensm_H, task_H)
+  fit_R <- run_ensemble(ensm_R, task_R)
   fit_A <- glm(self$formula_trt(), data = self$at_risk_trt(), family = "binomial")
 
   list(
-    hzrd_off = predict_sl3(fit_H, pred_H0, envir = environment()),
-    hzrd_on  = predict_sl3(fit_H, pred_H1, envir = environment()),
-    cens_off = predict_sl3(fit_R, pred_R0, envir = environment()),
-    cens_on  = predict_sl3(fit_R, pred_R1, envir = environment()),
+    hzrd_fit = fit_H,
+    cens_fit = fit_R,
+    trt_fit  = fit_A,
+    hzrd_off = predict_sl3(fit_H, pred_H0),
+    hzrd_on  = predict_sl3(fit_H, pred_H1),
+    cens_off = predict_sl3(fit_R, pred_R0),
+    cens_on  = predict_sl3(fit_R, pred_R1),
     trt_off  = 1 - predict(fit_A, newdata = self$turn_on(), type = "response"),
     trt_on   = predict(fit_A, newdata = self$turn_on(), type = "response")
   )
@@ -72,6 +75,9 @@ nuis_glm <- function(self) {
   fit_A <- glm(self$formula_trt(), data = self$at_risk_trt(), family = "binomial")
 
   list(
+    hzrd_fit = fit_H,
+    cens_fit = fit_R,
+    trt_fit  = fit_A,
     hzrd_off = predict(fit_H, newdata = self$turn_off(), type = "response"),
     hzrd_on  = predict(fit_H, newdata = self$turn_on(), type = "response"),
     cens_off = predict(fit_R, newdata = self$turn_off(), type = "response"),
@@ -79,4 +85,18 @@ nuis_glm <- function(self) {
     trt_off  = 1 - predict(fit_A, newdata = self$turn_on(), type = "response"),
     trt_on   = predict(fit_A, newdata = self$turn_on(), type = "response")
   )
+}
+
+#' Return Nuisance Parameter Model Fits
+#'
+#' @param meta
+#'
+#' @return
+#' @export
+#'
+#' @examples
+get_fits <- function(meta) {
+  list(Hazard = meta$nuisance$hzrd_fit,
+       Censoring = meta$nuisance$cens_fit,
+       Treatment = meta$nuisance$trt_fit)
 }

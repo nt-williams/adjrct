@@ -136,7 +136,7 @@ Survival <- R6::R6Class(
       cat("\n")
       cli::cli_ul(c("Estimate RMST with `rmst()`",
                     "Estimate survival probability with `survprob()`",
-                    "Inspect SuperLearner weights with `get_weights()`"))
+                    "Inspect nuisance parameter models with `get_fits()`"))
       cat("\n")
       cli::cli_text(cat("         "), "Estimator: {self$estimator}")
       cli::cli_text(cat("            "), "Engine: {self$engine$engine}")

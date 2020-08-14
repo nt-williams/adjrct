@@ -17,7 +17,7 @@ new_sl3 <- function(data, Y, X, id = NULL) {
   ))
 }
 
-run_ensemble <- function(ensemble, task, envir) {
+run_ensemble <- function(ensemble, task) {
   if (!is.null(ensemble)) {
     ensemble <- sl3::delayed_learner_train(ensemble, task)
     if (check_future_job()) {
@@ -31,14 +31,6 @@ run_ensemble <- function(ensemble, task, envir) {
   }
 }
 
-predict_sl3 <- function(object, task, envir) {
-  #if (getOption("efficient.engine") == "sl3") {
+predict_sl3 <- function(object, task) {
     return(object$predict(task))
-  # } else {
-  #   call_data <- eval(substitute(task$data), envir = envir)
-  #   call_obj  <- substitute(object)
-  #   out       <- sw(eval(call("predict.glm", call_obj, newdata = call_data, type = "response"),
-  #                        envir = envir))
-  #   return(as.vector(out))
-  # }
 }
