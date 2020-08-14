@@ -1,6 +1,37 @@
 
+Engine <- R6::R6Class(
+  "Engine",
+  public = list(
+    engine = NULL,
+    lrnrs_cens = NULL,
+    lrnrs_hzrd = NULL,
+    initialize = function(lrnrs_cens = NULL, lrnrs_hzrd = NULL) {
+      self$lrnrs_cens <- lrnrs_cens
+      self$lrnrs_hzrd <- lrnrs_hzrd
+    },
+    eval_engine = function(estimator) {
+      if (estimator == "km") {
+        self$engine <- "glm"
+        if (!is.null(self$lrnrs_cens) || !is.null(self$lrnrs_hzrd)) {
+          warning("sl3 learners supplied with Kaplan-Meier estimator. Using `glm()` instead.",
+                  call. = FALSE)
+        }
+      } else {
+        if (is.null(self$lrnrs_cens) || is.null(self$lrnrs_hzrd)) {
+          self$engine <- "glm"
+        } else {
+          has_sl3 <- check_sl3()
+          self$engine <- ifelse(has_sl3, "sl3", "glm")
+          if (!has_sl3) warning("sl3 not found. Using `glm()`.", call. = FALSE)
+        }
+      }
+      invisible(self)
+    }
+  )
+)
+
 nuis_dr <- function(self) {
-  switch(self$engine,
+  switch(self$engine$engine,
          glm = nuis_glm(self),
          sl3 = nuis_sl3(self))
 }
@@ -14,8 +45,8 @@ nuis_sl3 <- function(self) {
   pred_R0 <- new_sl3(self$turn_off(), "cens", self$predictors(), "survrctId")
   pred_R1 <- new_sl3(self$turn_on(), "cens", self$predictors(), "survrctId")
 
-  ensm_H <- new_ensemble(self$lrnrs_hzrd)
-  ensm_R <- new_ensemble(self$lrnrs_cens)
+  ensm_H <- new_ensemble(self$engine$lrnrs_hzrd)
+  ensm_R <- new_ensemble(self$engine$lrnrs_cens)
 
   fit_H <- run_ensemble(ensm_H, task_H, envir = environment())
   fit_R <- run_ensemble(ensm_R, task_R, envir = environment())

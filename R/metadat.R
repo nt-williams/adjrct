@@ -12,7 +12,7 @@ Survival <- R6::R6Class(
     time = NULL,
     horizon = list(),
     id = NULL,
-    engine = "sl3",
+    engine = NULL,
     lrnrs_cens = NULL,
     lrnrs_hzrd = NULL,
     nobs = NULL,
@@ -29,8 +29,7 @@ Survival <- R6::R6Class(
       self$data       <- data
       self$trt        <- target
       self$estimator  <- estimator
-      self$lrnrs_cens <- check_sl3_usage("cens", estimator, lrnrs_cens)
-      self$lrnrs_hzrd <- check_sl3_usage("hzrd", estimator, lrnrs_hzrd)
+      self$engine     <- Engine$new(lrnrs_cens, lrnrs_hzrd)$eval_engine(estimator)
     },
     prepare_data = function(coarsen = 1) {
 
