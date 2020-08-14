@@ -65,14 +65,26 @@ print.survprob <- function(x, ...) {
   }
 }
 
-#' Title
+#' Extract RMST And Survival Probability Estimates
 #'
-#' @param x
+#' @param x An object of class "rmst" or "survprob".
 #'
-#' @return
+#' @seealso \code{\link{rmst}} and \code{\link{survprob}} for creating \code{x}.
+#'
+#' @return A data frame containing the estimates.
 #' @export
 #'
 #' @examples
+#' if (requireNamespace("survival", quietly = TRUE)) {
+#'   library(survrct)
+#'   veteran <- survival::veteran
+#'   veteran$trt <- veteran$trt - 1
+#'   veteran$celltype <- factor(veteran$celltype)
+#'   surv <- survrct(Surv(time, status) ~ trt + celltype + karno + diagtime + age + prior,
+#'                   target = "trt", data = veteran, coarsen = 7, estimator = "tmle")
+#'   estm <- rmst(surv, 55)
+#'   all_estimates(estm)
+#' }
 all_estimates <- function(x) {
   out <- do.call("rbind", lapply(x$estimates[-which(names(x$estimates) == "mbcv")], function(x)
     data.frame(

@@ -26,8 +26,6 @@ run_ensemble <- function(ensemble, task) {
       sched <- delayed::Scheduler$new(ensemble, delayed::SequentialJob)
     }
     sched$compute()
-  } else {
-    sw(eval(task, envir = envir))
   }
 }
 

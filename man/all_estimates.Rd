@@ -2,16 +2,31 @@
 % Please edit documentation in R/print.R
 \name{all_estimates}
 \alias{all_estimates}
-\title{Title}
+\title{Extract RMST And Survival Probability Estimates}
 \usage{
 all_estimates(x)
 }
 \arguments{
-\item{x}{}
+\item{x}{An object of class "rmst" or "survprob".}
 }
 \value{
-
+A data frame containing the estimates.
 }
 \description{
-Title
+Extract RMST And Survival Probability Estimates
+}
+\examples{
+if (requireNamespace("survival", quietly = TRUE)) {
+  library(survrct)
+  veteran <- survival::veteran
+  veteran$trt <- veteran$trt - 1
+  veteran$celltype <- factor(veteran$celltype)
+  surv <- survrct(Surv(time, status) ~ trt + celltype + karno + diagtime + age + prior,
+                  target = "trt", data = veteran, coarsen = 7, estimator = "tmle")
+  estm <- rmst(surv, 55)
+  all_estimates(estm)
+}
+}
+\seealso{
+\code{\link{rmst}} and \code{\link{survprob}} for creating \code{x}.
 }

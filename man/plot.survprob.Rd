@@ -7,11 +7,29 @@
 \method{plot}{survprob}(x, ...)
 }
 \arguments{
-\item{...}{}
+\item{x}{An object of class "survprob" produced by a call to \code{survprob()}}
+
+\item{...}{Extra arguments to be passed to plot, not used.}
 }
 \value{
-
+Object of class \code{ggplot} containing a patchwork step function plot of the
+ treatment and control arm survpval probability point estimates and their differences
+ across a sequence of time horizons.
 }
 \description{
 Plot Survival Probability Estimates
+}
+\examples{
+\donttest{
+if (requireNamespace("survival", quietly = TRUE)) {
+  library(survrct)
+  veteran <- survival::veteran
+  veteran$trt <- veteran$trt - 1
+  veteran$celltype <- factor(veteran$celltype)
+  surv <- survrct(Surv(time, status) ~ trt + celltype + karno + diagtime + age + prior,
+                  target = "trt", data = veteran, coarsen = 7, estimator = "tmle")
+  estm <- survprob(surv, 10:40)
+  plot(estm)
+  }
+}
 }
