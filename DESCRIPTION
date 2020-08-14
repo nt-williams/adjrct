@@ -30,3 +30,7 @@ Imports:
 URL: https://github.com/nt-williams/survrct
 BugReports: https://github.com/nt-williams/survrct/issues
 RoxygenNote: 7.1.0
+Suggests: 
+    survival
+Enhances: 
+    sl3

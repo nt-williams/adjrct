@@ -6,7 +6,7 @@
 #'
 #' @return
 #'
-#' @importFrom ggplot2 ggplot aes geom_step labs scale_color_manual geom_ribbon scale_fill_manual theme
+#' @importFrom ggplot2 ggplot aes geom_step labs scale_color_manual geom_ribbon scale_fill_manual theme element_blank
 #' @importFrom patchwork wrap_plots
 #' @export
 #'
@@ -27,7 +27,7 @@ plot.rmst <- function(x, ...) {
 
   bottom <- ggplot2::ggplot(estm, aes(x = horizon, y = theta)) +
     ggplot2::geom_ribbon(aes(ymin = unif.conf.low, ymax = unif.conf.high, fill = "95% Uniform"), alpha = 0.4) +
-    ggplot2::geom_ribbon(aes(ymin = theta.conf.low, ymax = theta.conf.high, fill = "95% Point-wise"), alpha = 0.35) +
+    ggplot2::geom_ribbon(aes(ymin = theta.conf.low, ymax = theta.conf.high, fill = "95% Pointwise"), alpha = 0.35) +
     ggplot2::geom_line() +
     ggplot2::scale_fill_manual(values = flls) +
     ggplot2::labs(x = "Time horizon",
@@ -44,7 +44,7 @@ plot.rmst <- function(x, ...) {
 #'
 #' @return
 #'
-#' @importFrom ggplot2 ggplot aes geom_step labs scale_color_manual geom_ribbon scale_fill_manual theme
+#' @importFrom ggplot2 ggplot aes geom_step labs scale_color_manual geom_ribbon scale_fill_manual theme element_blank
 #' @importFrom patchwork wrap_plots
 #' @export
 #'

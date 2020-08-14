@@ -9,7 +9,7 @@ print.rmst <- function(x, ...) {
     cat(" Test of no effect, p-value:\n")
     cat("          First 6 estimates:\n")
     cat("\n")
-    print(head(pretty_print_estimates(x)))
+    print(head(pretty_print(x)))
     cli::cli_text(cli::col_red("Access all estimates with `all_estimates()`"))
   } else {
     cli::cli_text(cat("  "), "{.strong Time horizon}: {x$horizon}")
@@ -42,7 +42,7 @@ print.survprob <- function(x, ...) {
     cat(" Test of no effect, p-value:\n")
     cat("          First 6 estimates:\n")
     cat("\n")
-    print(head(pretty_print_estimates(x)))
+    print(head(pretty_print(x)))
     cli::cli_text(cli::col_red("Access all estimates with `all_estimates()`"))
   } else {
     cli::cli_text(cat("  "), "{.strong Time horizon}: {x$horizon}")
@@ -88,7 +88,7 @@ all_estimates <- function(x) {
   out[, c(8, 1:7)]
 }
 
-pretty_print_estimates <- function(x) {
+pretty_print <- function(x) {
   x <- all_estimates(x)
   x$`Treatment` <- format_digits(x$treatment, 2)
   x$`Control` <- format_digits(x$control, 2)
