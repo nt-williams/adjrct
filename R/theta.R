@@ -67,3 +67,15 @@ survprob_eif_aipw <- function(meta, aux) {
        theta  = theta1 - theta0,
        eif    = eif)
 }
+
+simul_ci <- function(res, n) {
+  cv <- simul::simul_crit(lapply(res, function(x) x$theta),
+                          lapply(res, function(x) x$eif),
+                          n)
+  for (i in 1:length(res)) {
+    res[[i]]$unif.conf.low <- res[[i]]$theta - cv*res[[i]]$std.error
+    res[[i]]$unif.conf.high <- res[[i]]$theta + cv*res[[i]]$std.error
+  }
+  res$mbcv <- cv
+  return(res)
+}

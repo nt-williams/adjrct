@@ -7,7 +7,6 @@ compute_survprob <- function(meta, nuis, estimator) {
 }
 
 survprob_tmle <- function(meta, nuis) {
-
   nobs      <- meta$nobs
   id        <- meta$surv_data[["survrctId"]]
   trt       <- meta$get_var("trt")
@@ -33,7 +32,7 @@ survprob_tmle <- function(meta, nuis) {
           compute_H_survprob(id, trt)$
           compute_M_survprob(id, all_time)$
           tilt_eps(trt, evnt, risk_evnt)$
-          tilt_gamma(cens, risk_cens)$
+          tilt_gamma(cens, risk_cens, all_time, trt)$
           tilt_nu(trt, all_time)$
           update_crit(nobs)
       }
@@ -46,11 +45,11 @@ survprob_tmle <- function(meta, nuis) {
       survprob_eif("tmle", meta, aux)
     }
   }
-  compute_simulband(as.list(res), nobs)
+
+  simul_ci(as.list(res), nobs)
 }
 
 survprob_ee <- function(meta, nuis) {
-
   id  <- meta$surv_data[["survrctId"]]
   trt <- meta$get_var("trt")
   ind <- meta$time_indicator()
@@ -68,5 +67,6 @@ survprob_ee <- function(meta, nuis) {
       survprob_eif(meta$estimator, meta, aux)
     }
   }
-  compute_simulband(as.list(res), meta$nobs)
+
+  simul_ci(as.list(res), meta$nobs)
 }

@@ -97,7 +97,7 @@ plot.survprob <- function(x, ...) {
 
   bottom <- ggplot(estm, aes_(x = ~horizon, y = ~theta)) +
     geom_ribbon(aes_(ymin = ~unif.conf.low, ymax = ~unif.conf.high, fill = "95% Uniform"), alpha = 0.4) +
-    geom_ribbon(aes_(ymin = ~theta.conf.low, ymax = ~theta.conf.high, fill = "95% Pointwise"), alpha = 0.35) +
+    geom_ribbon(aes_(ymin = ~theta.conf.low, ymax = ~theta.conf.high, fill = "95% Point-wise"), alpha = 0.35) +
     geom_line() +
     scale_fill_manual(values = flls) +
     labs(x = "Time",

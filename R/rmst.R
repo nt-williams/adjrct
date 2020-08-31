@@ -7,7 +7,6 @@ compute_rmst <- function(meta) {
 }
 
 rmst_tmle <- function(meta) {
-
   nobs      <- meta$nobs
   id        <- meta$surv_data[["survrctId"]]
   trt       <- meta$get_var("trt")
@@ -33,7 +32,7 @@ rmst_tmle <- function(meta) {
           compute_H_rmst(ind, trt, id)$
           compute_M_rmst(id, all_time)$
           tilt_eps(trt, evnt, risk_evnt)$
-          tilt_gamma(cens, risk_cens)$
+          tilt_gamma(cens, risk_cens, all_time, trt)$
           tilt_nu(trt, all_time)$
           update_crit(nobs)
       }
@@ -46,11 +45,11 @@ rmst_tmle <- function(meta) {
       rmst_eif(meta, aux)
     }
   }
-  compute_simulband(as.list(res), nobs)
+
+  simul_ci(as.list(res), nobs)
 }
 
 rmst_ee <- function(meta) {
-
   id  <- meta$surv_data[["survrctId"]]
   trt <- meta$get_var("trt")
   ind <- meta$time_indicator()
@@ -68,5 +67,5 @@ rmst_ee <- function(meta) {
       rmst_eif(meta, aux)
     }
   }
-  compute_simulband(as.list(res), meta$nobs)
+  simul_ci(as.list(res), meta$nobs)
 }

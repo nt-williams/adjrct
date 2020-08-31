@@ -104,9 +104,9 @@ Auxiliary <- R6::R6Class(
                         risk_evnt = risk_evnt)
       self$eps <- check_na_coef(
         coef(
-          glm2::glm2(
+          speedglm::speedglm(
             evnt ~ 0 + offset(qlogis(offset)) + I(trt * Z1) + I((1 - trt) * Z0),
-            family = binomial,
+            family = binomial(),
             subset = risk_evnt == 1,
             data   = use
           )
@@ -116,23 +116,25 @@ Auxiliary <- R6::R6Class(
       self$nuis$hzrd_off <- bound01(plogis(qlogis(self$nuis$hzrd_off) + self$eps[2] * self$Z0))
       invisible(self)
     },
-    tilt_gamma = function(cens, risk_cens) {
+    tilt_gamma = function(cens, risk_cens, all_time, trt) {
       use <- data.frame(cens = cens,
                         offset = self$GR,
                         H = self$H,
+                        all_time = as.factor(all_time),
+                        trt = trt,
                         risk_cens = risk_cens)
       self$gamma <- check_na_coef(
         coef(
-          glm2::glm2(
-            cens ~ 0 + offset(qlogis(offset)) + H,
-            family = binomial,
+          sw(speedglm::speedglm(
+            cens ~ 0 + offset(qlogis(offset)) + H + all_time*trt,
+            family = binomial(),
             subset = risk_cens == 1,
             data = use
-          )
+          ))
         )
       )
-      self$nuis$cens_on  <- bound01(plogis(qlogis(self$nuis$cens_on) + self$gamma * self$H1))
-      self$nuis$cens_off <- bound01(plogis(qlogis(self$nuis$cens_off) - self$gamma * self$H0))
+      self$nuis$cens_on  <- bound01(plogis(qlogis(self$nuis$cens_on) + self$gamma[1] * self$H1))
+      self$nuis$cens_off <- bound01(plogis(qlogis(self$nuis$cens_off) - self$gamma[1] * self$H0))
       invisible(self)
     },
     tilt_nu = function(trt, all_time) {
@@ -142,9 +144,9 @@ Auxiliary <- R6::R6Class(
                         time = all_time)
       self$nu <- check_na_coef(
         coef(
-          glm2::glm2(
+          speedglm::speedglm(
             trt ~ 0 + offset(qlogis(offset)) + M,
-            family = binomial,
+            family = binomial(),
             subset = time == 1,
             data = use
           )
@@ -156,7 +158,7 @@ Auxiliary <- R6::R6Class(
     },
     update_crit = function(nobs) {
       self$iter <- self$iter + 1
-      self$crit <- any(abs(c(self$eps, self$gamma, self$nu)) > 1e-3/nobs^(0.6))
+      self$crit <- any(abs(c(self$eps, self$gamma[1], self$nu)) > 1e-3/nobs^(0.6))
       invisible(self)
     }
   )
