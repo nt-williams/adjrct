@@ -26,7 +26,6 @@ rmst_tmle <- function(meta) {
         aux$
           compute_LHGR(trt)$
           compute_S(id)$
-          compute_SL(id)$
           compute_G(id)$
           compute_Z_rmst(ind, id)$
           compute_H_rmst(ind, trt, id)$

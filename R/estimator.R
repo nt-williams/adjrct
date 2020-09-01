@@ -31,7 +31,8 @@
 #'   survrct(Surv(time, status) ~ trt + celltype + karno + diagtime + age + prior,
 #'           target = "trt", data = veteran, coarsen = 7, estimator = "tmle")
 #' }
-survrct <- function(formula, target, data, coarsen, estimator = c("tmle", "aipw", "km"),
+survrct <- function(formula, target, data, coarsen = 1,
+                    estimator = c("tmle", "aipw", "km"),
                     lrnrs_cens = NULL, lrnrs_hzrd = NULL) {
   Survival$
     new(formula, target, data, match.arg(estimator), lrnrs_cens, lrnrs_hzrd)$

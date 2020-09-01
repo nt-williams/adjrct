@@ -26,7 +26,6 @@ survprob_tmle <- function(meta, nuis) {
         aux$
           compute_LHGR(trt)$
           compute_S(id)$
-          compute_SL(id)$
           compute_G(id)$
           compute_Z_survprob(ind, id)$
           compute_H_survprob(id, trt)$
@@ -42,7 +41,7 @@ survprob_tmle <- function(meta, nuis) {
         compute_Z_survprob(ind, id)$
         compute_LHGR(trt)
 
-      survprob_eif("tmle", meta, aux)
+      survprob_eif(meta, aux)
     }
   }
 
