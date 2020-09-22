@@ -12,14 +12,13 @@ Survival <- R6::R6Class(
     time = NULL,
     horizon = list(),
     id = NULL,
-    engine = NULL,
     nobs = NULL,
     all_time = NULL,
     max_time = NULL,
     risk_evnt = NULL,
     risk_cens = NULL,
     nuisance = list(),
-    initialize = function(formula, target, data, estimator, lrnrs_cens, lrnrs_hzrd) {
+    initialize = function(formula, target, data, estimator) {
 
       # TODO check_correct_trt() i.e., trt is 0 and 1
 
@@ -27,7 +26,6 @@ Survival <- R6::R6Class(
       self$data       <- data
       self$trt        <- target
       self$estimator  <- estimator
-      self$engine     <- Engine$new(lrnrs_cens, lrnrs_hzrd)$eval_engine(estimator)
     },
     prepare_data = function(coarsen = 1) {
 
@@ -59,10 +57,7 @@ Survival <- R6::R6Class(
       invisible(self)
     },
     fit_nuis = function(...) {
-      self$nuisance <- switch(self$estimator,
-                              tmle = nuis_dr(self),
-                              aipw = nuis_dr(self),
-                              km   = nuis_glm(self))
+      self$nuisance <- nuisance(self)
       invisible(self)
     },
     evaluate_horizon = function(horizon = NULL, estimand) {
@@ -117,7 +112,7 @@ Survival <- R6::R6Class(
     },
     formula_cens = function() {
       if (self$estimator %in% c("tmle", "aipw")) {
-        formula(paste("cens ~", self$trt, "* (as.factor(all_time) + ", paste(self$covar, collapse = "+"), ")"))
+        formula(paste("cens ~", self$trt, "* (all_time + ", paste(self$covar, collapse = "+"), ")"))
       } else {
         formula(paste("cens ~ all_time * ", self$trt))
       }
@@ -139,7 +134,6 @@ Survival <- R6::R6Class(
                     "Inspect nuisance parameter models with `get_fits()`"))
       cat("\n")
       cli::cli_text(cat("         "), "Estimator: {self$estimator}")
-      cli::cli_text(cat("            "), "Engine: {self$engine$engine}")
       cli::cli_text(cat("   "), "Target variable: {self$trt}")
       cli::cli_text(cat("  "), "Status Indicator: {self$status}")
       cli::cli_text(cat("    "), "Adjustment set: {self$covar}")
