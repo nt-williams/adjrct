@@ -17,8 +17,9 @@ A list of class \code{survprob} containing the following components:
 
 \item{estimator}{The estimation method used.}
 \item{horizon}{The time horizons the survival probability was evaluated at.}
-\item{standard_error}{The computed estimates for each time horizon including the efficient influence function,
-     standard errors, and confidence intervals.}
+\item{standard_error}{The computed estimates for each time horizon including the
+                      efficient influence function, standard errors,
+                      and confidence intervals.}
 }
 \description{
 Estimate Survival Probabilities

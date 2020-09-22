@@ -112,9 +112,9 @@ Survival <- R6::R6Class(
     },
     formula_cens = function() {
       if (self$estimator %in% c("tmle", "aipw")) {
-        formula(paste("cens ~", self$trt, "* (all_time + ", paste(self$covar, collapse = "+"), ")"))
+        formula(paste("cens ~", self$trt, "* (as.factor(all_time) + ", paste(self$covar, collapse = "+"), ")"))
       } else {
-        formula(paste("cens ~ all_time * ", self$trt))
+        formula(paste("cens ~ as.factor(all_time) * ", self$trt))
       }
     },
     formula_hzrd = function() {

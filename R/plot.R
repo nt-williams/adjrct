@@ -52,8 +52,8 @@ plot.rmst <- function(x, ...) {
     geom_ribbon(aes_(ymin = ~theta.unif.low,
                      ymax = ~theta.unif.high, fill = "95% Uniform"),
                 alpha = 0.4) +
-    geom_ribbon(aes_(ymin = ~theta..low,
-                     ymax = ~theta..high, fill = "95% Pointwise"),
+    geom_ribbon(aes_(ymin = ~theta.conf.low,
+                     ymax = ~theta.conf.high, fill = "95% Pointwise"),
                 alpha = 0.35) +
     geom_line() +
     scale_fill_manual(values = flls) +
