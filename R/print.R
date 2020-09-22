@@ -5,11 +5,11 @@ print.rmst <- function(x, ...) {
   if (length(x$horizon) > 1) {
     cat("\n")
     cat("           Confidence level: 95%\n")
-    cat("     Multiplier Bootstrap C:", x$estimates$mbcv, "\n")
+    cat("          Mult. Bootstrap C:", x$estimates$mbcv_theta, "\n")
     cat(" Test of no effect, p-value:\n")
     cat("          First 6 estimates:\n")
     cat("\n")
-    print(head(pretty_print(x)))
+    print(head(format_est(x)))
     cli::cli_text(cli::col_red("Access all estimates with `all_estimates()`"))
   } else {
     cli::cli_text(cat("  "), "{.strong Time horizon}: {x$horizon}")
@@ -38,11 +38,11 @@ print.survprob <- function(x, ...) {
   if (length(x$horizon) > 1) {
     cat("\n")
     cat("           Confidence level: 95%\n")
-    cat("     Multiplier Bootstrap C:", x$estimates$mbcv, "\n")
+    cat("          Mult. Bootstrap C:", x$estimates$mbcv_theta, "\n")
     cat(" Test of no effect, p-value:\n")
     cat("          First 6 estimates:\n")
     cat("\n")
-    print(head(pretty_print(x)))
+    print(head(format_est(x)))
     cli::cli_text(cli::col_red("Access all estimates with `all_estimates()`"))
   } else {
     cli::cli_text(cat("  "), "{.strong Time horizon}: {x$horizon}")
@@ -86,27 +86,37 @@ print.survprob <- function(x, ...) {
 #'   all_estimates(estm)
 #' }
 all_estimates <- function(x) {
-  out <- do.call("rbind", lapply(x$estimates[-which(names(x$estimates) == "mbcv")], function(x)
-    data.frame(
-      treatment       = x$arm1,
-      control         = x$arm0,
-      theta           = x$theta,
-      theta.conf.low  = x$theta.conf.low,
-      theta.conf.high = x$theta.conf.high,
-      unif.conf.low   = x$unif.conf.low,
-      unif.conf.high  = x$unif.conf.high
-    )))
+  out <- do.call(
+    "rbind",
+    lapply(x$estimates[-which(names(x$estimates) %in%
+                                c("mbcv_theta", "mbcv_treatment", "mbcv_control"))],
+           function(x) {
+             data.frame(treatment = x$arm1,
+                        treatment.conf.low = x$arm1.conf.low,
+                        treatment.conf.high = x$arm1.conf.high,
+                        treatment.unif.low = x$arm1.unif.low,
+                        treatment.unif.high = x$arm1.unif.high,
+                        control = x$arm0,
+                        control.conf.low = x$arm0.conf.low,
+                        control.conf.high = x$arm0.conf.high,
+                        control.unif.low = x$arm0.unif.low,
+                        control.unif.high = x$arm0.unif.high,
+                        theta = x$theta,
+                        theta.conf.low = x$theta.conf.low,
+                        theta.conf.high = x$theta.conf.high,
+                        theta.unif.low = x$theta.unif.low,
+                        theta.unif.high = x$theta.unif.high)
+           }))
   out$horizon <- x$horizon
-  out[, c(8, 1:7)]
+  out[, c(16, 1:15)]
 }
 
-pretty_print <- function(x) {
+format_est <- function(x) {
   x <- all_estimates(x)
-  x$`Treatment` <- format_digits(x$treatment, 2)
-  x$`Control` <- format_digits(x$control, 2)
-  x$Theta <- format_digits(x$theta, 2)
-  x$`Point-wise 95% CI` <- paste0("(", paste(format_digits(x$theta.conf.low, 2), "to", format_digits(x$theta.conf.high, 2)), ")")
-  x$`Uniform 95% CI` <- paste0("(", paste(format_digits(x$unif.conf.low, 2), "to", format_digits(x$unif.conf.high, 2)), ")")
-  x[, c(1, 9:13)]
+  x$`treatment` <- format_digits(x$treatment, 2)
+  x$`control` <- format_digits(x$control, 2)
+  x$theta <- format_digits(x$theta, 2)
+  x$`point-wise 95% CI` <- paste0("(", paste(format_digits(x$theta.conf.low, 2), "to", format_digits(x$theta.conf.high, 2)), ")")
+  x$`uniform 95% CI` <- paste0("(", paste(format_digits(x$theta.unif.low, 2), "to", format_digits(x$theta.unif.high, 2)), ")")
+  x[, c(1:2, 7, 12, 17:18)]
 }
-
