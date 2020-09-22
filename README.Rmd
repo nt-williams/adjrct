@@ -38,15 +38,11 @@ devtools::install_github("nt-williams/survrct")
 
 # Scope
 
-`survrct` implements efficient estimators for the restricted mean survival time (RMST) and survival probability in randomized controlled trials (RCT) without the proportional hazards assumption as introduced in Diaz et al. (2019). Prognostic baseline variables should be incorporated to obtain equal or better asymptotic precision compared to unadjusted estimators.
-
-Under random censoring, the primary estimator (TMLE) is doubly robust--it is consistent if either the outcome or censoring model is correctly specified. This is an advantage over Cox proportional hazards which relies on assumptions of only the outcome model. The primary estimator is non-parametric and can incorporate flexible, data-adaptive estimation (provided using the SuperLearner from the [`sl3`](https://github.com/tlverse/sl3) package) for nuisance parameters while remaining root-n consistent.
-
-Estimators are implemented using a formula interface based on that of the [`survival`](https://CRAN.R-project.org/package=survival) package for familiar users.
+**survrct** implements efficient estimators for the restricted mean survival time (RMST) and survival probability in randomized controlled trials (RCT) without the proportional hazards assumption as introduced in Diaz et al. (2019). Prognostic baseline variables should be incorporated to obtain equal or better asymptotic precision compared to unadjusted estimators. Under random censoring, the primary estimator (TMLE) is doubly robust--it is consistent if either the outcome or censoring model is correctly specified. This is an advantage over Cox proportional hazards which relies on assumptions of only the outcome model. Estimators are implemented using a formula interface based on that of the [**survival**](https://CRAN.R-project.org/package=survival) package for familiar users.
 
 # Example
 
-Using the `veteran` dataset provided by the [`survival`](https://CRAN.R-project.org/package=survival) package:
+Using the `veteran` dataset provided by the [**survival**](https://CRAN.R-project.org/package=survival) package:
 
 ```{r}
 library(survrct)
@@ -58,9 +54,7 @@ veteran$celltype <- factor(veteran$celltype)
 head(veteran)
 ```
 
-We can use the SuperLearner provided by the [`sl3`](https://github.com/tlverse/sl3) package for estimation of the outcome and censoring models. Alternatively, if no SuperLearner specification is provided, estimation will be performed using saturated GLMs.
-
-To allow for estimation of multiple estimands without having to re-estimate nuisance parameters we first create a Survival metadata object using the `survrct()` function. We specify the model paramaterization using a typical `R` formula with `Surv()` (based on the [`survival`](https://CRAN.R-project.org/package=survival) package) specifying the left-hand side of the formula. 
+To allow for estimation of multiple estimands without having to re-estimate nuisance parameters we first create a Survival metadata object using the `survrct()` function. We specify the model paramaterization using a typical `R` formula with `Surv()` (based on the [**survival**](https://CRAN.R-project.org/package=survival) package) specifying the left-hand side of the formula. 
 
 We also specify our target variable of interest, an optional time coarsener, and the estimator we would like to use.
 
@@ -93,7 +87,7 @@ rmst(surv)
 #> RMST Estimator: tmle
 #> 
 #>            Confidence level: 95%
-#>      Multiplier Bootstrap C: 2.512656 
+#>           Mult. Bootstrap C: 2.512656 
 #>  Test of no effect, p-value:
 #>           First 6 estimates:
 #> 
@@ -114,7 +108,7 @@ survprob(surv)
 #> Survival Probability Estimator: tmle
 #> 
 #>            Confidence level: 95%
-#>      Multiplier Bootstrap C: 2.862583 
+#>           Mult. Bootstrap C: 2.862583 
 #>  Test of no effect, p-value:
 #>           First 6 estimates:
 #> 
