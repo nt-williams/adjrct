@@ -63,7 +63,7 @@ survprob_ee <- function(meta, nuis) {
         compute_G(id)$
         compute_Z_survprob(ind, id)
 
-      survprob_eif(meta$estimator, meta, aux)
+      survprob_eif(meta, aux)
     }
   }
 

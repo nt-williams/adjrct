@@ -16,25 +16,20 @@ Authors@R:
 Description: Adjusted and unadjusted estimators for the restriced mean survival 
   time and survival probability in randomized controlled trials without the 
   proportional hazards assumptions as described in Díaz, Colantuoni, Hanley, 
-  Rosenblum (2019) <doi:10.1007/s10985-019-09484-y>. Estimation is enhanced 
-  using the Super Learner from 'sl3' available for download from GitHub 
-  using 'remotes::install_github("tlverse/sl3@devel")'. 
+  Rosenblum (2019) <doi:10.1007/s10985-019-09484-y>. 
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
 Imports: 
-    speedglm,
     cli,
     listenv,
     future,
-    delayed,
     ggplot2,
-    patchwork
+    patchwork,
+    pammtools
 URL: https://github.com/nt-williams/survrct
 BugReports: https://github.com/nt-williams/survrct/issues
 RoxygenNote: 7.1.0
 Suggests: 
     survival,
     covr
-Enhances: 
-    sl3

@@ -34,16 +34,27 @@ plot.rmst <- function(x, ...) {
   top <- ggplot(estm, aes_(x = ~horizon)) +
     geom_step(aes_(y = ~treatment, color = "Treatment")) +
     geom_step(aes_(y = ~control, color = "Control")) +
+    pammtools::geom_stepribbon(aes_(ymin = ~treatment.unif.low,
+                                    ymax = ~treatment.unif.high),
+                               alpha = 0.4, fill = "blue") +
+    pammtools::geom_stepribbon(aes_(ymin = ~control.unif.low,
+                                    ymax = ~control.unif.high),
+                               alpha = 0.4, fill = "red") +
     labs(x = NULL,
-                  y = "Restricted Mean Survival Time",
-                  color = NULL) +
+         y = "Restricted Mean Survival Time",
+         color = NULL) +
     scale_color_manual(values = clrs) +
+    scale_fill_manual(values = flls) +
     theme(axis.ticks.x.bottom = element_blank(),
           axis.text.x.bottom = element_blank())
 
   bottom <- ggplot(estm, aes_(x = ~horizon, y = ~theta)) +
-    geom_ribbon(aes_(ymin = ~unif.conf.low, ymax = ~unif.conf.high, fill = "95% Uniform"), alpha = 0.4) +
-    geom_ribbon(aes_(ymin = ~theta.conf.low, ymax = ~theta.conf.high, fill = "95% Pointwise"), alpha = 0.35) +
+    geom_ribbon(aes_(ymin = ~theta.unif.low,
+                     ymax = ~theta.unif.high, fill = "95% Uniform"),
+                alpha = 0.4) +
+    geom_ribbon(aes_(ymin = ~theta.conf.low,
+                     ymax = ~theta.conf.high, fill = "95% Pointwise"),
+                alpha = 0.35) +
     geom_line() +
     scale_fill_manual(values = flls) +
     labs(x = "Time horizon",
@@ -88,16 +99,24 @@ plot.survprob <- function(x, ...) {
   top <- ggplot(estm, aes_(x = ~horizon)) +
     geom_step(aes_(y = ~treatment, color = "Treatment")) +
     geom_step(aes_(y = ~control, color = "Control")) +
+    pammtools::geom_stepribbon(aes_(ymin = ~treatment.unif.low,
+                                    ymax = ~treatment.unif.high),
+                               alpha = 0.4, fill = "blue") +
+    pammtools::geom_stepribbon(aes_(ymin = ~control.unif.low,
+                                    ymax = ~control.unif.high),
+                               alpha = 0.4, fill = "red") +
     labs(x = NULL,
-                  y = "Survival probability",
-                  color = NULL) +
+         y = "Survival probability",
+         color = NULL) +
     scale_color_manual(values = clrs) +
     theme(axis.ticks.x.bottom = element_blank(),
                    axis.text.x.bottom = element_blank())
 
   bottom <- ggplot(estm, aes_(x = ~horizon, y = ~theta)) +
-    geom_ribbon(aes_(ymin = ~unif.conf.low, ymax = ~unif.conf.high, fill = "95% Uniform"), alpha = 0.4) +
-    geom_ribbon(aes_(ymin = ~theta.conf.low, ymax = ~theta.conf.high, fill = "95% Point-wise"), alpha = 0.35) +
+    geom_ribbon(aes_(ymin = ~theta.unif.low,
+                     ymax = ~theta.unif.high, fill = "95% Uniform"), alpha = 0.4) +
+    geom_ribbon(aes_(ymin = ~theta.conf.low,
+                     ymax = ~theta.conf.high, fill = "95% Point-wise"), alpha = 0.35) +
     geom_line() +
     scale_fill_manual(values = flls) +
     labs(x = "Time",

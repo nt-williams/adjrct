@@ -109,14 +109,8 @@ Auxiliary <- R6::R6Class(
                         Z1 = self$Z1, Z0 = self$Z0, risk_evnt = risk_evnt)
 
       self$eps <- check_na_coef(
-        coef(
-          speedglm::speedglm(
-            evnt ~ 0 + offset(qlogis(offset)) + I(trt * Z1) + I((1 - trt) * Z0),
-            family = binomial(),
-            subset = risk_evnt == 1,
-            data = dat
-          )
-        )
+        coef(glm(evnt ~ 0 + offset(qlogis(offset)) + I(trt * Z1) + I((1 - trt) * Z0),
+                 family = binomial(), subset = risk_evnt == 1, data = dat))
       )
 
       self$nuis$hzrd_on <- bound01(plogis(qlogis(self$nuis$hzrd_on) + self$eps[1] * self$Z1))
@@ -127,19 +121,12 @@ Auxiliary <- R6::R6Class(
       dat <- data.frame(cens = cens,
                         offset = self$GR,
                         H = self$H,
-                        # all_time = as.factor(all_time),
-                        # trt = trt,
                         risk_cens = risk_cens)
 
       self$gamma <- check_na_coef(
-        coef(
-          sw(speedglm::speedglm(
-            cens ~ 0 + offset(qlogis(offset)) + H,
-            family = binomial(),
-            subset = risk_cens == 1,
-            data = dat
-          ))
-        )
+        coef(sw(glm(cens ~ 0 + offset(qlogis(offset)) + H,
+                    family = binomial(),
+                    subset = risk_cens == 1, data = dat)))
       )
 
       self$nuis$cens_on <- bound01(plogis(qlogis(self$nuis$cens_on) + self$gamma[1] * self$H1))
@@ -151,14 +138,8 @@ Auxiliary <- R6::R6Class(
                         M = self$M, time = all_time)
 
       self$nu <- check_na_coef(
-        coef(
-          speedglm::speedglm(
-            trt ~ 0 + offset(qlogis(offset)) + M,
-            family = binomial(),
-            subset = time == 1,
-            data = dat
-          )
-        )
+        coef(glm(trt ~ 0 + offset(qlogis(offset)) + M,
+                 family = binomial(), subset = time == 1, data = dat))
       )
 
       self$nuis$trt_on <- bound01(plogis(qlogis(self$nuis$trt_on) + self$nu * self$M))

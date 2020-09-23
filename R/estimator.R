@@ -1,22 +1,21 @@
 
 #' Create RCT Survival Metadata
 #'
-#' Create RCT survival metadata to be used for estimation of the restricted mean survival time and
-#' survival probability.
+#' Create RCT survival metadata to be used for estimation of the
+#' restricted mean survival time and survival probability.
 #'
-#' @param formula An object of class "formula". The left hand side should be specified using \code{Surv(time, status)}
-#'   where time is the name of the variable containing follow-up time and status is the name of the indicator variable
-#'   with 0 = right censored and 1 = event at \code{time}. The right hand side should contain the target variable of
-#'   interest and baseline prognostic covariates.
+#' @param formula An object of class "formula". The left hand side should be
+#'   specified using \code{Surv(time, status)} where time is the name of the
+#'   variable containing follow-up time and status is the name of the indicator variable
+#'   with 0 = right censored and 1 = event at \code{time}. The right hand
+#'   side should contain the target variable of interest and baseline prognostic covariates.
 #' @param target The name of the target variable of interest; i.e., the randomized condition.
 #' @param data A data frame containing the variables in the model.
-#' @param coarsen An optional integer that specifies if and how \code{time} should be categorized into coarser intervals.
-#' @param estimator The method to be used for computing estimands. Options are "tmle" for Targeted Maximum Likelihood
-#'   Estimation (the default), "aipw" for Augmented IPW, and "km" for Kaplan-Meier.
-#' @param lrnrs_cens An optional \code{sl3} learner stack for estimation of the censoring model.
-#'   Ignored if \code{estimator = "km"}. If \code{NULL} estimation will be performed using a saturated linear model instead.
-#' @param lrnrs_hzrd An optional \code{sl3} learner stack for estimation of the outcome model.
-#'   Ignored if \code{estimator = "km"}. If \code{NULL} estimation will be performed using a saturated linear model instead.
+#' @param coarsen An optional integer that specifies if and how \code{time} should
+#'   be categorized into coarser intervals.
+#' @param estimator The method to be used for computing estimands. Options are "tmle"
+#'   for Targeted Maximum Likelihood Estimation (the default), "aipw" for Augmented IPW,
+#'   and "km" for Kaplan-Meier.
 #'
 #' @family survrct functions
 #'
@@ -32,10 +31,9 @@
 #'           target = "trt", data = veteran, coarsen = 7, estimator = "tmle")
 #' }
 survrct <- function(formula, target, data, coarsen = 1,
-                    estimator = c("tmle", "aipw", "km"),
-                    lrnrs_cens = NULL, lrnrs_hzrd = NULL) {
+                    estimator = c("tmle", "aipw", "km")) {
   Survival$
-    new(formula, target, data, match.arg(estimator), lrnrs_cens, lrnrs_hzrd)$
+    new(formula, target, data, match.arg(estimator))$
     prepare_data(coarsen)$
     fit_nuis()
 }
@@ -53,8 +51,9 @@ survrct <- function(formula, target, data, coarsen = 1,
 #'
 #' \item{estimator}{The estimation method used.}
 #' \item{horizon}{The time horizons RMST was evaluated at.}
-#' \item{standard_error}{The computed estimates for each time horizon including the efficient influence function,
-#'      standard errors, and confidence intervals.}
+#' \item{standard_error}{The computed estimates for each time horizon including
+#'                       the efficient influence function, standard errors, and
+#'                       confidence intervals.}
 #'
 #' @export
 #'
@@ -89,8 +88,9 @@ rmst <- function(metadata, horizon = NULL) {
 #'
 #' \item{estimator}{The estimation method used.}
 #' \item{horizon}{The time horizons the survival probability was evaluated at.}
-#' \item{standard_error}{The computed estimates for each time horizon including the efficient influence function,
-#'      standard errors, and confidence intervals.}
+#' \item{standard_error}{The computed estimates for each time horizon including the
+#'                       efficient influence function, standard errors,
+#'                       and confidence intervals.}
 #'
 #' @export
 #'

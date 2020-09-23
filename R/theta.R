@@ -18,15 +18,18 @@ rmst_eif <- function(meta, aux) {
   eif1 <- as.vector(DT1 + DW1)
   eif0 <- as.vector(DT0 + DW0)
   eif <- eif1 - eif0
+
   se1 <- sqrt(var(eif1) / meta$nobs)
   se0 <- sqrt(var(eif0) / meta$nobs)
   se <- sqrt(var(eif) / meta$nobs)
 
   list(arm1            = theta1,
+       eif1            = eif1,
        arm1.std.error  = se1,
        arm1.conf.low   = theta1 - qnorm(0.975)*se1,
        arm1.conf.high  = theta1 + qnorm(0.975)*se1,
        arm0            = theta0,
+       eif0            = eif0,
        arm0.std.error  = se0,
        arm0.conf.low   = theta0 - qnorm(0.975)*se0,
        arm0.conf.high  = theta0 + qnorm(0.975)*se0,
@@ -88,10 +91,12 @@ survprob_eif <- function(meta, aux) {
   se <- sqrt(var(eif) / meta$nobs)
 
   list(arm1            = theta1,
+       eif1            = eif1,
        arm1.std.error  = se1,
        arm1.conf.low   = theta1 - qnorm(0.975)*se1,
        arm1.conf.high  = theta1 + qnorm(0.975)*se1,
        arm0            = theta0,
+       eif0            = eif0,
        arm0.std.error  = se0,
        arm0.conf.low   = theta0 - qnorm(0.975)*se0,
        arm0.conf.high  = theta0 + qnorm(0.975)*se0,
@@ -119,13 +124,22 @@ survprob_eif <- function(meta, aux) {
 # }
 
 simul_ci <- function(res, n) {
-  cv <- simul::simul_crit(lapply(res, function(x) x$theta),
-                          lapply(res, function(x) x$eif),
-                          n)
+  cv_theta <- simul::simul_crit(lapply(res, function(x) x$theta),
+                                lapply(res, function(x) x$eif), n)
+  cv_arm1 <- simul::simul_crit(lapply(res, function(x) x$arm1),
+                               lapply(res, function(x) x$eif1), n)
+  cv_arm0 <- simul::simul_crit(lapply(res, function(x) x$arm0),
+                               lapply(res, function(x) x$eif0), n)
   for (i in 1:length(res)) {
-    res[[i]]$unif.conf.low <- res[[i]]$theta - cv*res[[i]]$std.error
-    res[[i]]$unif.conf.high <- res[[i]]$theta + cv*res[[i]]$std.error
+    res[[i]]$arm1.unif.low <- res[[i]]$arm1 - cv_arm1*res[[i]]$arm1.std.error
+    res[[i]]$arm1.unif.high <- res[[i]]$arm1 + cv_arm1*res[[i]]$arm1.std.error
+    res[[i]]$arm0.unif.low <- res[[i]]$arm0 - cv_arm0*res[[i]]$arm0.std.error
+    res[[i]]$arm0.unif.high <- res[[i]]$arm0 + cv_arm0*res[[i]]$arm0.std.error
+    res[[i]]$theta.unif.low <- res[[i]]$theta - cv_theta*res[[i]]$std.error
+    res[[i]]$theta.unif.high <- res[[i]]$theta + cv_theta*res[[i]]$std.error
   }
-  res$mbcv <- cv
+  res$mbcv_theta <- cv_theta
+  res$mbcv_treatment <- cv_arm1
+  res$mbcv_control <- cv_arm0
   return(res)
 }

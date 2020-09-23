@@ -8,39 +8,34 @@ survrct(
   formula,
   target,
   data,
-  coarsen,
-  estimator = c("tmle", "aipw", "km"),
-  lrnrs_cens = NULL,
-  lrnrs_hzrd = NULL
+  coarsen = 1,
+  estimator = c("tmle", "aipw", "km")
 )
 }
 \arguments{
-\item{formula}{An object of class "formula". The left hand side should be specified using \code{Surv(time, status)}
-where time is the name of the variable containing follow-up time and status is the name of the indicator variable
-with 0 = right censored and 1 = event at \code{time}. The right hand side should contain the target variable of
-interest and baseline prognostic covariates.}
+\item{formula}{An object of class "formula". The left hand side should be
+specified using \code{Surv(time, status)} where time is the name of the
+variable containing follow-up time and status is the name of the indicator variable
+with 0 = right censored and 1 = event at \code{time}. The right hand
+side should contain the target variable of interest and baseline prognostic covariates.}
 
 \item{target}{The name of the target variable of interest; i.e., the randomized condition.}
 
 \item{data}{A data frame containing the variables in the model.}
 
-\item{coarsen}{An optional integer that specifies if and how \code{time} should be categorized into coarser intervals.}
+\item{coarsen}{An optional integer that specifies if and how \code{time} should
+be categorized into coarser intervals.}
 
-\item{estimator}{The method to be used for computing estimands. Options are "tmle" for Targeted Maximum Likelihood
-Estimation (the default), "aipw" for Augmented IPW, and "km" for Kaplan-Meier.}
-
-\item{lrnrs_cens}{An optional \code{sl3} learner stack for estimation of the censoring model.
-Ignored if \code{estimator = "km"}. If \code{NULL} estimation will be performed using a saturated linear model instead.}
-
-\item{lrnrs_hzrd}{An optional \code{sl3} learner stack for estimation of the outcome model.
-Ignored if \code{estimator = "km"}. If \code{NULL} estimation will be performed using a saturated linear model instead.}
+\item{estimator}{The method to be used for computing estimands. Options are "tmle"
+for Targeted Maximum Likelihood Estimation (the default), "aipw" for Augmented IPW,
+and "km" for Kaplan-Meier.}
 }
 \value{
 An R6 object of class "Survival".
 }
 \description{
-Create RCT survival metadata to be used for estimation of the restricted mean survival time and
-survival probability.
+Create RCT survival metadata to be used for estimation of the
+restricted mean survival time and survival probability.
 }
 \examples{
 if (requireNamespace("survival", quietly = TRUE)) {
