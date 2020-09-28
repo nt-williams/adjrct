@@ -38,12 +38,9 @@ Create RCT survival metadata to be used for estimation of the
 restricted mean survival time and survival probability.
 }
 \examples{
-if (requireNamespace("survival", quietly = TRUE)) {
-  veteran <- survival::veteran
-  veteran$trt <- veteran$trt - 1
-  veteran$celltype <- factor(veteran$celltype)
-  survrct(Surv(time, status) ~ trt + celltype + karno + diagtime + age + prior,
-          target = "trt", data = veteran, coarsen = 7, estimator = "tmle")
+\donttest{
+survrct(Surv(time, status) ~ trt + age + sex + obstruct + perfor + adhere + surg,
+        target = "trt", data = colon, coarsen = 30, estimator = "tmle")
 }
 }
 \seealso{

@@ -26,7 +26,7 @@ Imports:
     future,
     ggplot2,
     patchwork,
-    pammtools
+    simul
 URL: https://github.com/nt-williams/survrct
 BugReports: https://github.com/nt-williams/survrct/issues
 RoxygenNote: 7.1.0
@@ -34,3 +34,5 @@ Suggests:
     survival,
     covr,
     testthat
+Depends: 
+    R (>= 2.10)

@@ -16,16 +16,10 @@
 #'
 #' @examples
 #' \donttest{
-#' if (requireNamespace("survival", quietly = TRUE)) {
-#'   library(survrct)
-#'   veteran <- survival::veteran
-#'   veteran$trt <- veteran$trt - 1
-#'   veteran$celltype <- factor(veteran$celltype)
-#'   surv <- survrct(Surv(time, status) ~ trt + celltype + karno + diagtime + age + prior,
-#'                   target = "trt", data = veteran, coarsen = 7, estimator = "tmle")
-#'   estm <- rmst(surv, 10:40)
-#'   plot(estm)
-#'   }
+#' surv <- survrct(Surv(time, status) ~ trt + age + sex + obstruct +
+#'                    perfor + adhere + surg,
+#'                 target = "trt", data = colon, coarsen = 30, estimator = "tmle")
+#' plot(rmst(surv, 105:111))
 #' }
 plot.rmst <- function(x, ...) {
   estm <- all_estimates(x)
@@ -34,12 +28,6 @@ plot.rmst <- function(x, ...) {
   top <- ggplot(estm, aes_(x = ~horizon)) +
     geom_step(aes_(y = ~treatment, color = "Treatment")) +
     geom_step(aes_(y = ~control, color = "Control")) +
-    pammtools::geom_stepribbon(aes_(ymin = ~treatment.unif.low,
-                                    ymax = ~treatment.unif.high),
-                               alpha = 0.4, fill = "blue") +
-    pammtools::geom_stepribbon(aes_(ymin = ~control.unif.low,
-                                    ymax = ~control.unif.high),
-                               alpha = 0.4, fill = "red") +
     labs(x = NULL,
          y = "Restricted Mean Survival Time",
          color = NULL) +
@@ -81,16 +69,10 @@ plot.rmst <- function(x, ...) {
 #'
 #' @examples
 #' \donttest{
-#' if (requireNamespace("survival", quietly = TRUE)) {
-#'   library(survrct)
-#'   veteran <- survival::veteran
-#'   veteran$trt <- veteran$trt - 1
-#'   veteran$celltype <- factor(veteran$celltype)
-#'   surv <- survrct(Surv(time, status) ~ trt + celltype + karno + diagtime + age + prior,
-#'                   target = "trt", data = veteran, coarsen = 7, estimator = "tmle")
-#'   estm <- survprob(surv, 10:40)
-#'   plot(estm)
-#'   }
+#' surv <- survrct(Surv(time, status) ~ trt + age + sex + obstruct +
+#'                    perfor + adhere + surg,
+#'                 target = "trt", data = colon, coarsen = 30, estimator = "tmle")
+#' plot(survprob(surv, 105:111))
 #' }
 plot.survprob <- function(x, ...) {
   estm <- all_estimates(x)
@@ -99,12 +81,6 @@ plot.survprob <- function(x, ...) {
   top <- ggplot(estm, aes_(x = ~horizon)) +
     geom_step(aes_(y = ~treatment, color = "Treatment")) +
     geom_step(aes_(y = ~control, color = "Control")) +
-    pammtools::geom_stepribbon(aes_(ymin = ~treatment.unif.low,
-                                    ymax = ~treatment.unif.high),
-                               alpha = 0.4, fill = "blue") +
-    pammtools::geom_stepribbon(aes_(ymin = ~control.unif.low,
-                                    ymax = ~control.unif.high),
-                               alpha = 0.4, fill = "red") +
     labs(x = NULL,
          y = "Survival probability",
          color = NULL) +

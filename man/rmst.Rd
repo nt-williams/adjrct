@@ -25,13 +25,12 @@ A list of class \code{rmst} containing the following components:
 Estimate Restricted Mean Survival Time
 }
 \examples{
-if (requireNamespace("survival", quietly = TRUE)) {
-  veteran <- survival::veteran
-  veteran$trt <- veteran$trt - 1
-  veteran$celltype <- factor(veteran$celltype)
-  surv <- survrct(Surv(time, status) ~ trt + celltype + karno + diagtime + age + prior,
-                  target = "trt", data = veteran, coarsen = 7, estimator = "tmle")
-  rmst(surv, horizon = 50)
+\donttest{
+surv <- survrct(Surv(time, status) ~ trt + age + sex + obstruct +
+                   perfor + adhere + surg,
+                target = "trt", data = colon, coarsen = 30, estimator = "tmle")
+rmst(surv, surv$max_time)
+rmst(surv, 105:111)
 }
 }
 \seealso{

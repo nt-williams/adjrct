@@ -23,12 +23,9 @@
 #' @export
 #'
 #' @examples
-#' if (requireNamespace("survival", quietly = TRUE)) {
-#'   veteran <- survival::veteran
-#'   veteran$trt <- veteran$trt - 1
-#'   veteran$celltype <- factor(veteran$celltype)
-#'   survrct(Surv(time, status) ~ trt + celltype + karno + diagtime + age + prior,
-#'           target = "trt", data = veteran, coarsen = 7, estimator = "tmle")
+#' \donttest{
+#' survrct(Surv(time, status) ~ trt + age + sex + obstruct + perfor + adhere + surg,
+#'         target = "trt", data = colon, coarsen = 30, estimator = "tmle")
 #' }
 survrct <- function(formula, target, data, coarsen = 1,
                     estimator = c("tmle", "aipw", "km")) {
@@ -58,13 +55,12 @@ survrct <- function(formula, target, data, coarsen = 1,
 #' @export
 #'
 #' @examples
-#' if (requireNamespace("survival", quietly = TRUE)) {
-#'   veteran <- survival::veteran
-#'   veteran$trt <- veteran$trt - 1
-#'   veteran$celltype <- factor(veteran$celltype)
-#'   surv <- survrct(Surv(time, status) ~ trt + celltype + karno + diagtime + age + prior,
-#'                   target = "trt", data = veteran, coarsen = 7, estimator = "tmle")
-#'   rmst(surv, horizon = 50)
+#' \donttest{
+#' surv <- survrct(Surv(time, status) ~ trt + age + sex + obstruct +
+#'                    perfor + adhere + surg,
+#'                 target = "trt", data = colon, coarsen = 30, estimator = "tmle")
+#' rmst(surv, surv$max_time)
+#' rmst(surv, 105:111)
 #' }
 rmst <- function(metadata, horizon = NULL) {
   metadata$evaluate_horizon(horizon, "rmst")
@@ -95,13 +91,12 @@ rmst <- function(metadata, horizon = NULL) {
 #' @export
 #'
 #' @examples
-#' if (requireNamespace("survival", quietly = TRUE)) {
-#'   veteran <- survival::veteran
-#'   veteran$trt <- veteran$trt - 1
-#'   veteran$celltype <- factor(veteran$celltype)
-#'   surv <- survrct(Surv(time, status) ~ trt + celltype + karno + diagtime + age + prior,
-#'                   target = "trt", data = veteran, coarsen = 7, estimator = "tmle")
-#'   survprob(surv, horizon = 50)
+#' \donttest{
+#' surv <- survrct(Surv(time, status) ~ trt + age + sex + obstruct +
+#'                    perfor + adhere + surg,
+#'                 target = "trt", data = colon, coarsen = 30, estimator = "tmle")
+#' survprob(surv, surv$max_time)
+#' survprob(surv, 105:111)
 #' }
 survprob <- function(metadata, horizon = NULL) {
   metadata$evaluate_horizon(horizon, "survprob")

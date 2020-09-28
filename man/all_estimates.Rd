@@ -16,15 +16,12 @@ A data frame containing the estimates.
 Extract RMST And Survival Probability Estimates
 }
 \examples{
-if (requireNamespace("survival", quietly = TRUE)) {
-  library(survrct)
-  veteran <- survival::veteran
-  veteran$trt <- veteran$trt - 1
-  veteran$celltype <- factor(veteran$celltype)
-  surv <- survrct(Surv(time, status) ~ trt + celltype + karno + diagtime + age + prior,
-                  target = "trt", data = veteran, coarsen = 7, estimator = "tmle")
-  estm <- rmst(surv, 55)
-  all_estimates(estm)
+\donttest{
+surv <- survrct(Surv(time, status) ~ trt + age + sex + obstruct +
+                   perfor + adhere + surg,
+                target = "trt", data = colon, coarsen = 30, estimator = "tmle")
+est <- rmst(surv, 105:111)
+all_estimates(est)
 }
 }
 \seealso{
