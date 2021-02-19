@@ -243,12 +243,12 @@ rmst_aipw <- function(meta) {
       DW1 <- rowSums(St1[all_time == 1, 1:(tau-1)])
       DW0 <- rowSums(St0[all_time == 1, 1:(tau-1)])
 
-      theta1 <- 1 + mean(DW1)
-      theta0 <- 1 + mean(DW0)
-
       eif1 <- as.vector(DT1 + DW1)
       eif0 <- as.vector(DT0 + DW0)
       eif <- eif1 - eif0
+
+      theta1 <- 1 + mean(eif1)
+      theta0 <- 1 + mean(eif0)
 
       se1 <- sqrt(var(eif1) / nobs)
       se0 <- sqrt(var(eif0) / nobs)
