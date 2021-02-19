@@ -1,7 +1,6 @@
 compute_rmst <- function(x) {
   switch(x$estimator,
          tmle = rmst_tmle(x),
-         ipw = rmst_ipw(x),
          aipw = rmst_aipw(x),
          km = rmst_km(x))
 }
@@ -130,67 +129,6 @@ rmst_tmle <- function(meta) {
            std.error = se,
            theta.conf.low  = (theta1 - theta0) - qnorm(0.975)*se,
            theta.conf.high = (theta1 - theta0) + qnorm(0.975)*se)
-    }
-  }
-  as.list(res)
-}
-
-rmst_ipw <- function(meta) {
-  nobs <- meta$nobs
-  id <- meta$surv_data[["survrctId"]]
-  trt <- meta$get_var("trt")
-  ind <- meta$time_indicator()
-  evnt <- meta$surv_data[["evnt"]]
-  cens <- meta$surv_data[["cens"]]
-  risk_evnt <- meta$risk_evnt
-  risk_cens <- meta$risk_cens
-  all_time <- meta$all_time
-  nuis <- meta$nuisance
-  res <- listenv::listenv()
-
-  gA1 <- nuis$trt_on[all_time == 1]
-  gA0 <- 1 - gA1
-
-  h1 <- nuis$hzrd_on
-  h0 <- nuis$hzrd_off
-  gR1 <- nuis$cens_on
-  gR0 <- nuis$cens_off
-
-  h <- trt*h1 + (1 - trt)*h0
-  gR <- trt*gR1 + (1 - trt)*gR0
-
-  G1 <- tapply(1-gR1, id, cumprod, simplify = FALSE)
-  G0 <- tapply(1-gR0, id, cumprod, simplify = FALSE)
-  Gm1 <- unlist(G1)
-  Gm0 <- unlist(G0)
-
-  for (j in 1:length(meta$horizon)) {
-    res[[j]] %<-% {
-      tau <- meta$horizon[j]
-      Z1 <- -rowSums(ind[, 1:(tau-1)]) / bound(gA1[id] * Gm1)
-      Z0 <- -rowSums(ind[, 1:(tau-1)]) / bound(gA0[id] * Gm0)
-
-      DT1 <- tapply(risk_evnt * trt*Z1 * evnt, id, sum)
-      DT0 <- tapply(risk_evnt * (1-trt)*Z0 * evnt , id, sum)
-
-      theta1 <- 1 + mean(DT1)
-      theta0 <- 1 + mean(DT0)
-
-      list(arm1 = theta1,
-           eif1 = NULL,
-           arm1.std.error = NULL,
-           arm1.conf.low = NULL,
-           arm1.conf.high = NULL,
-           arm0 = theta0,
-           eif0 = NULL,
-           arm0.std.error = NULL,
-           arm0.conf.low = NULL,
-           arm0.conf.high = NULL,
-           theta = theta1 - theta0,
-           eif = NULL,
-           std.error = NULL,
-           theta.conf.low = NULL,
-           theta.conf.high = NULL)
     }
   }
   as.list(res)
