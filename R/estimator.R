@@ -1,4 +1,3 @@
-
 #' Create RCT Survival Metadata
 #'
 #' Create RCT survival metadata to be used for estimation of the

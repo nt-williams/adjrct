@@ -1,4 +1,3 @@
-
 prodlag <- function(x) {
   cumprod(c(1, x[-length(x)]))
 }
