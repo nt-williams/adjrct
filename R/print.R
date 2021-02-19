@@ -1,4 +1,3 @@
-
 #' @export
 print.rmst <- function(x, ...) {
   cli::cli_text("{.strong RMST Estimator}: {x$estimator}")
