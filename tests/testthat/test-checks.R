@@ -1,4 +1,3 @@
-
 context("Various checks")
 
 test_that("fixes NA coefficients", {

@@ -1,4 +1,3 @@
-
 Survival <- R6::R6Class(
   "Survival",
   public = list(
@@ -19,21 +18,20 @@ Survival <- R6::R6Class(
     risk_cens = NULL,
     nuisance = list(),
     initialize = function(formula, target, data, estimator) {
-
-      # TODO check_correct_trt() i.e., trt is 0 and 1
-
-      self$formula    <- formula
-      self$data       <- data
-      self$trt        <- target
-      self$estimator  <- estimator
+      if (!all(unique(data[[target]]) %in% c(0, 1))) {
+        stop("`target` should be coded as 0 and 1.", call. = FALSE)
+      }
+      self$formula <- formula
+      self$data <- data
+      self$trt <- target
+      self$estimator <- estimator
     },
     prepare_data = function(coarsen = 1) {
-
       # TODO check_status() i.e., status is 0 and 1
 
-      self$time   <- get_time(self$formula)
+      self$time <- get_time(self$formula)
       self$status <- get_status(self$formula)
-      self$covar  <- get_covar(self$formula, self$trt)
+      self$covar <- get_covar(self$formula, self$trt)
 
       if (coarsen > 1) self$data[[self$time]] <- self$data[[self$time]] %/% coarsen + 1
 
@@ -61,17 +59,18 @@ Survival <- R6::R6Class(
       invisible(self)
     },
     evaluate_horizon = function(horizon = NULL, estimand) {
-
-      # TODO check_time_horizon() i.e., less than maximum time
-
-      if (is.null(horizon)) {
+      # also need to add check for the minimum time
+      if (!is.null(horizon)) {
+        if (max(horizon) > self$max_time) {
+          stop("Horizon is greater than max observed time!", call. = FALSE)
+        }
+        self$horizon <- horizon
+      } else {
         if (estimand == "rmst") {
           self$horizon <- 2:self$max_time
         } else {
           self$horizon <- 1:self$max_time
         }
-      } else {
-        self$horizon <- horizon
       }
       invisible(self)
     },

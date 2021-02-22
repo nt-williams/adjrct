@@ -1,4 +1,3 @@
-
 #' @export
 print.rmst <- function(x, ...) {
   cli::cli_text("{.strong RMST Estimator}: {x$estimator}")
@@ -6,8 +5,6 @@ print.rmst <- function(x, ...) {
     cat("\n")
     cat("           Confidence level: 95%\n")
     cat("          Mult. Bootstrap C:", x$estimates$mbcv_theta, "\n")
-    cat(" Test of no effect, p-value:\n")
-    cat("          First 6 estimates:\n")
     cat("\n")
     print(head(format_est(x)))
     cli::cli_text(cli::col_red("Access all estimates with `all_estimates()`"))

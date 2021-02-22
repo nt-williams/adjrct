@@ -1,4 +1,4 @@
-#' @importFrom stats as.formula coef glm plogis predict qlogis qnorm pnorm sd quantile var rbinom
+#' @importFrom stats as.formula coef glm plogis predict qlogis qnorm pnorm sd quantile var binomial rbinom
 #' @importFrom utils head
 #' @importFrom future `%<-%`
 #' @keywords internal

@@ -1,4 +1,3 @@
-
 nuisance <- function(self) {
   fit_H <- glm(self$formula_hzrd(), data = self$at_risk_evnt(), family = "binomial")
   fit_R <- glm(self$formula_cens(), data = self$at_risk_cens(), family = "binomial")
