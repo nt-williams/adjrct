@@ -131,7 +131,7 @@ rmst_tmle <- function(meta) {
            theta.conf.high = (theta1 - theta0) + qnorm(0.975)*se)
     }
   }
-  as.list(res)
+  simul_ci(as.list(res), nobs)
 }
 
 rmst_aipw <- function(meta) {
@@ -158,28 +158,28 @@ rmst_aipw <- function(meta) {
   h <- trt*h1 + (1 - trt)*h0
   gR <- trt*gR1 + (1 - trt)*gR0
 
-  S1 <- tapply(1-h1, id, cumprod, simplify = FALSE)
-  S0 <- tapply(1-h0, id, cumprod, simplify = FALSE)
+  S1 <- tapply(1 - h1, id, cumprod, simplify = FALSE)
+  S0 <- tapply(1 - h0, id, cumprod, simplify = FALSE)
   St1 <- do.call('rbind', S1[id])
   St0 <- do.call('rbind', S0[id])
   Sm1 <- unlist(S1)
   Sm0 <- unlist(S0)
 
-  G1 <- tapply(1-gR1, id, cumprod, simplify = FALSE)
-  G0 <- tapply(1-gR0, id, cumprod, simplify = FALSE)
+  G1 <- tapply(1 - gR1, id, cumprod, simplify = FALSE)
+  G0 <- tapply(1 - gR0, id, cumprod, simplify = FALSE)
   Gm1 <- unlist(G1)
   Gm0 <- unlist(G0)
 
   for (j in 1:length(meta$horizon)) {
     res[[j]] %<-% {
       tau <- meta$horizon[j]
-      Z1 <- -rowSums((ind * St1)[, 1:(tau-1)]) / bound(Sm1 * gA1[id] * Gm1)
-      Z0 <- -rowSums((ind * St0)[, 1:(tau-1)]) / bound(Sm0 * gA0[id] * Gm0)
+      Z1 <- -rowSums((ind * St1)[, 1:(tau - 1)]) / bound(Sm1 * gA1[id] * Gm1)
+      Z0 <- -rowSums((ind * St0)[, 1:(tau - 1)]) / bound(Sm0 * gA0[id] * Gm0)
 
       DT1 <- tapply(risk_evnt*trt*Z1*(evnt - h), id, sum)
       DT0 <- tapply(risk_evnt*(1 - trt)*Z0*(evnt - h), id, sum)
-      DW1 <- rowSums(St1[all_time == 1, 1:(tau-1)])
-      DW0 <- rowSums(St0[all_time == 1, 1:(tau-1)])
+      DW1 <- rowSums(St1[all_time == 1, 1:(tau - 1)])
+      DW0 <- rowSums(St0[all_time == 1, 1:(tau - 1)])
 
       eif1 <- as.vector(DT1 + DW1)
       eif0 <- as.vector(DT0 + DW0)
@@ -209,7 +209,7 @@ rmst_aipw <- function(meta) {
            theta.conf.high = (theta1 - theta0) + qnorm(0.975)*se)
     }
   }
-  as.list(res)
+  simul_ci(as.list(res), nobs)
 }
 
 rmst_km <- function(meta) {
@@ -236,15 +236,15 @@ rmst_km <- function(meta) {
   h <- trt*h1 + (1 - trt)*h0
   gR <- trt*gR1 + (1 - trt)*gR0
 
-  S1 <- tapply(1-h1, id, cumprod, simplify = FALSE)
-  S0 <- tapply(1-h0, id, cumprod, simplify = FALSE)
+  S1 <- tapply(1 - h1, id, cumprod, simplify = FALSE)
+  S0 <- tapply(1 - h0, id, cumprod, simplify = FALSE)
   St1 <- do.call('rbind', S1[id])
   St0 <- do.call('rbind', S0[id])
   Sm1 <- unlist(S1)
   Sm0 <- unlist(S0)
 
-  G1 <- tapply(1-gR1, id, cumprod, simplify = FALSE)
-  G0 <- tapply(1-gR0, id, cumprod, simplify = FALSE)
+  G1 <- tapply(1 - gR1, id, cumprod, simplify = FALSE)
+  G0 <- tapply(1 - gR0, id, cumprod, simplify = FALSE)
   Gm1 <- unlist(G1)
   Gm0 <- unlist(G0)
 
@@ -256,8 +256,8 @@ rmst_km <- function(meta) {
 
       DT1 <- tapply(risk_evnt*trt*Z1*(evnt - h), id, sum)
       DT0 <- tapply(risk_evnt*(1 - trt)*Z0*(evnt - h), id, sum)
-      DW1 <- rowSums(St1[all_time == 1, 1:(tau-1)])
-      DW0 <- rowSums(St0[all_time == 1, 1:(tau-1)])
+      DW1 <- rowSums(St1[all_time == 1, 1:(tau - 1)])
+      DW0 <- rowSums(St0[all_time == 1, 1:(tau - 1)])
       theta1 <- 1 + mean(DW1)
       theta0 <- 1 + mean(DW0)
 
@@ -286,5 +286,5 @@ rmst_km <- function(meta) {
            theta.conf.high = (theta1 - theta0) + qnorm(0.975)*se)
     }
   }
-  as.list(res)
+  simul_ci(as.list(res), nobs)
 }

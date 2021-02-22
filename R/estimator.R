@@ -58,8 +58,7 @@ survrct <- function(formula, target, data, coarsen = 1,
 #' surv <- survrct(Surv(time, status) ~ trt + age + sex + obstruct +
 #'                    perfor + adhere + surg,
 #'                 target = "trt", data = colon, coarsen = 30, estimator = "tmle")
-#' rmst(surv, surv$max_time)
-#' rmst(surv, 105:111)
+#' rmst(surv, 60)
 #' }
 rmst <- function(metadata, horizon = NULL) {
   metadata$evaluate_horizon(horizon, "rmst")
@@ -94,8 +93,7 @@ rmst <- function(metadata, horizon = NULL) {
 #' surv <- survrct(Surv(time, status) ~ trt + age + sex + obstruct +
 #'                    perfor + adhere + surg,
 #'                 target = "trt", data = colon, coarsen = 30, estimator = "tmle")
-#' survprob(surv, surv$max_time)
-#' survprob(surv, 105:111)
+#' survprob(surv, 60)
 #' }
 survprob <- function(metadata, horizon = NULL) {
   metadata$evaluate_horizon(horizon, "survprob")

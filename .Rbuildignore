@@ -5,3 +5,4 @@
 ^test\.R$
 ^\.travis\.yml$
 ^codecov\.yml$
+^\.github$

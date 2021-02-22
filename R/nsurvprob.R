@@ -128,7 +128,7 @@ survprob_tmle <- function(meta) {
            theta.conf.high = (theta1 - theta0) + qnorm(0.975)*se)
     }
   }
-  as.list(res)
+  simul_ci(as.list(res), nobs)
 }
 
 survprob_aipw <- function(meta) {
@@ -206,7 +206,7 @@ survprob_aipw <- function(meta) {
            theta.conf.high = (theta1 - theta0) + qnorm(0.975)*se)
     }
   }
-  as.list(res)
+  simul_ci(as.list(res), nobs)
 }
 
 survprob_km <- function(meta) {
@@ -283,5 +283,5 @@ survprob_km <- function(meta) {
            theta.conf.high = (theta1 - theta0) + qnorm(0.975)*se)
     }
   }
-  as.list(res)
+  simul_ci(as.list(res), nobs)
 }

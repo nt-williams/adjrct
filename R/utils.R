@@ -17,14 +17,6 @@ sw <- function(x) {
   suppressWarnings(x)
 }
 
-check_future_job <- function() {
-  if (get_workers() == 1) {
-    FALSE
-  } else {
-    TRUE
-  }
-}
-
 format_digits <- function(x, n) {
   format(round(as.double(x), digits = n), nsmall = n, trim = TRUE)
 }

@@ -29,8 +29,7 @@ Estimate Restricted Mean Survival Time
 surv <- survrct(Surv(time, status) ~ trt + age + sex + obstruct +
                    perfor + adhere + surg,
                 target = "trt", data = colon, coarsen = 30, estimator = "tmle")
-rmst(surv, surv$max_time)
-rmst(surv, 105:111)
+rmst(surv, 60)
 }
 }
 \seealso{
