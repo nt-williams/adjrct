@@ -131,7 +131,8 @@ rmst_tmle <- function(meta) {
            theta.conf.high = (theta1 - theta0) + qnorm(0.975)*se)
     }
   }
-  simul_ci(as.list(res), nobs)
+  as.list(res)
+  # simul_ci(as.list(res), nobs)
 }
 
 rmst_aipw <- function(meta) {
@@ -209,7 +210,8 @@ rmst_aipw <- function(meta) {
            theta.conf.high = (theta1 - theta0) + qnorm(0.975)*se)
     }
   }
-  simul_ci(as.list(res), nobs)
+  as.list(res)
+  # simul_ci(as.list(res), nobs)
 }
 
 rmst_km <- function(meta) {
@@ -286,5 +288,6 @@ rmst_km <- function(meta) {
            theta.conf.high = (theta1 - theta0) + qnorm(0.975)*se)
     }
   }
-  simul_ci(as.list(res), nobs)
+  as.list(res)
+  # simul_ci(as.list(res), nobs)
 }
