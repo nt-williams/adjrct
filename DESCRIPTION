@@ -25,7 +25,8 @@ Imports:
     listenv,
     future,
     simul,
-    glm2
+    glm2,
+    R6
 URL: https://github.com/nt-williams/survrct
 BugReports: https://github.com/nt-williams/survrct/issues
 RoxygenNote: 7.1.1
