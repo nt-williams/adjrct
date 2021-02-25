@@ -1,4 +1,10 @@
 simul_ci <- function(res, n) {
+  if (length(res) == 1) {
+    res$mbcv_theta <- qnorm(0.975)
+    res$mbcv_treatment <- qnorm(0.975)
+    res$mbcv_control <- qnorm(0.975)
+    return(res)
+  }
   cv <- simul::simul(lapply(res, function(x) x$theta), lapply(res, function(x) x$eif), n)
   cv1 <- simul::simul(lapply(res, function(x) x$arm1), lapply(res, function(x) x$eif1), n)
   cv0 <- simul::simul(lapply(res, function(x) x$arm0), lapply(res, function(x) x$eif0), n)

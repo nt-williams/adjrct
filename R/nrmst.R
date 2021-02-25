@@ -54,14 +54,14 @@ rmst_tmle <- function(meta) {
         Gm1 <- unlist(G1)
         Gm0 <- unlist(G0)
 
-        Z1 <- -rowSums((ind * St1)[, 1:(tau-1)]) / bound(Sm1 * gA1[id] * Gm1)
-        Z0 <- -rowSums((ind * St0)[, 1:(tau-1)]) / bound(Sm0 * gA0[id] * Gm0)
+        Z1 <- -rowSums((ind * St1)[, 1:(tau-1), drop = FALSE]) / bound(Sm1 * gA1[id] * Gm1)
+        Z0 <- -rowSums((ind * St0)[, 1:(tau-1), drop = FALSE]) / bound(Sm0 * gA0[id] * Gm0)
 
         M <- tapply(Sm1 / bound(gA1[id]) * (all_time <= tau-1), id, sum) +
           tapply(Sm0 / bound(gA0[id]) * (all_time <= tau-1), id, sum)
 
-        H1 <- -rowSums((ind * St1)[,1:(tau-1)]) / bound(Sm1lag * gA1[id] * Gm1)
-        H0 <- -rowSums((ind * St0)[,1:(tau-1)]) / bound(Sm0lag * gA0[id] * Gm0)
+        H1 <- -rowSums((ind * St1)[,1:(tau-1), drop = FALSE]) / bound(Sm1lag * gA1[id] * Gm1)
+        H0 <- -rowSums((ind * St0)[,1:(tau-1), drop = FALSE]) / bound(Sm0lag * gA0[id] * Gm0)
         H <- trt * H1 - (1-trt) * H0
 
         eps <- coef(glm2::glm2(evnt[risk_evnt == 1] ~ 0 + offset(qlogis(h[risk_evnt == 1])) + I(trt[risk_evnt == 1] * Z1[risk_evnt == 1]) + I((1-trt[risk_evnt == 1]) * Z0[risk_evnt == 1]), family = binomial()))
@@ -95,13 +95,13 @@ rmst_tmle <- function(meta) {
       Sm0 <- unlist(S0)
       Gm1 <- unlist(G1)
       Gm0 <- unlist(G0)
-      Z1 <- -rowSums((ind * St1)[, 1:(tau-1)]) / bound(Sm1 * gA1[id] * Gm1)
-      Z0 <- -rowSums((ind * St0)[, 1:(tau-1)]) / bound(Sm0 * gA0[id] * Gm0)
+      Z1 <- -rowSums((ind * St1)[, 1:(tau-1), drop = FALSE]) / bound(Sm1 * gA1[id] * Gm1)
+      Z0 <- -rowSums((ind * St0)[, 1:(tau-1), drop = FALSE]) / bound(Sm0 * gA0[id] * Gm0)
 
       DT1 <- tapply(risk_evnt*trt*Z1*(evnt - h), id, sum)
       DT0 <- tapply(risk_evnt*(1 - trt)*Z0*(evnt - h), id, sum)
-      DW1 <- rowSums(St1[all_time == 1, 1:(tau-1)])
-      DW0 <- rowSums(St0[all_time == 1, 1:(tau-1)])
+      DW1 <- rowSums(St1[all_time == 1, 1:(tau-1), drop = FALSE])
+      DW0 <- rowSums(St0[all_time == 1, 1:(tau-1), drop = FALSE])
 
       theta1 <- 1 + mean(DW1)
       theta0 <- 1 + mean(DW0)
@@ -131,8 +131,8 @@ rmst_tmle <- function(meta) {
            theta.conf.high = (theta1 - theta0) + qnorm(0.975)*se)
     }
   }
-  as.list(res)
-  # simul_ci(as.list(res), nobs)
+  # as.list(res)
+  simul_ci(as.list(res), nobs)
 }
 
 rmst_aipw <- function(meta) {
@@ -174,13 +174,13 @@ rmst_aipw <- function(meta) {
   for (j in 1:length(meta$horizon)) {
     res[[j]] %<-% {
       tau <- meta$horizon[j]
-      Z1 <- -rowSums((ind * St1)[, 1:(tau - 1)]) / bound(Sm1 * gA1[id] * Gm1)
-      Z0 <- -rowSums((ind * St0)[, 1:(tau - 1)]) / bound(Sm0 * gA0[id] * Gm0)
+      Z1 <- -rowSums((ind * St1)[, 1:(tau - 1), drop = FALSE]) / bound(Sm1 * gA1[id] * Gm1)
+      Z0 <- -rowSums((ind * St0)[, 1:(tau - 1), drop = FALSE]) / bound(Sm0 * gA0[id] * Gm0)
 
       DT1 <- tapply(risk_evnt*trt*Z1*(evnt - h), id, sum)
       DT0 <- tapply(risk_evnt*(1 - trt)*Z0*(evnt - h), id, sum)
-      DW1 <- rowSums(St1[all_time == 1, 1:(tau - 1)])
-      DW0 <- rowSums(St0[all_time == 1, 1:(tau - 1)])
+      DW1 <- rowSums(St1[all_time == 1, 1:(tau - 1), drop = FALSE])
+      DW0 <- rowSums(St0[all_time == 1, 1:(tau - 1), drop = FALSE])
 
       eif1 <- as.vector(DT1 + DW1)
       eif0 <- as.vector(DT0 + DW0)
@@ -253,8 +253,8 @@ rmst_km <- function(meta) {
   for (j in 1:length(meta$horizon)) {
     res[[j]] %<-% {
       tau <- meta$horizon[j]
-      Z1 <- -rowSums((ind * St1)[, 1:(tau-1)]) / bound(Sm1 * gA1[id] * Gm1)
-      Z0 <- -rowSums((ind * St0)[, 1:(tau-1)]) / bound(Sm0 * gA0[id] * Gm0)
+      Z1 <- -rowSums((ind * St1)[, 1:(tau-1), drop = FALSE]) / bound(Sm1 * gA1[id] * Gm1)
+      Z0 <- -rowSums((ind * St0)[, 1:(tau-1), drop = FALSE]) / bound(Sm0 * gA0[id] * Gm0)
 
       DT1 <- tapply(risk_evnt*trt*Z1*(evnt - h), id, sum)
       DT0 <- tapply(risk_evnt*(1 - trt)*Z0*(evnt - h), id, sum)
