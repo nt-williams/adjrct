@@ -9,7 +9,8 @@ survrct(
   target,
   data,
   coarsen = 1,
-  estimator = c("tmle", "aipw", "km")
+  estimator = c("tmle", "aipw", "km"),
+  lasso = FALSE
 )
 }
 \arguments{
@@ -29,6 +30,8 @@ be categorized into coarser intervals.}
 \item{estimator}{The method to be used for computing estimands. Options are "tmle"
 for Targeted Maximum Likelihood Estimation (the default), "aipw" for Augmented IPW,
 and "km" for Kaplan-Meier.}
+
+\item{lasso}{Should LASSO be used for fitting? Default is \code{FALSE}.}
 }
 \value{
 An R6 object of class "Survival".

@@ -54,8 +54,8 @@ Survival <- R6::R6Class(
                                    all_time = self$all_time, evnt, cens)
       invisible(self)
     },
-    fit_nuis = function(...) {
-      self$nuisance <- nuisance(self)
+    fit_nuis = function(lasso) {
+      self$nuisance <- nuisance(self, lasso)
       invisible(self)
     },
     evaluate_horizon = function(horizon = NULL, estimand) {
