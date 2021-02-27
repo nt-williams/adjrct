@@ -15,6 +15,7 @@
 #' @param estimator The method to be used for computing estimands. Options are "tmle"
 #'   for Targeted Maximum Likelihood Estimation (the default), "aipw" for Augmented IPW,
 #'   and "km" for Kaplan-Meier.
+#' @param lasso Should LASSO be used for fitting? Default is \code{FALSE}.
 #'
 #' @family survrct functions
 #'
@@ -27,11 +28,12 @@
 #'         target = "trt", data = colon, coarsen = 30, estimator = "tmle")
 #' }
 survrct <- function(formula, target, data, coarsen = 1,
-                    estimator = c("tmle", "aipw", "km")) {
+                    estimator = c("tmle", "aipw", "km"),
+                    lasso = FALSE) {
   Survival$
     new(formula, target, data, match.arg(estimator))$
     prepare_data(coarsen)$
-    fit_nuis()
+    fit_nuis(if (match.arg(estimator) == "km") FALSE else lasso)
 }
 
 #' Estimate Restricted Mean Survival Time

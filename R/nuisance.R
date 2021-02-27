@@ -1,4 +1,8 @@
-nuisance <- function(self) {
+nuisance <- function(self, lasso) {
+  if (lasso) {
+    return(fit_lasso(self))
+  }
+
   fit_H <- glm(self$formula_hzrd(), data = self$at_risk_evnt(), family = "binomial")
   fit_R <- glm(self$formula_cens(), data = self$at_risk_cens(), family = "binomial")
   fit_A <- glm(self$formula_trt(), data = self$at_risk_trt(), family = "binomial")
@@ -6,14 +10,62 @@ nuisance <- function(self) {
   list(
     hzrd_fit = fit_H,
     cens_fit = fit_R,
-    trt_fit  = fit_A,
+    trt_fit = fit_A,
     hzrd_off = predict(fit_H, newdata = self$turn_off(), type = "response"),
-    hzrd_on  = predict(fit_H, newdata = self$turn_on(), type = "response"),
+    hzrd_on = predict(fit_H, newdata = self$turn_on(), type = "response"),
     cens_off = predict(fit_R, newdata = self$turn_off(), type = "response"),
-    cens_on  = predict(fit_R, newdata = self$turn_on(), type = "response"),
-    trt_off  = 1 - predict(fit_A, newdata = self$turn_on(), type = "response"),
-    trt_on   = predict(fit_A, newdata = self$turn_on(), type = "response")
+    cens_on = predict(fit_R, newdata = self$turn_on(), type = "response"),
+    trt_off = 1 - predict(fit_A, newdata = self$turn_on(), type = "response"),
+    trt_on = predict(fit_A, newdata = self$turn_on(), type = "response")
   )
+}
+
+fit_lasso <- function(self) {
+  on <- self$turn_on()
+  off <- self$turn_off()
+
+  H_m <- model.matrix(self$formula_hzrd(), self$at_risk_evnt())
+  R_m <- model.matrix(self$formula_cens(), self$at_risk_cens())
+  A_m <- model.matrix(self$formula_trt(), self$at_risk_trt())
+
+  H_mon <- model.matrix(self$formula_hzrd(), on)
+  H_moff <- model.matrix(self$formula_hzrd(), off)
+
+  R_mon <- model.matrix(self$formula_cens(), on)
+  R_moff <- model.matrix(self$formula_cens(), off)
+
+  A_o <- model.matrix(self$formula_trt(), self$surv_data)
+
+  fit_H <- glmnet::cv.glmnet(H_m, as.matrix(self$at_risk_evnt()[["evnt"]]),
+                             family = "binomial", intercept = FALSE,
+                             foldid = foldsids(nrow(H_m), self$at_risk_evnt()[["survrctId"]], 10))
+  fit_R <- glmnet::cv.glmnet(R_m, self$at_risk_cens()[["cens"]],
+                             family = "binomial", intercept = FALSE,
+                             foldid = foldsids(nrow(R_m), self$at_risk_cens()[["survrctId"]], 10))
+  fit_A <- glmnet::cv.glmnet(A_m, self$at_risk_trt()[[self$trt]],
+                             family = "binomial", intercept = FALSE,
+                             foldid = foldsids(nrow(A_m), self$at_risk_trt()[["survrctId"]], 10))
+
+  list(
+    hzrd_fit = fit_H,
+    cens_fit = fit_R,
+    trt_fit = fit_A,
+    hzrd_off = as.vector(predict(fit_H, newx = H_moff, type = "response")),
+    hzrd_on = as.vector(predict(fit_H, newx = H_mon, type = "response")),
+    cens_off = as.vector(predict(fit_R, newx = R_moff, type = "response")),
+    cens_on = as.vector(predict(fit_R, newx = R_mon, type = "response")),
+    trt_off = as.vector(1 - predict(fit_A, newx = A_o, type = "response")),
+    trt_on = as.vector(predict(fit_A, newx = A_o, type = "response"))
+  )
+}
+
+foldsids <- function(n, id, V) {
+  out <- rep(0, n)
+  folds <- origami::make_folds(n, cluster_ids = id, V = V)
+  for (i in 1:length(folds)) {
+    out[folds[[i]]$validation_set] <- i
+  }
+  out
 }
 
 #' Return Nuisance Parameter Model Fits
