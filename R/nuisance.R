@@ -24,38 +24,41 @@ fit_lasso <- function(self) {
   on <- self$turn_on()
   off <- self$turn_off()
 
-  H_m <- model.matrix(self$formula_hzrd(), self$at_risk_evnt())
-  R_m <- model.matrix(self$formula_cens(), self$at_risk_cens())
-  A_m <- model.matrix(self$formula_trt(), self$at_risk_trt())
+  H_m <- model.matrix(self$formula_hzrd(), self$at_risk_evnt())[, -1]
+  R_m <- model.matrix(self$formula_cens(), self$at_risk_cens())[, -1]
+  A_m <- model.matrix(self$formula_trt(), self$at_risk_trt())[, -1]
 
-  H_mon <- model.matrix(self$formula_hzrd(), on)
-  H_moff <- model.matrix(self$formula_hzrd(), off)
+  H_mon <- model.matrix(self$formula_hzrd(), on)[, -1]
+  H_moff <- model.matrix(self$formula_hzrd(), off)[, -1]
 
-  R_mon <- model.matrix(self$formula_cens(), on)
-  R_moff <- model.matrix(self$formula_cens(), off)
+  R_mon <- model.matrix(self$formula_cens(), on)[, -1]
+  R_moff <- model.matrix(self$formula_cens(), off)[, -1]
 
-  A_o <- model.matrix(self$formula_trt(), self$surv_data)
+  A_o <- model.matrix(self$formula_trt(), self$surv_data)[, -1]
+
+  pen <- rep(1, ncol(R_m))
+  pen[grep("^as.factor\\(all_time\\)", colnames(R_m))] <- 0
 
   fit_H <- glmnet::cv.glmnet(H_m, as.matrix(self$at_risk_evnt()[["evnt"]]),
-                             family = "binomial", intercept = FALSE,
+                             family = "binomial",
                              foldid = foldsids(nrow(H_m), self$at_risk_evnt()[["survrctId"]], 10))
   fit_R <- glmnet::cv.glmnet(R_m, self$at_risk_cens()[["cens"]],
-                             family = "binomial", intercept = FALSE,
+                             family = "binomial", penalty.factor = pen,
                              foldid = foldsids(nrow(R_m), self$at_risk_cens()[["survrctId"]], 10))
   fit_A <- glmnet::cv.glmnet(A_m, self$at_risk_trt()[[self$trt]],
-                             family = "binomial", intercept = FALSE,
+                             family = "binomial",
                              foldid = foldsids(nrow(A_m), self$at_risk_trt()[["survrctId"]], 10))
 
   list(
     hzrd_fit = fit_H,
     cens_fit = fit_R,
     trt_fit = fit_A,
-    hzrd_off = as.vector(predict(fit_H, newx = H_moff, type = "response")),
-    hzrd_on = as.vector(predict(fit_H, newx = H_mon, type = "response")),
-    cens_off = as.vector(predict(fit_R, newx = R_moff, type = "response")),
-    cens_on = as.vector(predict(fit_R, newx = R_mon, type = "response")),
-    trt_off = as.vector(1 - predict(fit_A, newx = A_o, type = "response")),
-    trt_on = as.vector(predict(fit_A, newx = A_o, type = "response"))
+    hzrd_off = bound01(as.vector(predict(fit_H, newx = H_moff, type = "response"))),
+    hzrd_on = bound01(as.vector(predict(fit_H, newx = H_mon, type = "response"))),
+    cens_off = bound01(as.vector(predict(fit_R, newx = R_moff, type = "response"))),
+    cens_on = bound01(as.vector(predict(fit_R, newx = R_mon, type = "response"))),
+    trt_off = bound01(as.vector(1 - predict(fit_A, newx = A_o, type = "response"))),
+    trt_on = bound01(as.vector(predict(fit_A, newx = A_o, type = "response")))
   )
 }
 
