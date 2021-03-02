@@ -38,27 +38,26 @@ fit_lasso <- function(self) {
 
   pen <- rep(1, ncol(R_m))
   pen[grep("^as.factor\\(all_time\\)", colnames(R_m))] <- 0
+  folds <- foldsids(nrow(self$surv_data), self$surv_data[["survrctId"]], 10)
 
   fit_H <- glmnet::cv.glmnet(H_m, as.matrix(self$at_risk_evnt()[["evnt"]]),
-                             family = "binomial",
-                             foldid = foldsids(nrow(H_m), self$at_risk_evnt()[["survrctId"]], 10))
+                             family = "binomial", foldid = folds[self$risk_evnt == 1])
   fit_R <- glmnet::cv.glmnet(R_m, self$at_risk_cens()[["cens"]],
                              family = "binomial", penalty.factor = pen,
-                             foldid = foldsids(nrow(R_m), self$at_risk_cens()[["survrctId"]], 10))
+                             foldid = folds[self$risk_cens == 1])
   fit_A <- glmnet::cv.glmnet(A_m, self$at_risk_trt()[[self$trt]],
-                             family = "binomial",
-                             foldid = foldsids(nrow(A_m), self$at_risk_trt()[["survrctId"]], 10))
+                             family = "binomial", foldid = folds[self$all_time == 1])
 
   list(
     hzrd_fit = fit_H,
     cens_fit = fit_R,
     trt_fit = fit_A,
-    hzrd_off = bound01(as.vector(predict(fit_H, newx = H_moff, type = "response"))),
-    hzrd_on = bound01(as.vector(predict(fit_H, newx = H_mon, type = "response"))),
-    cens_off = bound01(as.vector(predict(fit_R, newx = R_moff, type = "response"))),
-    cens_on = bound01(as.vector(predict(fit_R, newx = R_mon, type = "response"))),
-    trt_off = bound01(as.vector(1 - predict(fit_A, newx = A_o, type = "response"))),
-    trt_on = bound01(as.vector(predict(fit_A, newx = A_o, type = "response")))
+    hzrd_off = bound01(as.vector(predict(fit_H, newx = H_moff, type = "response", s = "lambda.min"))),
+    hzrd_on = bound01(as.vector(predict(fit_H, newx = H_mon, type = "response", s = "lambda.min"))),
+    cens_off = bound01(as.vector(predict(fit_R, newx = R_moff, type = "response", s = "lambda.min"))),
+    cens_on = bound01(as.vector(predict(fit_R, newx = R_mon, type = "response", s = "lambda.min"))),
+    trt_off = bound01(as.vector(1 - predict(fit_A, newx = A_o, type = "response", s = "lambda.min"))),
+    trt_on = bound01(as.vector(predict(fit_A, newx = A_o, type = "response", s = "lambda.min")))
   )
 }
 
