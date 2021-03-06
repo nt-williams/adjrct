@@ -1,0 +1,130 @@
+compute_lor <- function(theta) {
+  mean(log(theta[1, ] / (1 - theta[1, ]) * (1 - theta[2, ]) / theta[2, ]))
+}
+
+compute_theta <- function(H_on, H_off, K, id) {
+  tmp1 <- tapply(1 - H_on, id, cumprod, simplify = FALSE)
+  tmp0 <- tapply(1 - H_off, id, cumprod, simplify = FALSE)
+
+  if (K > 2) {
+    theta1 <- 1 - rowMeans(sapply(tmp1, I))
+    theta0 <- 1 - rowMeans(sapply(tmp0, I))
+  }
+  if (K == 2) {
+    theta1 <- 1 - mean(sapply(tmp1, I))
+    theta0 <- 1 - mean(sapply(tmp0, I))
+  }
+  rbind(theta1 = theta1, theta0 = theta0)
+}
+
+log_odds <- function(meta) {
+  trt <- meta$data[[meta$trt]]
+  trtl <- meta$ordinal_data[["A"]]
+  Y <- meta$data[[meta$Y]]
+  K <- meta$K
+  n <- meta$nobs
+  id <- meta$id
+  R <- meta$R
+  Yl <- meta$ordinal_data$Y
+  nuis <- meta$nuisance
+  H_on <- nuis$H_on
+  H_off <- nuis$H_off
+  trt_on <- nuis$trt_on
+  trt_off <- nuis$trt_off
+
+  Qkn <- trtl*H_on + (1 - trtl)*H_off
+  gAn <- trtl*trt_on + (1 - trtl)*trt_off
+
+  m <- length(id)
+  crit <- TRUE
+  iter <- 1
+  ind <- outer(as.numeric(meta$ordinal_data$kl), 1:(K - 1), '<=')
+  psin <- Dn <- list()
+
+  while(crit && iter <= 100){
+    tmp1 <- tapply(1 - H_on, id, cumprod, simplify = FALSE)
+    tmp0 <- tapply(1 - H_off, id, cumprod, simplify = FALSE)
+
+    prodk1 <- do.call('rbind', tmp1[id])
+    prodk0 <- do.call('rbind', tmp0[id])
+    prodj1 <- unlist(tmp1)
+    prodj0 <- unlist(tmp0)
+
+    theta <- compute_theta(H_on, H_off, K, id)
+
+    Z1 <- ind * prodk1 / (prodj1 * trt_on[id])
+    Z0 <- ind * prodk0 / (prodj0 * trt_off[id])
+    Z <- cbind(trtl * Z1, (1 - trtl) * Z0)
+
+    M1 <- do.call(rbind, tapply(1 - H_on, id, cumprod, simplify = FALSE))
+    M0 <- do.call(rbind, tapply(1 - H_off, id, cumprod, simplify = FALSE))
+
+    H1 <- (M1 - theta[1,]) / (trt_on)
+    H0 <- (M0 - theta[2,]) / (trt_off)
+    H1 <- colSums(t(H1) / (theta[1, ] * (1 - theta[1, ])))
+    H0 <- colSums(t(H0) / (theta[2, ] * (1 - theta[2,])))
+    H  <- trt * H1 - (1 - trt) * H0
+
+    M1 <- (M1 - theta[1,]) / trt_on
+    M0 <- (M0 - theta[2,]) / trt_off
+    M1 <- colSums(t(M1) / (theta[1,] * (1 - theta[1, ])))
+    M0 <- colSums(t(M0) / (theta[2,] * (1 - theta[2, ])))
+    M <- M1 + M0
+
+    eps <- coef(glm(Yl ~ 0 + offset(qlogis(Qkn)) + Z, family = binomial(), subset = R == 1, start = rep(0, ncol(Z))))
+    nu <- coef(glm(trt ~ 0 + offset(qlogis(trt_on)) + M, family = binomial(), start = 0))
+
+    eps[is.na(eps)] <- 0
+    nu[is.na(nu)] <- 0
+
+    H_on <- bound(plogis(qlogis(H_on) + as.vector(cbind(Z1, 0 * Z0) %*% eps)))
+    H_off <- bound(plogis(qlogis(H_off) + as.vector(cbind(0 * Z1, Z0) %*% eps)))
+
+    trt_on <- bound(plogis(qlogis(trt_on) + M * nu))
+    trt_off <- 1 - trt_on
+
+    Qkn <- trtl*H_on + (1 - trtl)*H_off
+    gAn <- trt*trt_on + (1 - trt)*trt_off
+
+    iter <- iter + 1
+    crit <- any(abs(c(eps, nu)) > 1e-3/n^(0.6))
+  }
+
+  Z1 <- colSums(t(Z1) / (theta[1,] * (1 - theta[1,])))
+  Z0 <- colSums(t(Z0) / (theta[2,] * (1 - theta[2,])))
+  Z <- trtl * Z1 - (1 - trtl) * Z0
+  DnY <- tapply(R * Z * (Yl - Qkn), id, mean)
+
+  tmp1 <- colMeans(do.call(cbind, tapply(1 - H_on, id, cumprod, simplify = FALSE))
+                   / (theta[1, ] * (1 - theta[1, ])))
+  tmp0 <- colMeans(do.call(cbind, tapply(1 - H_off, id, cumprod, simplify = FALSE))
+                   / (theta[2, ] * (1 - theta[2, ])))
+
+  eif <- DnY - tmp1 + tmp0
+  theta <- compute_theta(H_on, H_off, K, id)
+  lor <- compute_lor(theta)
+  std.error <- sqrt(var(eif) / n)
+
+  list(lor = lor,
+       dist = theta,
+       std.error = std.error,
+       eif = eif)
+}
+
+cdf <- list()
+wrong <- survrct:::log_odds(o)$dist
+hold <- vector("numeric", 5)
+for (i in 5:2) {
+  hold[i] <- wrong[1, i] - wrong[1, i - 1]
+}
+hold[1] <- wrong[1, 1]
+cdf[[1]] <- c(1 - sum(hold), hold)
+
+hold <- vector("numeric", 5)
+for (i in 5:2) {
+  hold[i] <- wrong[2, i] - wrong[2, i - 1]
+}
+hold[1] <- wrong[2, 1]
+cdf[[2]] <- c(1 - sum(hold), hold)
+
+estimate_logodds(lapply(cdf, cumsum))
