@@ -17,6 +17,10 @@ Ordinal <- R6::R6Class(
       if (!all(unique(data[[target]]) %in% c(0, 1))) {
         stop("`target` should be coded as 0 and 1.", call. = FALSE)
       }
+
+      if (!is.ordered(data[[all.vars(formula[[2]])]])) {
+        stop("Outcome should be an ordered factor.", call. = FALSE)
+      }
       self$formula <- formula
       self$data <- data
       self$trt <- target
@@ -32,7 +36,7 @@ Ordinal <- R6::R6Class(
       W <- self$data[self$id, self$covar, drop = FALSE]
       A <- self$data[[self$trt]][self$id]
       kl <- as.factor(rep(1:(self$K - 1), self$nobs))
-      Yl <- as.numeric(self$data[[self$Y]][self$id] == kl)
+      Yl <- as.numeric(as.numeric(self$data[[self$Y]][self$id]) == kl)
       self$R <- unlist(lapply(tapply(Yl, self$id, cumsum), function(x) as.numeric(cumsum(x) <= 1)))
 
       self$ordinal_data <- data.frame(W, A, kl, Y = Yl)
@@ -70,6 +74,21 @@ Ordinal <- R6::R6Class(
     },
     formula_y = function() {
       formula(paste("Y ~ -1 + kl*(A + ", paste(self$covar, collapse = "+"), ")"))
+    },
+    print = function(...) {
+      cli::cli_text("{.strong ordinalrct} metadata")
+      cat("\n")
+      print(self$formula)
+      cat("\n")
+      cli::cli_ul(c("Estimate log odds ratio with `log_or()`",
+                    "Estimate Mann-Whitney with `mannwhitney()`",
+                    "Get CDF with `cdf()`",
+                    "Inspect nuisance parameter models with `get_fits()`"))
+      cat("\n")
+      cli::cli_text(cat("         "), "Estimator: {self$estimator}")
+      cli::cli_text(cat("   "), "Target variable: {self$trt}")
+      cli::cli_text(cat("  "), "Outcome variable: {self$Y}")
+      cli::cli_text(cat("    "), "Adjustment set: {self$covar}")
     }
   )
 )

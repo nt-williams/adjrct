@@ -60,6 +60,22 @@ print.survprob <- function(x, ...) {
   }
 }
 
+#' @export
+print.lor <- function(x, ...) {
+  cli::cli_text("{.strong Log OR Estimator}: {x$estimator}")
+    cat("\n")
+    cli::cli_text("{.strong Arm-specific log odds:}")
+    cli::cli_text(cli::col_blue(cli::style_italic("Treatment Arm")))
+    cli::cli_text(cat("      "), "{.strong Estimate}: {round(x$estimates$lor$arm1, 2)}")
+    cli::cli_text(cli::col_red(cli::style_italic("Control Arm")))
+    cli::cli_text(cat("      "), "{.strong Estimate}: {round(x$estimates$lor$arm0, 2)}")
+    cat("\n")
+    cli::cli_text("{.strong Average log odds ratio:}")
+    cli::cli_text(cat("      "), "{.strong Estimate}: {round(x$estimates$lor$theta, 2)}")
+    cli::cli_text(cat("    "), "{.strong Std. error}: {round(x$estimates$std.error, 2)}")
+    cli::cli_text(cat("        "), "{.strong 95% CI}: ({round(x$estimates$ci[1], 2)}, {round(x$estimates$ci[2], 2)})")
+}
+
 #' Extract RMST And Survival Probability Estimates
 #'
 #' @param x An object of class "rmst" or "survprob".

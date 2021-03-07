@@ -1,7 +1,3 @@
-compute_lor <- function(theta) {
-  mean(log(theta[1, ] / (1 - theta[1, ]) * (1 - theta[2, ]) / theta[2, ]))
-}
-
 compute_theta <- function(H_on, H_off, K, id) {
   tmp1 <- tapply(1 - H_on, id, cumprod, simplify = FALSE)
   tmp0 <- tapply(1 - H_off, id, cumprod, simplify = FALSE)
@@ -17,7 +13,12 @@ compute_theta <- function(H_on, H_off, K, id) {
   rbind(theta1 = theta1, theta0 = theta0)
 }
 
-log_odds <- function(meta) {
+compute_lor <- function(x) {
+  switch(x$estimator,
+         tmle = lor_tmle(x))
+}
+
+lor_tmle <- function(meta) {
   trt <- meta$data[[meta$trt]]
   trtl <- meta$ordinal_data[["A"]]
   Y <- meta$data[[meta$Y]]
@@ -35,13 +36,12 @@ log_odds <- function(meta) {
   Qkn <- trtl*H_on + (1 - trtl)*H_off
   gAn <- trtl*trt_on + (1 - trtl)*trt_off
 
-  m <- length(id)
   crit <- TRUE
   iter <- 1
   ind <- outer(as.numeric(meta$ordinal_data$kl), 1:(K - 1), '<=')
   psin <- Dn <- list()
 
-  while(crit && iter <= 100){
+  while (crit && iter <= 100) {
     tmp1 <- tapply(1 - H_on, id, cumprod, simplify = FALSE)
     tmp0 <- tapply(1 - H_off, id, cumprod, simplify = FALSE)
 
@@ -101,30 +101,17 @@ log_odds <- function(meta) {
                    / (theta[2, ] * (1 - theta[2, ])))
 
   eif <- DnY - tmp1 + tmp0
-  theta <- compute_theta(H_on, H_off, K, id)
-  lor <- compute_lor(theta)
+  cdf <- compute_theta(H_on, H_off, K, id)
+
+  theta1 <- mean(log(cdf[1, ] / (1 - cdf[1, ])))
+  theta0 <- mean(log((cdf[2, ]) / (1 - cdf[2, ])))
+  beta <- theta1 - theta0
+
+  lor <- list(arm1 = theta1, arm0 = theta0, theta = beta)
   std.error <- sqrt(var(eif) / n)
+  ci <- c(lor$theta - qnorm(0.975)*std.error, lor$theta + qnorm(0.975)*std.error)
 
   list(lor = lor,
-       dist = theta,
        std.error = std.error,
-       eif = eif)
+       ci = ci)
 }
-
-cdf <- list()
-wrong <- survrct:::log_odds(o)$dist
-hold <- vector("numeric", 5)
-for (i in 5:2) {
-  hold[i] <- wrong[1, i] - wrong[1, i - 1]
-}
-hold[1] <- wrong[1, 1]
-cdf[[1]] <- c(1 - sum(hold), hold)
-
-hold <- vector("numeric", 5)
-for (i in 5:2) {
-  hold[i] <- wrong[2, i] - wrong[2, i - 1]
-}
-hold[1] <- wrong[2, 1]
-cdf[[2]] <- c(1 - sum(hold), hold)
-
-estimate_logodds(lapply(cdf, cumsum))
