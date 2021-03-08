@@ -164,3 +164,9 @@ cdf <- function(metadata) {
   out
 }
 
+pmf <- function(metadata) {
+  out <- list(estimator = metadata$estimator,
+              estimates = compute_pmf(metadata))
+  class(out) <- "pmf"
+  out
+}

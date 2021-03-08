@@ -63,6 +63,9 @@ cdf_tmle <- function(meta) {
   }
 
   std.error <- sqrt(sapply(Dnl, function(x) diag(var(x))) / n)
+
   list(dist = compute_theta(H_on, H_off, K, id),
-       std.error = std.error)
+       std.error = std.error,
+       eif = list(theta1 = sapply(Dnl, function(x) x[, 1]),
+                  theta0 = sapply(Dnl, function(x) x[, 2])))
 }
