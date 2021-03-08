@@ -70,10 +70,15 @@ Ordinal <- R6::R6Class(
       return(out)
     },
     formula_trt = function() {
-      formula(paste(self$trt, "~", paste(self$covar, collapse = "+")))
+      if (is.null(self$covar)) {
+        covar <- 1
+      } else {
+        covar <- self$covar
+      }
+      formula(paste(self$trt, "~", paste(covar, collapse = "+")))
     },
     formula_y = function() {
-      formula(paste("Y ~ -1 + kl*(A + ", paste(self$covar, collapse = "+"), ")"))
+      formula(paste("Y ~ -1 + kl*(", paste(c("A", self$covar), collapse = "+"), ")"))
     },
     print = function(...) {
       cli::cli_text("{.strong ordinalrct} metadata")

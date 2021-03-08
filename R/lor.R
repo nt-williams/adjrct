@@ -15,7 +15,8 @@ compute_theta <- function(H_on, H_off, K, id) {
 
 compute_lor <- function(x) {
   switch(x$estimator,
-         tmle = lor_tmle(x))
+         tmle = lor_tmle(x),
+         unadjusted = lor_unadjusted(x))
 }
 
 lor_tmle <- function(meta) {
@@ -103,15 +104,36 @@ lor_tmle <- function(meta) {
   eif <- DnY - tmp1 + tmp0
   cdf <- compute_theta(H_on, H_off, K, id)
 
-  theta1 <- mean(log(cdf[1, ] / (1 - cdf[1, ])))
-  theta0 <- mean(log((cdf[2, ]) / (1 - cdf[2, ])))
-  beta <- theta1 - theta0
-
-  lor <- list(arm1 = theta1, arm0 = theta0, theta = beta)
+  lor <- LOR(cdf)
   std.error <- sqrt(var(eif) / n)
   ci <- c(lor$theta - qnorm(0.975)*std.error, lor$theta + qnorm(0.975)*std.error)
 
   list(lor = lor,
        std.error = std.error,
        ci = ci)
+}
+
+tcs <- function(x) {
+  out <- vector("numeric", length(x))
+  for (i in 1:length(x)) {
+    out[i] <- sum(x[1:i], na.rm = T)
+  }
+  out
+}
+
+LOR <- function(cdf) {
+  theta1 <- mean(log(cdf[1, ] / (1 - cdf[1, ])))
+  theta0 <- mean(log((cdf[2, ]) / (1 - cdf[2, ])))
+  list(arm1 = theta1, arm0 = theta0, theta = theta1 - theta0)
+}
+
+lor_unadjusted <- function(meta) {
+  tab <- table(meta$data[[meta$Y]], meta$data[[meta$trt]])
+  tabcumsum <- apply(tab, 2, tcs)
+  cdf <- cbind(tabcumsum[1:(nrow(tabcumsum) - 1), 2] /
+                 sum(tab[, 2], na.rm = T), tabcumsum[1:(nrow(tabcumsum) - 1), 1] /
+                 sum(tab[, 1], na.rm = T))
+  list(lor = LOR(t(cdf)),
+       std.error = NULL,
+       ci = NULL)
 }

@@ -125,10 +125,14 @@ survprob <- function(metadata, horizon = NULL) {
 #' @return An R6 object of class "Ordinal".
 #' @export
 ordinalrct <- function(formula, target, data, estimator = c("tmle", "aipw", "unadjusted")) {
-  Ordinal$
+  meta <- Ordinal$
     new(formula, target, data, match.arg(estimator))$
-    prepare_data()$
-    fit_nuis()
+    prepare_data()
+
+  if (meta$estimator != "unadjusted") {
+    meta$fit_nuis()
+  }
+  return(meta)
 }
 
 #' Estimate Average Log Odds Ratio
