@@ -25,7 +25,6 @@ mw_tmle <- function(meta) {
 
 # based on https://github.com/benkeser/drord/blob/master/R/mannwhitney_fn.R
 mw_gradient <- function(CDF, PMF) {
-  K <- ncol(PMF)
   F_0 <- c(0, CDF$dist["theta0", ])
   f_0 <- PMF$dist["theta0", ]
   f_1 <- PMF$dist["theta1", ]

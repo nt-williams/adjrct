@@ -170,3 +170,10 @@ pmf <- function(metadata) {
   class(out) <- "pmf"
   out
 }
+
+mannwhitney <- function(metadata) {
+  out <- list(estimator = metadata$estimator,
+              estimates = compute_mw(metadata))
+  class(out) <- "mannwhit"
+  out
+}

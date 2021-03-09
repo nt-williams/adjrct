@@ -70,7 +70,7 @@ Ordinal <- R6::R6Class(
       return(out)
     },
     formula_trt = function() {
-      if (is.null(self$covar)) {
+      if (length(self$covar) == 0) {
         covar <- 1
       } else {
         covar <- self$covar
@@ -87,7 +87,8 @@ Ordinal <- R6::R6Class(
       cat("\n")
       cli::cli_ul(c("Estimate log odds ratio with `log_or()`",
                     "Estimate Mann-Whitney with `mannwhitney()`",
-                    "Get CDF with `cdf()`",
+                    "Estimate with `cdf()`",
+                    "Estimate with `pmf()`",
                     "Inspect nuisance parameter models with `get_fits()`"))
       cat("\n")
       cli::cli_text(cat("         "), "Estimator: {self$estimator}")

@@ -76,6 +76,25 @@ print.lor <- function(x, ...) {
     cli::cli_text(cat("        "), "{.strong 95% CI}: ({round(x$estimates$ci[1], 2)}, {round(x$estimates$ci[2], 2)})")
 }
 
+#' @export
+print.cdf <- function(x, ...) {
+  cli::cli_text("{.strong CDF Estimator}: {x$estimator}")
+}
+
+#' @export
+print.pmf <- function(x, ...) {
+  cli::cli_text("{.strong PMF Estimator}: {x$estimator}")
+}
+
+#' @export
+print.mannwhit <- function(x, ...) {
+  cli::cli_text("{.strong Mann-Whitney Estimand:}")
+  cli::cli_text(cat("     "), "{.strong Estimator}: {x$estimator}")
+  cli::cli_text(cat("      "), "{.strong Estimate}: {round(x$estimates$theta, 2)}")
+  cli::cli_text(cat("    "), "{.strong Std. error}: {round(x$estimates$std.error, 2)}")
+  cli::cli_text(cat("        "), "{.strong 95% CI}: ({round(x$estimates$ci[1], 2)}, {round(x$estimates$ci[2], 2)})")
+}
+
 #' Extract RMST And Survival Probability Estimates
 #'
 #' @param x An object of class "rmst" or "survprob".
