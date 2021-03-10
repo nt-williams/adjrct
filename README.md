@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# survrct
+# adjrct
 
 <!-- badges: start -->
 
@@ -14,12 +14,12 @@ v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/li
 status](https://github.com/nt-williams/rctSurv/workflows/R-CMD-check/badge.svg)](https://github.com/nt-williams/rctSurv/actions)
 <!-- badges: end -->
 
-> Efficient Estimators for Survival Analysis in RCTs Without
-> Proportional Hazards
+> Efficient Estimators for Survival and Ordinal Outcomes in RCTs Without
+> Proportional Hazards and Odds Assumptions
 
 Nick Williams and Iván Díaz
 
------
+------------------------------------------------------------------------
 
 # Installation
 

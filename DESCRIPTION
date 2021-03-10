@@ -1,6 +1,6 @@
-Package: survrct
+Package: adjrct
 Type: Package
-Title: Efficient Estimators for Survival Analysis in RCTs Without Proportional Hazards
+Title: Efficient Estimators for Survival and Ordinal Outcomes in RCTs Without Proportional Hazards and Odds Assumptions
 Version: 0.1.0.9000
 Authors@R: 
     c(person(given = "Iván", 
@@ -13,10 +13,12 @@ Authors@R:
              role = c("cre", "aut", "cph"),
              email = "niw4001@med.cornell.edu", 
              comment = c(ORCID = "0000-0002-1378-4831")))
-Description: Adjusted and unadjusted estimators for the restriced mean survival 
-  time and survival probability in randomized controlled trials without the 
-  proportional hazards assumptions as described in Díaz, Colantuoni, Hanley, 
-  Rosenblum (2019) <doi:10.1007/s10985-019-09484-y>. 
+Description: Adjusted estimators for the restriced mean survival time, 
+  survival probability, average log odds ratio, the Mann-Whitney estimand, 
+  and CDF and PMF in randomized controlled trials with survival or ordinal outcomes 
+  without the proportional hazards and proportional odds assumptions as 
+  described in Díaz, et. al (2019) <doi:10.1007/s10985-019-09484-y>, 
+  Díaz, et. al (2015) <doi:10.1111/biom.12450>, and Benkeser, et. al (2020) <doi:10.1101/2020.04.19.20069922>. 
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
@@ -29,8 +31,8 @@ Imports:
     R6,
     origami,
     glmnet
-URL: https://github.com/nt-williams/survrct
-BugReports: https://github.com/nt-williams/survrct/issues
+URL: https://github.com/nt-williams/adjrct
+BugReports: https://github.com/nt-williams/adjrct/issues
 RoxygenNote: 7.1.1
 Suggests: 
     survival,
