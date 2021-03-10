@@ -4,7 +4,7 @@
 \alias{ordinalrct}
 \title{Create RCT Ordinal Metadata}
 \usage{
-ordinalrct(formula, target, data, estimator = c("tmle", "aipw", "unadjusted"))
+ordinalrct(formula, target, data, estimator = c("tmle", "aipw"), lasso = FALSE)
 }
 \arguments{
 \item{formula}{An object of class "formula". The left hand side should be
@@ -18,6 +18,9 @@ side should contain the target variable of interest and baseline prognostic cova
 \item{estimator}{The method to be used for computing estimands. Options are "tmle"
 for Targeted Maximum Likelihood Estimation (the default), "aipw" for Augmented IPW,
 and "unadjusted" for the unadjusted estimator.}
+
+\item{lasso}{Should LASSO be used for fitting? Default is \code{FALSE}. Ignored if
+less than two covariates for adjustment are specified in \code{formula}.}
 }
 \value{
 An R6 object of class "Ordinal".

@@ -163,8 +163,8 @@ format_est <- function(x) {
 }
 
 format_dist <- function(dist, std.error, ci) {
-  out <- data.frame(Estimate = dist,
-                    std.error = std.error,
+  out <- data.frame(Estimate = format_digits(dist, 3),
+                    std.error = format_digits(std.error, 3),
                     ci = paste0("(", paste(format_digits(ci[, 1], 2), "to", format_digits(ci[, 2], 2)), ")"))
   names(out) <- c("Estimate", "Std. error", "95% CI")
   out

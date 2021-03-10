@@ -39,20 +39,50 @@ Ordinal <- R6::R6Class(
       Yl <- as.numeric(as.numeric(self$data[[self$Y]][self$id]) == kl)
       self$R <- unlist(lapply(tapply(Yl, self$id, cumsum), function(x) as.numeric(cumsum(x) <= 1)))
 
-      self$ordinal_data <- data.frame(W, A, kl, Y = Yl)
+      self$ordinal_data <- data.frame(ordinalrctId = self$id, W, A, kl, Y = Yl)
       invisible(self)
     },
-    fit_nuis = function() {
-      fit_Q <- glm(self$formula_y(), family = binomial(), data = self$at_risk())
-      fit_A <- glm(self$formula_trt(), family = binomial(), data = self$data)
+    fit_nuis = function(lasso) {
+      if (length(self$covar) < 2) lasso <- FALSE
+      if (!lasso) {
+        fit_Q <- glm(self$formula_y(), family = binomial(), data = self$at_risk())
+        fit_A <- glm(self$formula_trt(), family = binomial(), data = self$data)
+
+        self$nuisance <- list(
+          hzrd_fit = fit_Q,
+          trt_fit = fit_A,
+          H_off = as.vector(predict(fit_Q, newdata = self$turn_off(), type = "response")),
+          H_on = as.vector(predict(fit_Q, newdata = self$turn_on(), type = "response")),
+          trt_off = as.vector(1 - predict(fit_A, type = "response")),
+          trt_on = as.vector(predict(fit_A, type = "response"))
+        )
+        return(invisible(self))
+      }
+      on <- self$turn_on()
+      off <- self$turn_off()
+
+      H_m <- model.matrix(self$formula_y(), self$at_risk())[, -1, drop = FALSE]
+      A_m <- model.matrix(self$formula_trt(), self$data)[, -1, drop = FALSE]
+
+      H_mon <- model.matrix(self$formula_y(), on)[, -1, drop = FALSE]
+      H_moff <- model.matrix(self$formula_y(), off)[, -1, drop = FALSE]
+
+      A_o <- model.matrix(self$formula_trt(), self$data)[, -1, drop = FALSE]
+
+      folds <- foldsids(nrow(self$ordinal_data), self$ordinal_data[["ordinalrctId"]], 10)
+
+      fit_Q <- glmnet::cv.glmnet(H_m, as.matrix(self$at_risk()[["Y"]]),
+                                 family = "binomial", foldid = folds[self$R == 1])
+      fit_A <- glmnet::cv.glmnet(A_m, self$data[[self$trt]],
+                                 family = "binomial", foldid = as.vector(tapply(folds, self$id, function(x) x[1])))
 
       self$nuisance <- list(
-        fit_H = fit_Q,
-        fit_A = fit_A,
-        H_off = as.vector(predict(fit_Q, newdata = self$turn_off(), type = "response")),
-        H_on = as.vector(predict(fit_Q, newdata = self$turn_on(), type = "response")),
-        trt_off = as.vector(1 - predict(fit_A, type = "response")),
-        trt_on = as.vector(predict(fit_A, type = "response"))
+        hzrd_fit = fit_Q,
+        trt_fit = fit_A,
+        H_off = bound01(as.vector(predict(fit_Q, newx = H_moff, type = "response", s = "lambda.min"))),
+        H_on = bound01(as.vector(predict(fit_Q, newx = H_mon, type = "response", s = "lambda.min"))),
+        trt_off = bound01(as.vector(1 - predict(fit_A, newx = A_o, type = "response", s = "lambda.min"))),
+        trt_on = bound01(as.vector(predict(fit_A, newx = A_o, type = "response", s = "lambda.min")))
       )
       invisible(self)
     },
