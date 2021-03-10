@@ -62,10 +62,14 @@ cdf_tmle <- function(meta) {
     Dnl[[k]][,2] <- DnY[, k + K - 1] - tmp0[, k]
   }
 
+  dist <- compute_theta(H_on, H_off, K, id)
   std.error <- sqrt(sapply(Dnl, function(x) diag(var(x))) / n)
+  ci <- list(theta1 = dist_ci(dist[1, ], std.error[1, ]),
+             theta0 = dist_ci(dist[2, ], std.error[2, ]))
 
-  list(dist = compute_theta(H_on, H_off, K, id),
+  list(dist = dist,
        std.error = std.error,
+       ci = ci,
        eif = list(theta1 = sapply(Dnl, function(x) x[, 1]),
                   theta0 = sapply(Dnl, function(x) x[, 2])))
 }

@@ -79,11 +79,25 @@ print.lor <- function(x, ...) {
 #' @export
 print.cdf <- function(x, ...) {
   cli::cli_text("{.strong CDF Estimator}: {x$estimator}")
+  cat("\n")
+  cli::cli_text("{.strong Arm-specific CDF:}")
+  cli::cli_text(cli::col_blue(cli::style_italic("Treatment Arm")))
+  print(format_dist(x$estimates$dist[1, ], x$estimates$std.error[1, ], x$estimates$ci$theta1))
+  cat("\n")
+  cli::cli_text(cli::col_red(cli::style_italic("Control Arm")))
+  print(format_dist(x$estimates$dist[2, ], x$estimates$std.error[2, ], x$estimates$ci$theta0))
 }
 
 #' @export
 print.pmf <- function(x, ...) {
   cli::cli_text("{.strong PMF Estimator}: {x$estimator}")
+  cat("\n")
+  cli::cli_text("{.strong Arm-specific PMF:}")
+  cli::cli_text(cli::col_blue(cli::style_italic("Treatment Arm")))
+  print(format_dist(x$estimates$dist[1, ], x$estimates$std.error[1, ], x$estimates$ci$theta1))
+  cat("\n")
+  cli::cli_text(cli::col_red(cli::style_italic("Control Arm")))
+  print(format_dist(x$estimates$dist[2, ], x$estimates$std.error[2, ], x$estimates$ci$theta0))
 }
 
 #' @export
@@ -146,4 +160,12 @@ format_est <- function(x) {
   x$`point-wise 95% CI` <- paste0("(", paste(format_digits(x$theta.conf.low, 2), "to", format_digits(x$theta.conf.high, 2)), ")")
   x$`uniform 95% CI` <- paste0("(", paste(format_digits(x$theta.unif.low, 2), "to", format_digits(x$theta.unif.high, 2)), ")")
   x[, c(1:2, 7, 12, 17:18)]
+}
+
+format_dist <- function(dist, std.error, ci) {
+  out <- data.frame(Estimate = dist,
+                    std.error = std.error,
+                    ci = paste0("(", paste(format_digits(ci[, 1], 2), "to", format_digits(ci[, 2], 2)), ")"))
+  names(out) <- c("Estimate", "Std. error", "95% CI")
+  out
 }
