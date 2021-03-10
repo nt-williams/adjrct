@@ -22,7 +22,7 @@ Ordinal <- R6::R6Class(
         stop("Outcome should be an ordered factor.", call. = FALSE)
       }
       self$formula <- formula
-      self$data <- data
+      self$data <- as.data.frame(data)
       self$trt <- target
       self$estimator <- estimator
     },
