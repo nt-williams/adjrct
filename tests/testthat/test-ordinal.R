@@ -1,4 +1,4 @@
-meta <- ordinalrct(Y ~ A, "A", mistie, "tmle", lasso = TRUE)
+meta <- ordinalrct(Y ~ A + age, "A", mistie, "tmle", lasso = TRUE)
 
 log_or(meta)
 cdf(meta)

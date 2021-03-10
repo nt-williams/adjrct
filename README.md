@@ -28,7 +28,7 @@ The development version can be installed from
 [GitHub](https://github.com) with:
 
 ``` r
-devtools::install_github("nt-williams/survrct")
+devtools::install_github("nt-williams/adjrct")
 ```
 
 # Scope

@@ -32,7 +32,7 @@ Nick Williams and Iván Díaz
 The development version can be installed from [GitHub](https://github.com) with:
 
 ```{r eval = FALSE}
-devtools::install_github("nt-williams/survrct")
+devtools::install_github("nt-williams/adjrct")
 ```
 
 # Scope
