@@ -51,8 +51,8 @@ Ordinal <- R6::R6Class(
         self$nuisance <- list(
           hzrd_fit = fit_Q,
           trt_fit = fit_A,
-          H_off = as.vector(predict(fit_Q, newdata = self$turn_off(), type = "response")),
-          H_on = as.vector(predict(fit_Q, newdata = self$turn_on(), type = "response")),
+          H_off = bound01(as.vector(predict(fit_Q, newdata = self$turn_off(), type = "response"))),
+          H_on = bound01(as.vector(predict(fit_Q, newdata = self$turn_on(), type = "response"))),
           trt_off = as.vector(1 - predict(fit_A, type = "response")),
           trt_on = as.vector(predict(fit_A, type = "response"))
         )

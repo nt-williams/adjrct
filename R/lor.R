@@ -37,12 +37,12 @@ lor_tmle <- function(meta) {
   Qkn <- trtl*H_on + (1 - trtl)*H_off
   gAn <- trtl*trt_on + (1 - trtl)*trt_off
 
-  crit <- TRUE
+  crit <- FALSE
   iter <- 1
   ind <- outer(as.numeric(meta$ordinal_data$kl), 1:(K - 1), '<=')
   psin <- Dn <- list()
 
-  while (crit && iter <= 100) {
+  while (!crit && iter <= 10) {
     tmp1 <- tapply(1 - H_on, id, cumprod, simplify = FALSE)
     tmp0 <- tapply(1 - H_off, id, cumprod, simplify = FALSE)
 
@@ -78,23 +78,30 @@ lor_tmle <- function(meta) {
     eps[is.na(eps)] <- 0
     nu[is.na(nu)] <- 0
 
-    H_on <- bound(plogis(qlogis(H_on) + as.vector(cbind(Z1, 0 * Z0) %*% eps)))
-    H_off <- bound(plogis(qlogis(H_off) + as.vector(cbind(0 * Z1, Z0) %*% eps)))
+    H_on <- bound01(plogis(qlogis(H_on) + as.vector(cbind(Z1, 0 * Z0) %*% eps)))
+    H_off <- bound01(plogis(qlogis(H_off) + as.vector(cbind(0 * Z1, Z0) %*% eps)))
 
-    trt_on <- bound(plogis(qlogis(trt_on) + M * nu))
+    trt_on <- bound01(plogis(qlogis(trt_on) + M * nu))
     trt_off <- 1 - trt_on
 
     Qkn <- trtl*H_on + (1 - trtl)*H_off
     gAn <- trt*trt_on + (1 - trt)*trt_off
 
+    tmpZ1 <- colSums(t(Z1) / (theta[1,] * (1 - theta[1,])))
+    tmpZ0 <- colSums(t(Z0) / (theta[2,] * (1 - theta[2,])))
+    tmpZ <- trtl * tmpZ1 - (1 - trtl) * tmpZ0
+    tmpDnY <- tapply(R * tmpZ * (Yl - Qkn), id, mean)
+
     iter <- iter + 1
-    crit <- any(abs(c(eps, nu)) > 1e-3/n^(0.6))
+    crit <- mean(tmpDnY) < (sd(tmpDnY) / (sqrt(n) * log(n)))*0.001
   }
 
   Z1 <- colSums(t(Z1) / (theta[1,] * (1 - theta[1,])))
   Z0 <- colSums(t(Z0) / (theta[2,] * (1 - theta[2,])))
   Z <- trtl * Z1 - (1 - trtl) * Z0
   DnY <- tapply(R * Z * (Yl - Qkn), id, mean)
+  DnY1 <- tapply(R * trtl*Z1 * (Yl - Qkn), id, mean)
+  DnY0 <- tapply(R * (1 - trtl)*Z0 * (Yl - Qkn), id, mean)
 
   tmp1 <- colMeans(do.call(cbind, tapply(1 - H_on, id, cumprod, simplify = FALSE))
                    / (theta[1, ] * (1 - theta[1, ])))
@@ -102,15 +109,25 @@ lor_tmle <- function(meta) {
                    / (theta[2, ] * (1 - theta[2, ])))
 
   eif <- DnY - tmp1 + tmp0
+  eif1 <- DnY1 - tmp1
+  eif0 <- DnY0 - tmp0
   cdf <- compute_theta(H_on, H_off, K, id)
 
   lor <- LOR(cdf)
   std.error <- sqrt(var(eif) / n)
-  ci <- c(lor$theta - qnorm(0.975)*std.error, lor$theta + qnorm(0.975)*std.error)
+  lo1.std.error <- sqrt(var(eif1) / n)
+  lo0.std.error <- sqrt(var(eif0) / n)
 
-  list(lor = lor,
+  list(lo1 = lor$arm1,
+       lo1.std.error = lo1.std.error,
+       lo1.ci = c(lor$arm1 - qnorm(0.975)*lo1.std.error, lor$arm1 + qnorm(0.975)*lo1.std.error),
+       lo0 = lor$arm0,
+       lo0.std.error = lo0.std.error,
+       lo0.ci = c(lor$arm0 - qnorm(0.975)*lo0.std.error, lor$arm0 + qnorm(0.975)*lo0.std.error),
+       lor = lor$theta,
        std.error = std.error,
-       ci = ci)
+       ci = c(lor$theta - qnorm(0.975)*std.error, lor$theta + qnorm(0.975)*std.error),
+       eif = eif)
 }
 
 tcs <- function(x) {

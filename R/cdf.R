@@ -21,12 +21,12 @@ cdf_tmle <- function(meta) {
 
   Qkn <- trtl*H_on + (1 - trtl)*H_off
 
-  crit <- TRUE
+  crit <- FALSE
   iter <- 1
   ind <- outer(as.numeric(meta$ordinal_data$kl), 1:(K - 1), '<=')
   psin <- Dn <- list()
 
-  while (crit && iter <= 100) {
+  while (!crit && iter <= 10) {
     tmp1 <- tapply(1 - H_on, id, cumprod, simplify = FALSE)
     tmp0 <- tapply(1 - H_off, id, cumprod, simplify = FALSE)
     prodk1 <- do.call('rbind', tmp1[id])
@@ -40,13 +40,17 @@ cdf_tmle <- function(meta) {
 
     eps <- coef(glm(Yl ~ 0 + offset(qlogis(Qkn)) + Z, family = binomial(), subset = R == 1))
 
-    H_on <- bound(plogis(qlogis(H_on) + as.vector(cbind(Z1, 0 * Z0) %*% eps)))
-    H_off <- bound(plogis(qlogis(H_off) + as.vector(cbind(0 * Z1, Z0) %*% eps)))
+    H_on <- bound01(plogis(qlogis(H_on) + as.vector(cbind(Z1, 0 * Z0) %*% eps)))
+    H_off <- bound01(plogis(qlogis(H_off) + as.vector(cbind(0 * Z1, Z0) %*% eps)))
 
     Qkn <- trtl*H_on + (1 - trtl)*H_off
 
+    tmpF1 <- matrix(H_on, nrow = m, ncol = K - 1)
+    tmpF0 <- matrix(H_off, nrow = m, ncol = K - 1)
+    tmpDnY <- Reduce('+', split(as.data.frame(R * Z * (Yl - cbind(tmpF1, tmpF0))), meta$ordinal_data$kl))
+
     iter <-  iter + 1
-    crit <- any(abs(eps) > 1e-3/n^(0.6))
+    crit <- all(colMeans(tmpDnY) < (vapply(tmpDnY, sd, FUN.VALUE = 1) / (sqrt(n) * log(n)))*0.001)
   }
 
   tmp1 <- matrix(H_on, nrow = m, ncol = K - 1)
