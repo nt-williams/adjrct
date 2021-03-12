@@ -103,22 +103,23 @@ Survival <- R6::R6Class(
       outer(self$all_time, 1:self$max_time, "<=")
     },
     formula_trt = function() {
-      if (self$estimator %in% c("tmle", "aipw")) {
-        formula(paste(self$trt, "~", paste(self$covar, collapse = "+")))
+      if (length(self$covar) == 0) {
+        covar <- 1
       } else {
-        formula(paste(self$trt, "~ 1"))
+        covar <- self$covar
       }
+      formula(paste(self$trt, "~", paste(covar, collapse = "+")))
     },
     formula_cens = function() {
       if (self$estimator %in% c("tmle", "aipw")) {
-        formula(paste("cens ~", self$trt, "* (as.factor(all_time) + ", paste(self$covar, collapse = "+"), ")"))
+        formula(paste("cens ~", self$trt, "* (", paste(c("as.factor(all_time)", self$covar), collapse = "+"), ")"))
       } else {
         formula(paste("cens ~ as.factor(all_time) * ", self$trt))
       }
     },
     formula_hzrd = function() {
       if (self$estimator %in% c("tmle", "aipw")) {
-        formula(paste("evnt ~", self$trt, "* (all_time + ", paste(self$covar, collapse = "+"), ")"))
+        formula(paste("evnt ~", self$trt, "* (", paste(c("all_time", self$covar), collapse = "+"), ")"))
       } else {
         formula(paste("evnt ~ all_time * ", self$trt))
       }
