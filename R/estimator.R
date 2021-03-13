@@ -13,8 +13,7 @@
 #' @param coarsen An optional integer that specifies if and how \code{time} should
 #'   be categorized into coarser intervals.
 #' @param estimator The method to be used for computing estimands. Options are "tmle"
-#'   for Targeted Maximum Likelihood Estimation (the default), "aipw" for Augmented IPW,
-#'   and "km" for Kaplan-Meier.
+#'   for Targeted Maximum Likelihood Estimation (the default) and "aipw" for Augmented IPW.
 #' @param lasso Should LASSO be used for fitting? Default is \code{FALSE}.
 #'
 #' @family survrct functions
@@ -28,12 +27,11 @@
 #'         target = "trt", data = colon, coarsen = 30, estimator = "tmle")
 #' }
 survrct <- function(formula, target, data, coarsen = 1,
-                    estimator = c("tmle", "aipw", "km"),
-                    lasso = FALSE) {
+                    estimator = c("tmle", "aipw"), lasso = FALSE) {
   Survival$
     new(formula, target, data, match.arg(estimator))$
     prepare_data(coarsen)$
-    fit_nuis(if (match.arg(estimator) == "km") FALSE else lasso)
+    fit_nuis(lasso)
 }
 
 #' Estimate Restricted Mean Survival Time
@@ -126,8 +124,7 @@ survprob <- function(metadata, horizon = NULL) {
 #'
 #' @return An R6 object of class "Ordinal".
 #' @export
-ordinalrct <- function(formula, target, data, estimator = c("tmle", "aipw"),
-                       lasso = FALSE) {
+ordinalrct <- function(formula, target, data, estimator = c("tmle", "aipw"), lasso = FALSE) {
   Ordinal$
     new(formula, target, data, match.arg(estimator))$
     prepare_data()$

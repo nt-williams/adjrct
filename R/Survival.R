@@ -27,11 +27,13 @@ Survival <- R6::R6Class(
       self$estimator <- estimator
     },
     prepare_data = function(coarsen = 1) {
-      # TODO check_status() i.e., status is 0 and 1
-
       self$time <- get_time(self$formula)
       self$status <- get_status(self$formula)
       self$covar <- get_covar(self$formula, self$trt)
+
+      if (!all(unique(self$data[[self$status]]) %in% c(0, 1))) {
+        stop("`status` should be coded as 0 and 1.", call. = FALSE)
+      }
 
       if (coarsen > 1) self$data[[self$time]] <- self$data[[self$time]] %/% coarsen + 1
 
@@ -111,18 +113,10 @@ Survival <- R6::R6Class(
       formula(paste(self$trt, "~", paste(covar, collapse = "+")))
     },
     formula_cens = function() {
-      if (self$estimator %in% c("tmle", "aipw")) {
-        formula(paste("cens ~", self$trt, "* (", paste(c("as.factor(all_time)", self$covar), collapse = "+"), ")"))
-      } else {
-        formula(paste("cens ~ as.factor(all_time) * ", self$trt))
-      }
+      formula(paste("cens ~", self$trt, "* (", paste(c("as.factor(all_time)", self$covar), collapse = "+"), ")"))
     },
     formula_hzrd = function() {
-      if (self$estimator %in% c("tmle", "aipw")) {
-        formula(paste("evnt ~", self$trt, "* (", paste(c("all_time", self$covar), collapse = "+"), ")"))
-      } else {
-        formula(paste("evnt ~ all_time * ", self$trt))
-      }
+      formula(paste("evnt ~", self$trt, "* (", paste(c("all_time", self$covar), collapse = "+"), ")"))
     },
     print = function(...) {
       cli::cli_text("{.strong survrct} metadata")

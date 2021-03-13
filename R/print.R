@@ -9,9 +9,8 @@ print.rmst <- function(x, ...) {
     print(head(format_est(x)))
     cli::cli_text(cli::col_red("Access all estimates with `all_estimates()`"))
   } else {
-    cli::cli_text(cat("  "), "{.strong Time horizon}: {x$horizon}")
     cat("\n")
-    cli::cli_text("{.strong Arm-specific RMST:}")
+    cli::cli_text("{.strong Marginal RMST:} E(min[T, {x$horizon}] | A = a)")
     cli::cli_text(cli::col_blue(cli::style_italic("Treatment Arm")))
     cli::cli_text(cat("      "), "{.strong Estimate}: {round(x$estimates[[1]]$arm1, 2)}")
     cli::cli_text(cat("    "), "{.strong Std. error}: {round(x$estimates[[1]]$arm1.std.error, 2)}")
@@ -21,7 +20,7 @@ print.rmst <- function(x, ...) {
     cli::cli_text(cat("    "), "{.strong Std. error}: {round(x$estimates[[1]]$arm0.std.error, 2)}")
     cli::cli_text(cat("        "), "{.strong 95% CI}: ({round(x$estimates[[1]]$arm0.conf.low, 2)}, {round(x$estimates[[1]]$arm0.conf.high, 2)})")
     cat("\n")
-    cli::cli_text("{.strong Treatment Effect:}")
+    cli::cli_text("{.strong Treatment Effect:} E(min[T, {x$horizon}] | A = 1) - E(min[T, {x$horizon}] | A = 0)")
     cli::cli_text(cli::col_green(cli::style_italic("Additive effect")))
     cli::cli_text(cat("      "), "{.strong Estimate}: {round(x$estimates[[1]]$theta, 2)}")
     cli::cli_text(cat("    "), "{.strong Std. error}: {round(x$estimates[[1]]$std.error, 2)}")
@@ -40,9 +39,8 @@ print.survprob <- function(x, ...) {
     print(head(format_est(x)))
     cli::cli_text(cli::col_red("Access all estimates with `all_estimates()`"))
   } else {
-    cli::cli_text(cat("  "), "{.strong Time horizon}: {x$horizon}")
     cat("\n")
-    cli::cli_text("{.strong Arm-specific Survival Probability:}")
+    cli::cli_text("{.strong Marginal Survival Probability:} Pr(T > {x$horizon} | A = a)")
     cli::cli_text(cli::col_blue(cli::style_italic("Treatment Arm")))
     cli::cli_text(cat("      "), "{.strong Estimate}: {round(x$estimates[[1]]$arm1, 2)}")
     cli::cli_text(cat("    "), "{.strong Std. error}: {round(x$estimates[[1]]$arm1.std.error, 2)}")
@@ -52,7 +50,7 @@ print.survprob <- function(x, ...) {
     cli::cli_text(cat("    "), "{.strong Std. error}: {round(x$estimates[[1]]$arm0.std.error, 2)}")
     cli::cli_text(cat("        "), "{.strong 95% CI}: ({round(x$estimates[[1]]$arm0.conf.low, 2)}, {round(x$estimates[[1]]$arm0.conf.high, 2)})")
     cat("\n")
-    cli::cli_text("{.strong Treatment Effect:}")
+    cli::cli_text("{.strong Treatment Effect:} Pr(T > {x$horizon} | A = 1) - Pr(T > {x$horizon} | A = 0)")
     cli::cli_text(cli::col_green(cli::style_italic("Additive effect")))
     cli::cli_text(cat("      "), "{.strong Estimate}: {round(x$estimates[[1]]$theta, 2)}")
     cli::cli_text(cat("    "), "{.strong Std. error}: {round(x$estimates[[1]]$std.error, 2)}")
@@ -106,7 +104,8 @@ print.pmf <- function(x, ...) {
 
 #' @export
 print.mannwhit <- function(x, ...) {
-  cli::cli_text("{.strong Mann-Whitney Estimand:}")
+  cli::cli_text("{.strong Mann-Whitney Estimand}")
+  cat("\n")
   cli::cli_text(cat("     "), "{.strong Estimator}: {x$estimator}")
   cli::cli_text(cat("      "), "{.strong Estimate}: {round(x$estimates$theta, 2)}")
   cli::cli_text(cat("    "), "{.strong Std. error}: {round(x$estimates$std.error, 2)}")

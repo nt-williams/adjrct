@@ -20,7 +20,7 @@ status](https://github.com/nt-williams/rctSurv/workflows/R-CMD-check/badge.svg)]
 
 Nick Williams and Iván Díaz
 
-------------------------------------------------------------------------
+-----
 
 # Installation
 
@@ -65,9 +65,10 @@ coarsener, and the estimator.
 library(adjrct)
 
 data(colon)
-surv <- survrct(Surv(time, status) ~ trt + age + sex + obstruct + perfor + adhere + surg, target = "trt", data = colon, coarsen = 30, estimator = "tmle")
-#> Surv(time, status) ~ trt + age + sex + obstruct + perfor + adhere + 
-#>     surg
+surv <- survrct(Surv(time, status) ~ trt + age + sex, target = "trt", data = colon, coarsen = 30)
+#> survrct metadata
+#> 
+#> Surv(time, status) ~ trt + age + sex
 #> 
 #> ● Estimate RMST with `rmst()`
 #> ● Estimate survival probability with `survprob()`
@@ -76,7 +77,7 @@ surv <- survrct(Surv(time, status) ~ trt + age + sex + obstruct + perfor + adher
 #>          Estimator: tmle
 #>    Target variable: trt
 #>   Status Indicator: status
-#>     Adjustment set: age, sex, obstruct, perfor, adhere, and surg
+#>     Adjustment set: age and sex
 #> Max coarsened time: 111
 ```
 
@@ -87,40 +88,38 @@ bands are returned: 95% point-wise intervals as well as 95% uniform
 confidence bands based on the multiplier-bootstrap from Kennedy (2019).
 
 ``` r
-rmst(surv, 40)
+rmst(surv, 60)
 #> RMST Estimator: tmle
-#>   Time horizon: 40
 #> 
-#> Arm-specific RMST:
+#> Marginal RMST: E(min[T, 60] | A = a)
 #> Treatment Arm
-#>       Estimate: 31.95
-#>     Std. error: 0.73
-#>         95% CI: (30.52, 33.38)
+#>       Estimate: 45.33
+#>     Std. error: 1.23
+#>         95% CI: (42.91, 47.74)
 #> Control Arm
-#>       Estimate: 27.5
-#>     Std. error: 0.84
-#>         95% CI: (25.86, 29.14)
+#>       Estimate: 37.83
+#>     Std. error: 1.39
+#>         95% CI: (35.12, 40.55)
 #> 
-#> Treatment Effect:
+#> Treatment Effect: E(min[T, 60] | A = 1) - E(min[T, 60] | A = 0)
 #> Additive effect
-#>       Estimate: 4.45
-#>     Std. error: 1.11
-#>         95% CI: (2.27, 6.63)
-survprob(surv, 40)
+#>       Estimate: 7.49
+#>     Std. error: 1.85
+#>         95% CI: (3.86, 11.12)
+survprob(surv, 60)
 #> Survival Probability Estimator: tmle
-#>   Time horizon: 40
 #> 
-#> Arm-specific Survival Probability:
+#> Marginal Survival Probability: Pr(T > 60 | A = a)
 #> Treatment Arm
-#>       Estimate: 0.67
+#>       Estimate: 0.65
 #>     Std. error: 0.03
-#>         95% CI: (0.62, 0.73)
+#>         95% CI: (0.6, 0.7)
 #> Control Arm
-#>       Estimate: 0.53
+#>       Estimate: 0.51
 #>     Std. error: 0.03
-#>         95% CI: (0.48, 0.59)
+#>         95% CI: (0.45, 0.57)
 #> 
-#> Treatment Effect:
+#> Treatment Effect: Pr(T > 60 | A = 1) - Pr(T > 60 | A = 0)
 #> Additive effect
 #>       Estimate: 0.14
 #>     Std. error: 0.04
@@ -141,11 +140,11 @@ ord
 #> 
 #> Y ~ A + age
 #> 
-#> * Estimate log odds ratio with `log_or()`
-#> * Estimate Mann-Whitney with `mannwhitney()`
-#> * Estimate with `cdf()`
-#> * Estimate with `pmf()`
-#> * Inspect nuisance parameter models with `get_fits()`
+#> ● Estimate log odds ratio with `log_or()`
+#> ● Estimate Mann-Whitney with `mannwhitney()`
+#> ● Estimate with `cdf()`
+#> ● Estimate with `pmf()`
+#> ● Inspect nuisance parameter models with `get_fits()`
 #> 
 #>          Estimator: tmle
 #>    Target variable: A
@@ -163,15 +162,20 @@ log_or(ord)
 #> Arm-specific log odds:
 #> Treatment Arm
 #>       Estimate: -0.24
+#>     Std. error: 0.22
+#>         95% CI: (-0.68, 0.19)
 #> Control Arm
 #>       Estimate: -0.5
+#>     Std. error: 0.31
+#>         95% CI: (-1.1, 0.11)
 #> 
 #> Average log odds ratio:
 #>       Estimate: 0.25
-#>     Std. error: 0.37
-#>         95% CI: (-0.47, 0.98)
+#>     Std. error: 0.38
+#>         95% CI: (-0.48, 0.99)
 mannwhitney(ord)
-#> Mann-Whitney Estimand:
+#> Mann-Whitney Estimand
+#> 
 #>      Estimator: tmle
 #>       Estimate: 0.46
 #>     Std. error: 0.06

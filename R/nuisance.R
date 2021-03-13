@@ -1,4 +1,6 @@
 nuisance <- function(self, lasso) {
+  if (length(self$covar) < 2) lasso <- FALSE
+
   if (lasso) {
     return(fit_lasso(self))
   }
