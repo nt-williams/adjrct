@@ -169,7 +169,8 @@ log_or <- function(metadata) {
 #'
 #' @export
 cdf <- function(metadata) {
-  out <- list(estimator = metadata$estimator,
+  out <- list(levels = levels(metadata$data[[metadata$Y]]),
+              estimator = metadata$estimator,
               estimates = compute_cdf(metadata))
   class(out) <- "cdf"
   out
@@ -191,7 +192,8 @@ cdf <- function(metadata) {
 #'
 #' @export
 pmf <- function(metadata) {
-  out <- list(estimator = metadata$estimator,
+  out <- list(levels = levels(metadata$data[[metadata$Y]]),
+              estimator = metadata$estimator,
               estimates = compute_pmf(metadata))
   class(out) <- "pmf"
   out

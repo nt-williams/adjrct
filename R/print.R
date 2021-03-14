@@ -82,24 +82,24 @@ print.lor <- function(x, ...) {
 print.cdf <- function(x, ...) {
   cli::cli_text("{.strong CDF Estimator}: {x$estimator}")
   cat("\n")
-  cli::cli_text("{.strong Arm-specific CDF:}")
+  cli::cli_text("{.strong Arm-specific CDF:} Pr(K <= k | A = a)")
   cli::cli_text(cli::col_blue(cli::style_italic("Treatment Arm")))
-  print(format_dist(x$estimates$dist[1, ], x$estimates$std.error[1, ], x$estimates$ci$theta1))
+  print(format_dist(x$estimates$dist[1, ], x$estimates$std.error[1, ], x$estimates$ci$theta1, levels = x$levels, "cdf"))
   cat("\n")
   cli::cli_text(cli::col_red(cli::style_italic("Control Arm")))
-  print(format_dist(x$estimates$dist[2, ], x$estimates$std.error[2, ], x$estimates$ci$theta0))
+  print(format_dist(x$estimates$dist[2, ], x$estimates$std.error[2, ], x$estimates$ci$theta0, levels = x$levels, "cdf"))
 }
 
 #' @export
 print.pmf <- function(x, ...) {
   cli::cli_text("{.strong PMF Estimator}: {x$estimator}")
   cat("\n")
-  cli::cli_text("{.strong Arm-specific PMF:}")
+  cli::cli_text("{.strong Arm-specific PMF:} Pr(K = k | A = a)")
   cli::cli_text(cli::col_blue(cli::style_italic("Treatment Arm")))
-  print(format_dist(x$estimates$dist[1, ], x$estimates$std.error[1, ], x$estimates$ci$theta1))
+  print(format_dist(x$estimates$dist[1, ], x$estimates$std.error[1, ], x$estimates$ci$theta1, levels = x$levels, "pmf"))
   cat("\n")
   cli::cli_text(cli::col_red(cli::style_italic("Control Arm")))
-  print(format_dist(x$estimates$dist[2, ], x$estimates$std.error[2, ], x$estimates$ci$theta0))
+  print(format_dist(x$estimates$dist[2, ], x$estimates$std.error[2, ], x$estimates$ci$theta0, levels = x$levels, "pmf"))
 }
 
 #' @export
@@ -165,10 +165,18 @@ format_est <- function(x) {
   x[, c(1:2, 7, 12, 17:18)]
 }
 
-format_dist <- function(dist, std.error, ci) {
-  out <- data.frame(Estimate = format_digits(dist, 3),
-                    std.error = format_digits(std.error, 3),
-                    ci = paste0("(", paste(format_digits(ci[, 1], 2), "to", format_digits(ci[, 2], 2)), ")"))
-  names(out) <- c("Estimate", "Std. error", "95% CI")
+format_dist <- function(dist, std.error, ci, levels, type = c("cdf", "pmf")) {
+  if (match.arg(type) == "cdf") {
+    out <- data.frame(k = levels,
+                      Estimate = c(format_digits(dist, 3), "1.000"),
+                      std.error = c(format_digits(std.error, 3), "-"),
+                      ci = c(paste0("(", paste(format_digits(ci[, 1], 2), "to", format_digits(ci[, 2], 2)), ")"), "-"))
+  } else {
+    out <- data.frame(k = levels,
+                      Estimate = format_digits(dist, 3),
+                      std.error = format_digits(std.error, 3),
+                      ci = paste0("(", paste(format_digits(ci[, 1], 2), "to", format_digits(ci[, 2], 2)), ")"))
+  }
+  names(out) <- c("k", "Estimate", "Std. error", "95% CI")
   out
 }
