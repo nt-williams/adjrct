@@ -56,12 +56,89 @@ Survival <- R6::R6Class(
                                    all_time = self$all_time, evnt, cens)
       invisible(self)
     },
-    fit_nuis = function(lasso) {
-      self$nuisance <- nuisance(self, lasso)
-      invisible(self)
+    fit_nuis = function(algo) {
+      if (length(self$covar) < 2) algo <- "glm"
+
+      if (algo == "glm") {
+        fit_H <- glm(self$formula_hzrd(), data = self$at_risk_evnt(), family = "binomial")
+        fit_R <- glm(self$formula_cens(), data = self$at_risk_cens(), family = "binomial")
+        fit_A <- glm(self$formula_trt(), data = self$at_risk_trt(), family = "binomial")
+
+        self$nuisance <- list(
+          hzrd_fit = fit_H,
+          cens_fit = fit_R,
+          trt_fit = fit_A,
+          hzrd_off = predict(fit_H, newdata = self$turn_off(), type = "response"),
+          hzrd_on = predict(fit_H, newdata = self$turn_on(), type = "response"),
+          cens_off = predict(fit_R, newdata = self$turn_off(), type = "response"),
+          cens_on = predict(fit_R, newdata = self$turn_on(), type = "response"),
+          trt_off = 1 - predict(fit_A, newdata = self$turn_on(), type = "response"),
+          trt_on = predict(fit_A, newdata = self$turn_on(), type = "response")
+        )
+        return(invisible(self))
+      }
+
+      on <- self$turn_on()
+      off <- self$turn_off()
+      H_m <- model.matrix(self$formula_hzrd(), self$at_risk_evnt())[, -1]
+      R_m <- model.matrix(self$formula_cens(), self$at_risk_cens())[, -1]
+      A_m <- model.matrix(self$formula_trt(), self$at_risk_trt())[, -1]
+      H_mon <- model.matrix(self$formula_hzrd(), on)[, -1]
+      H_moff <- model.matrix(self$formula_hzrd(), off)[, -1]
+      R_mon <- model.matrix(self$formula_cens(), on)[, -1]
+      R_moff <- model.matrix(self$formula_cens(), off)[, -1]
+      A_o <- model.matrix(self$formula_trt(), self$surv_data)[, -1]
+
+      if (algo == "lasso") {
+        pen <- rep(1, ncol(R_m))
+        pen[grep("^as.factor\\(all_time\\)", colnames(R_m))] <- 0
+        folds <- foldsids(nrow(self$surv_data), self$surv_data[["survrctId"]], 10)
+        fit_H <- glmnet::cv.glmnet(H_m, as.matrix(self$at_risk_evnt()[["evnt"]]),
+                                   family = "binomial", foldid = folds[self$risk_evnt == 1])
+        fit_R <- glmnet::cv.glmnet(R_m, self$at_risk_cens()[["cens"]],
+                                   family = "binomial", penalty.factor = pen,
+                                   foldid = folds[self$risk_cens == 1])
+        fit_A <- glmnet::cv.glmnet(A_m, self$at_risk_trt()[[self$trt]],
+                                   family = "binomial", foldid = folds[self$all_time == 1])
+        self$nuisance <- list(
+          hzrd_fit = fit_H,
+          cens_fit = fit_R,
+          trt_fit = fit_A,
+          hzrd_off = bound01(as.vector(predict(fit_H, newx = H_moff, type = "response", s = "lambda.min"))),
+          hzrd_on = bound01(as.vector(predict(fit_H, newx = H_mon, type = "response", s = "lambda.min"))),
+          cens_off = bound01(as.vector(predict(fit_R, newx = R_moff, type = "response", s = "lambda.min"))),
+          cens_on = bound01(as.vector(predict(fit_R, newx = R_mon, type = "response", s = "lambda.min"))),
+          trt_off = bound01(as.vector(1 - predict(fit_A, newx = A_o, type = "response", s = "lambda.min"))),
+          trt_on = bound01(as.vector(predict(fit_A, newx = A_o, type = "response", s = "lambda.min")))
+        )
+        return(invisible(self))
+      }
+
+      if (algo == "rf") {
+        fit_H <- ranger::ranger(x = H_m,
+                                y = self$at_risk_evnt()[["evnt"]],
+                                probability = TRUE)
+        fit_R <- ranger::ranger(x = R_m,
+                                y = self$at_risk_cens()[["cens"]],
+                                probability = TRUE)
+        fit_A <- ranger::ranger(x = A_m,
+                                y = self$at_risk_trt()[[self$trt]],
+                                probability = TRUE)
+        self$nuisance <- list(
+          hzrd_fit = fit_H,
+          cens_fit = fit_R,
+          trt_fit = fit_A,
+          hzrd_off = bound01(predict(fit_H, H_moff)$predictions[, 2]),
+          hzrd_on = bound01(predict(fit_H, H_mon)$predictions[, 2]),
+          cens_off = bound01(predict(fit_R, R_moff)$predictions[, 2]),
+          cens_on = bound01(predict(fit_R, R_mon)$predictions[, 2]),
+          trt_off = bound01(predict(fit_A, A_o)$predictions[, 1]),
+          trt_on = bound01(predict(fit_A, A_o)$predictions[, 2])
+        )
+        return(invisible(self))
+      }
     },
     evaluate_horizon = function(horizon = NULL, estimand) {
-      # also need to add check for the minimum time
       if (!is.null(horizon)) {
         if (max(horizon) > self$max_time) {
           stop("Horizon is greater than max observed time!", call. = FALSE)

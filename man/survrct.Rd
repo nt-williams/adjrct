@@ -9,8 +9,8 @@ survrct(
   target,
   data,
   coarsen = 1,
-  estimator = c("tmle", "aipw", "km"),
-  lasso = FALSE
+  estimator = c("tmle", "aipw"),
+  algo = c("glm", "lasso", "rf")
 )
 }
 \arguments{
@@ -28,10 +28,10 @@ side should contain the target variable of interest and baseline prognostic cova
 be categorized into coarser intervals.}
 
 \item{estimator}{The method to be used for computing estimands. Options are "tmle"
-for Targeted Maximum Likelihood Estimation (the default), "aipw" for Augmented IPW,
-and "km" for Kaplan-Meier.}
+for Targeted Maximum Likelihood Estimation (the default) and "aipw" for Augmented IPW.}
 
-\item{lasso}{Should LASSO be used for fitting? Default is \code{FALSE}.}
+\item{algo}{Method to be used for fitting nuisance parameters. Automatically set to "glm" if
+less than two covariates for adjustment are specified in \code{formula}.}
 }
 \value{
 An R6 object of class "Survival".

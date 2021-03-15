@@ -14,7 +14,8 @@
 #'   be categorized into coarser intervals.
 #' @param estimator The method to be used for computing estimands. Options are "tmle"
 #'   for Targeted Maximum Likelihood Estimation (the default) and "aipw" for Augmented IPW.
-#' @param lasso Should LASSO be used for fitting? Default is \code{FALSE}.
+#' @param algo Method to be used for fitting nuisance parameters. Automatically set to "glm" if
+#'   less than two covariates for adjustment are specified in \code{formula}.
 #'
 #' @family survrct functions
 #'
@@ -27,11 +28,11 @@
 #'         target = "trt", data = colon, coarsen = 30, estimator = "tmle")
 #' }
 survrct <- function(formula, target, data, coarsen = 1,
-                    estimator = c("tmle", "aipw"), lasso = FALSE) {
+                    estimator = c("tmle", "aipw"), algo = c("glm", "lasso", "rf")) {
   Survival$
     new(formula, target, data, match.arg(estimator))$
     prepare_data(coarsen)$
-    fit_nuis(lasso)
+    fit_nuis(match.arg(algo))
 }
 
 #' Estimate Restricted Mean Survival Time
@@ -117,18 +118,19 @@ survprob <- function(metadata, horizon = NULL) {
 #' @param estimator The method to be used for computing estimands. Options are "tmle"
 #'   for Targeted Maximum Likelihood Estimation (the default), "aipw" for Augmented IPW,
 #'   and "unadjusted" for the unadjusted estimator.
-#' @param lasso Should LASSO be used for fitting? Default is \code{FALSE}. Ignored if
+#' @param algo Method to be used for fitting nuisance parameters. Automatically set to "glm" if
 #'   less than two covariates for adjustment are specified in \code{formula}.
 #'
 #' @family ordinal functions
 #'
 #' @return An R6 object of class "Ordinal".
 #' @export
-ordinalrct <- function(formula, target, data, estimator = c("tmle", "aipw"), lasso = FALSE) {
+ordinalrct <- function(formula, target, data,
+                       estimator = c("tmle", "aipw"), algo = c("glm", "lasso", "rf")) {
   Ordinal$
     new(formula, target, data, match.arg(estimator))$
     prepare_data()$
-    fit_nuis(lasso)
+    fit_nuis(match.arg(algo))
 }
 
 #' Estimate Average Log Odds Ratio

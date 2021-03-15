@@ -30,7 +30,8 @@ Imports:
     glm2,
     R6,
     origami,
-    glmnet
+    glmnet,
+    ranger
 URL: https://github.com/nt-williams/adjrct
 BugReports: https://github.com/nt-williams/adjrct/issues
 RoxygenNote: 7.1.1

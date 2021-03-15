@@ -42,9 +42,10 @@ Ordinal <- R6::R6Class(
       self$ordinal_data <- data.frame(ordinalrctId = self$id, W, A, kl, Y = Yl)
       invisible(self)
     },
-    fit_nuis = function(lasso) {
-      if (length(self$covar) < 2) lasso <- FALSE
-      if (!lasso) {
+    fit_nuis = function(algo) {
+      if (length(self$covar) < 2) algo <- "glm"
+
+      if (algo == "glm") {
         fit_Q <- glm(self$formula_y(), family = binomial(), data = self$at_risk())
         fit_A <- glm(self$formula_trt(), family = binomial(), data = self$data)
 
@@ -58,33 +59,45 @@ Ordinal <- R6::R6Class(
         )
         return(invisible(self))
       }
+
       on <- self$turn_on()
       off <- self$turn_off()
-
       H_m <- model.matrix(self$formula_y(), self$at_risk())[, -1, drop = FALSE]
       A_m <- model.matrix(self$formula_trt(), self$data)[, -1, drop = FALSE]
-
       H_mon <- model.matrix(self$formula_y(), on)[, -1, drop = FALSE]
       H_moff <- model.matrix(self$formula_y(), off)[, -1, drop = FALSE]
-
       A_o <- model.matrix(self$formula_trt(), self$data)[, -1, drop = FALSE]
 
-      folds <- foldsids(nrow(self$ordinal_data), self$ordinal_data[["ordinalrctId"]], 10)
+      if (algo == "lasso") {
+        folds <- foldsids(nrow(self$ordinal_data), self$ordinal_data[["ordinalrctId"]], 10)
+        fit_Q <- glmnet::cv.glmnet(H_m, as.matrix(self$at_risk()[["Y"]]),
+                                   family = "binomial", foldid = folds[self$R == 1])
+        fit_A <- glmnet::cv.glmnet(A_m, self$data[[self$trt]],
+                                   family = "binomial", foldid = as.vector(tapply(folds, self$id, function(x) x[1])))
+        self$nuisance <- list(
+          hzrd_fit = fit_Q,
+          trt_fit = fit_A,
+          H_off = bound01(as.vector(predict(fit_Q, newx = H_moff, type = "response", s = "lambda.min"))),
+          H_on = bound01(as.vector(predict(fit_Q, newx = H_mon, type = "response", s = "lambda.min"))),
+          trt_off = bound01(as.vector(1 - predict(fit_A, newx = A_o, type = "response", s = "lambda.min"))),
+          trt_on = bound01(as.vector(predict(fit_A, newx = A_o, type = "response", s = "lambda.min")))
+        )
+        return(invisible(self))
+      }
 
-      fit_Q <- glmnet::cv.glmnet(H_m, as.matrix(self$at_risk()[["Y"]]),
-                                 family = "binomial", foldid = folds[self$R == 1])
-      fit_A <- glmnet::cv.glmnet(A_m, self$data[[self$trt]],
-                                 family = "binomial", foldid = as.vector(tapply(folds, self$id, function(x) x[1])))
-
-      self$nuisance <- list(
-        hzrd_fit = fit_Q,
-        trt_fit = fit_A,
-        H_off = bound01(as.vector(predict(fit_Q, newx = H_moff, type = "response", s = "lambda.min"))),
-        H_on = bound01(as.vector(predict(fit_Q, newx = H_mon, type = "response", s = "lambda.min"))),
-        trt_off = bound01(as.vector(1 - predict(fit_A, newx = A_o, type = "response", s = "lambda.min"))),
-        trt_on = bound01(as.vector(predict(fit_A, newx = A_o, type = "response", s = "lambda.min")))
-      )
-      invisible(self)
+      if (algo == "rf") {
+        fit_Q <- ranger::ranger(x = H_m, y = self$at_risk()[["Y"]], probability = TRUE)
+        fit_A <- ranger::ranger(x = A_m, y = self$data[[self$trt]], probability = TRUE)
+        self$nuisance <- list(
+          hzrd_fit = fit_Q,
+          trt_fit = fit_A,
+          H_off = bound01(predict(fit_Q, H_moff)$predictions[, 2]),
+          H_on = bound01(predict(fit_Q, H_mon)$predictions[, 2]),
+          trt_off = bound01(predict(fit_A, A_o)$predictions[, 1]),
+          trt_on = bound01(predict(fit_A, A_o)$predictions[, 2])
+        )
+        return(invisible(self))
+      }
     },
     at_risk = function() {
       self$ordinal_data[self$R == 1, ]

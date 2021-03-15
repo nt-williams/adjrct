@@ -1,6 +1,14 @@
-meta <- ordinalrct(Y ~ A + age, "A", mistie, "tmle", lasso = TRUE)
+meta <- ordinalrct(Y ~ A + age + EnrollmentNIHSStotal, "A", mistie, "tmle", algo = "rf")
 
 log_or(meta)
-cdf(meta)
-pmf(meta)
+mannwhitney(meta)
+
+meta <- ordinalrct(Y ~ A + age + EnrollmentNIHSStotal, "A", mistie, "tmle", algo = "lasso")
+
+log_or(meta)
+mannwhitney(meta)
+
+meta <- ordinalrct(Y ~ A + age + EnrollmentNIHSStotal, "A", mistie, "tmle", algo = "glm")
+
+log_or(meta)
 mannwhitney(meta)
