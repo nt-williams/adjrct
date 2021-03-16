@@ -72,24 +72,23 @@ Survival <- R6::R6Class(
           hzrd_on = predict(fit_H, newdata = self$turn_on(), type = "response"),
           cens_off = predict(fit_R, newdata = self$turn_off(), type = "response"),
           cens_on = predict(fit_R, newdata = self$turn_on(), type = "response"),
-          trt_off = 1 - predict(fit_A, newdata = self$turn_on(), type = "response"),
-          trt_on = predict(fit_A, newdata = self$turn_on(), type = "response")
+          trt_off = 1 - predict(fit_A, type = "response"),
+          trt_on = predict(fit_A, type = "response")
         )
         return(invisible(self))
       }
 
       on <- self$turn_on()
       off <- self$turn_off()
-      H_m <- model.matrix(self$formula_hzrd(), self$at_risk_evnt())[, -1]
-      R_m <- model.matrix(self$formula_cens(), self$at_risk_cens())[, -1]
-      A_m <- model.matrix(self$formula_trt(), self$at_risk_trt())[, -1]
-      H_mon <- model.matrix(self$formula_hzrd(), on)[, -1]
-      H_moff <- model.matrix(self$formula_hzrd(), off)[, -1]
-      R_mon <- model.matrix(self$formula_cens(), on)[, -1]
-      R_moff <- model.matrix(self$formula_cens(), off)[, -1]
-      A_o <- model.matrix(self$formula_trt(), self$surv_data)[, -1]
 
       if (algo == "lasso") {
+        H_m <- model.matrix(self$formula_hzrd(), self$at_risk_evnt())[, -1]
+        R_m <- model.matrix(self$formula_cens(), self$at_risk_cens())[, -1]
+        A_m <- model.matrix(self$formula_trt(), self$at_risk_trt())[, -1]
+        H_mon <- model.matrix(self$formula_hzrd(), on)[, -1]
+        H_moff <- model.matrix(self$formula_hzrd(), off)[, -1]
+        R_mon <- model.matrix(self$formula_cens(), on)[, -1]
+        R_moff <- model.matrix(self$formula_cens(), off)[, -1]
         pen <- rep(1, ncol(R_m))
         pen[grep("^as.factor\\(all_time\\)", colnames(R_m))] <- 0
         folds <- foldsids(nrow(self$surv_data), self$surv_data[["survrctId"]], 10)
@@ -108,32 +107,48 @@ Survival <- R6::R6Class(
           hzrd_on = bound01(as.vector(predict(fit_H, newx = H_mon, type = "response", s = "lambda.min"))),
           cens_off = bound01(as.vector(predict(fit_R, newx = R_moff, type = "response", s = "lambda.min"))),
           cens_on = bound01(as.vector(predict(fit_R, newx = R_mon, type = "response", s = "lambda.min"))),
-          trt_off = bound01(as.vector(1 - predict(fit_A, newx = A_o, type = "response", s = "lambda.min"))),
-          trt_on = bound01(as.vector(predict(fit_A, newx = A_o, type = "response", s = "lambda.min")))
+          trt_off = bound01(as.vector(1 - predict(fit_A, newx = A_m, type = "response", s = "lambda.min"))),
+          trt_on = bound01(as.vector(predict(fit_A, newx = A_m, type = "response", s = "lambda.min")))
         )
         return(invisible(self))
       }
 
       if (algo == "rf") {
-        fit_H <- ranger::ranger(x = H_m,
-                                y = self$at_risk_evnt()[["evnt"]],
-                                probability = TRUE)
-        fit_R <- ranger::ranger(x = R_m,
-                                y = self$at_risk_cens()[["cens"]],
-                                probability = TRUE)
-        fit_A <- ranger::ranger(x = A_m,
-                                y = self$at_risk_trt()[[self$trt]],
-                                probability = TRUE)
+        fit_H <- caret::train(
+          x = self$at_risk_evnt()[, c("all_time", self$trt, self$covar)],
+          y = factor(make.names(self$at_risk_evnt()[["evnt"]])),
+          method = "ranger",
+          tuneLength = 5,
+          trControl = caret::trainControl(
+            method = "cv",
+            classProbs = TRUE,
+            search = "random",
+            index = lapply(1:10, function(x) which(x != foldsids(nrow(self$at_risk_evnt()), self$at_risk_evnt()[["survrctId"]], 10)))
+          )
+        )
+        fit_R <- caret::train(
+          x = self$at_risk_cens()[, c("all_time", self$trt, self$covar)],
+          y = factor(make.names(self$at_risk_cens()[["cens"]])),
+          method = "ranger",
+          tuneLength = 5,
+          trControl = caret::trainControl(
+            method = "cv",
+            classProbs = TRUE,
+            search = "random",
+            index = lapply(1:10, function(x) which(x != foldsids(nrow(self$at_risk_cens()), self$at_risk_cens()[["survrctId"]], 10)))
+          )
+        )
+        fit_A <- glm(formula(paste(self$trt, "~", 1)), family = binomial(), data = self$at_risk_trt())
         self$nuisance <- list(
           hzrd_fit = fit_H,
           cens_fit = fit_R,
           trt_fit = fit_A,
-          hzrd_off = bound01(predict(fit_H, H_moff)$predictions[, 2]),
-          hzrd_on = bound01(predict(fit_H, H_mon)$predictions[, 2]),
-          cens_off = bound01(predict(fit_R, R_moff)$predictions[, 2]),
-          cens_on = bound01(predict(fit_R, R_mon)$predictions[, 2]),
-          trt_off = bound01(predict(fit_A, A_o)$predictions[, 1]),
-          trt_on = bound01(predict(fit_A, A_o)$predictions[, 2])
+          hzrd_off = bound01(predict(fit_H, off, type = "prob")[, "X1"]),
+          hzrd_on = bound01(predict(fit_H, on, type = "prob")[, "X1"]),
+          cens_off = bound01(predict(fit_R, off, type = "prob")[, "X1"]),
+          cens_on = bound01(predict(fit_R, on, type = "prob")[, "X1"]),
+          trt_off = as.vector(1 - predict(fit_A, type = "response")),
+          trt_on = as.vector(predict(fit_A, type = "response"))
         )
         return(invisible(self))
       }

@@ -17,7 +17,7 @@ rmst_tmle <- function(meta) {
   nuis <- meta$nuisance
   res <- listenv::listenv()
 
-  gA1 <- nuis$trt_on[all_time == 1]
+  gA1 <- nuis$trt_on
   gA0 <- 1 - gA1
 
   h1 <- nuis$hzrd_on

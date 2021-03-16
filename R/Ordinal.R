@@ -32,7 +32,6 @@ Ordinal <- R6::R6Class(
       self$K <- length(unique(self$data[[self$Y]]))
       self$nobs <- nrow(self$data)
       self$id <- rep(1:self$nobs, each = self$K - 1)
-
       W <- self$data[self$id, self$covar, drop = FALSE]
       A <- self$data[[self$trt]][self$id]
       kl <- as.factor(rep(1:(self$K - 1), self$nobs))
@@ -62,13 +61,14 @@ Ordinal <- R6::R6Class(
 
       on <- self$turn_on()
       off <- self$turn_off()
-      H_m <- model.matrix(self$formula_y(), self$at_risk())[, -1, drop = FALSE]
-      A_m <- model.matrix(self$formula_trt(), self$data)[, -1, drop = FALSE]
-      H_mon <- model.matrix(self$formula_y(), on)[, -1, drop = FALSE]
-      H_moff <- model.matrix(self$formula_y(), off)[, -1, drop = FALSE]
-      A_o <- model.matrix(self$formula_trt(), self$data)[, -1, drop = FALSE]
 
       if (algo == "lasso") {
+        H_m <- model.matrix(self$formula_y(), self$at_risk())[, -1, drop = FALSE]
+        A_m <- model.matrix(self$formula_trt(), self$data)[, -1, drop = FALSE]
+        H_mon <- model.matrix(self$formula_y(), on)[, -1, drop = FALSE]
+        H_moff <- model.matrix(self$formula_y(), off)[, -1, drop = FALSE]
+        A_o <- model.matrix(self$formula_trt(), self$data)[, -1, drop = FALSE]
+
         folds <- foldsids(nrow(self$ordinal_data), self$ordinal_data[["ordinalrctId"]], 10)
         fit_Q <- glmnet::cv.glmnet(H_m, as.matrix(self$at_risk()[["Y"]]),
                                    family = "binomial", foldid = folds[self$R == 1])
@@ -86,15 +86,26 @@ Ordinal <- R6::R6Class(
       }
 
       if (algo == "rf") {
-        fit_Q <- ranger::ranger(x = H_m, y = self$at_risk()[["Y"]], probability = TRUE)
-        fit_A <- ranger::ranger(x = A_m, y = self$data[[self$trt]], probability = TRUE)
+        fit_Q <- caret::train(
+          x = self$at_risk()[, c("kl", self$trt, self$covar)],
+          y = factor(make.names(self$at_risk()[["Y"]])),
+          method = "ranger",
+          tuneLength = 5,
+          trControl = caret::trainControl(
+            method = "cv",
+            classProbs = TRUE,
+            search = "random",
+            index = lapply(1:10, function(x) which(x != foldsids(nrow(self$at_risk()), self$at_risk()[["ordinalrctId"]], 10)))
+          )
+        )
+        fit_A <- glm(formula(paste(self$trt, "~", 1)), family = binomial(), data = self$data)
         self$nuisance <- list(
           hzrd_fit = fit_Q,
           trt_fit = fit_A,
-          H_off = bound01(predict(fit_Q, H_moff)$predictions[, 2]),
-          H_on = bound01(predict(fit_Q, H_mon)$predictions[, 2]),
-          trt_off = bound01(predict(fit_A, A_o)$predictions[, 1]),
-          trt_on = bound01(predict(fit_A, A_o)$predictions[, 2])
+          H_off = bound01(predict(fit_Q, off, type = "prob")[, "X1"]),
+          H_on = bound01(predict(fit_Q, on, type = "prob")[, "X1"]),
+          trt_off = as.vector(1 - predict(fit_A, type = "response")),
+          trt_on = as.vector(predict(fit_A, type = "response"))
         )
         return(invisible(self))
       }
