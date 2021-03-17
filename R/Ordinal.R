@@ -38,7 +38,7 @@ Ordinal <- R6::R6Class(
       Yl <- as.numeric(as.numeric(self$data[[self$Y]][self$id]) == kl)
       self$R <- unlist(lapply(tapply(Yl, self$id, cumsum), function(x) as.numeric(cumsum(x) <= 1)))
 
-      self$ordinal_data <- data.frame(ordinalrctId = self$id, W, A, kl, Y = Yl)
+      self$ordinal_data <- data.frame(ordinalrctId = self$id, atRisk = self$R, W, A, kl, Y = Yl)
       invisible(self)
     },
     fit_nuis = function(algo) {
@@ -86,24 +86,15 @@ Ordinal <- R6::R6Class(
       }
 
       if (algo == "rf") {
-        fit_Q <- caret::train(
-          x = self$at_risk()[, c("kl", self$trt, self$covar)],
-          y = factor(make.names(self$at_risk()[["Y"]])),
-          method = "ranger",
-          tuneLength = 5,
-          trControl = caret::trainControl(
-            method = "cv",
-            classProbs = TRUE,
-            search = "random",
-            index = lapply(1:10, function(x) which(x != foldsids(nrow(self$at_risk()), self$at_risk()[["ordinalrctId"]], 10)))
-          )
-        )
+        V <- automate_folds(nrow(self$ordinal_data))
+        folds <- origami::make_folds(self$ordinal_data, cluster_ids = self$ordinal_data$ordinalrctId, V = V)
+        cf <- origami::cross_validate(cv_fun = cf_rf_ord, folds = folds, self = self)
         fit_A <- glm(formula(paste(self$trt, "~", 1)), family = binomial(), data = self$data)
         self$nuisance <- list(
-          hzrd_fit = fit_Q,
+          hzrd_fit = cf$hzrd_fit,
           trt_fit = fit_A,
-          H_off = bound01(predict(fit_Q, off, type = "prob")[, "X1"]),
-          H_on = bound01(predict(fit_Q, on, type = "prob")[, "X1"]),
+          H_off = cf$H_off[order(do.call("c", lapply(folds, function(x) x$validation_set)))],
+          H_on = cf$H_on[order(do.call("c", lapply(folds, function(x) x$validation_set)))],
           trt_off = as.vector(1 - predict(fit_A, type = "response")),
           trt_on = as.vector(predict(fit_A, type = "response"))
         )
@@ -152,3 +143,29 @@ Ordinal <- R6::R6Class(
     }
   )
 )
+
+cf_rf_ord <- function(fold, self) {
+  train <- origami::training(self$ordinal_data)
+  train <- train[train$atRisk == 1, ]
+  on <- origami::validation(self$turn_on())
+  off <- origami::validation(self$turn_off())
+  V <- automate_folds(nrow(train))
+
+  fit_Q <- caret::train(
+    x = train[, c("kl", self$trt, self$covar)],
+    y = factor(make.names(train[["Y"]])),
+    method = "ranger",
+    tuneLength = 5,
+    trControl = caret::trainControl(
+      method = "cv",
+      classProbs = TRUE,
+      search = "random",
+      index = lapply(1:V, function(x) which(x != foldsids(nrow(train), train[["ordinalrctId"]], V)))
+    )
+  )
+
+  out <- list(H_off = bound01(predict(fit_Q, off, type = "prob")[, "X1"]),
+              H_on = bound01(predict(fit_Q, on, type = "prob")[, "X1"]),
+              hzrd_fit = fit_Q)
+  return(out)
+}

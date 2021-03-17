@@ -76,3 +76,16 @@ dist_ci <- function(estim, std.error) {
   }
   out
 }
+
+automate_folds <- function(n) {
+  if (n <= 100) {
+    return(20)
+  }
+  if (n > 100 && n <= 500) {
+    return(10)
+  }
+  if (n > 500 && n <= 1000) {
+    return(5)
+  }
+  return(3)
+}

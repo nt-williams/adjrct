@@ -114,39 +114,18 @@ Survival <- R6::R6Class(
       }
 
       if (algo == "rf") {
-        fit_H <- caret::train(
-          x = self$at_risk_evnt()[, c("all_time", self$trt, self$covar)],
-          y = factor(make.names(self$at_risk_evnt()[["evnt"]])),
-          method = "ranger",
-          tuneLength = 5,
-          trControl = caret::trainControl(
-            method = "cv",
-            classProbs = TRUE,
-            search = "random",
-            index = lapply(1:10, function(x) which(x != foldsids(nrow(self$at_risk_evnt()), self$at_risk_evnt()[["survrctId"]], 10)))
-          )
-        )
-        fit_R <- caret::train(
-          x = self$at_risk_cens()[, c("all_time", self$trt, self$covar)],
-          y = factor(make.names(self$at_risk_cens()[["cens"]])),
-          method = "ranger",
-          tuneLength = 5,
-          trControl = caret::trainControl(
-            method = "cv",
-            classProbs = TRUE,
-            search = "random",
-            index = lapply(1:10, function(x) which(x != foldsids(nrow(self$at_risk_cens()), self$at_risk_cens()[["survrctId"]], 10)))
-          )
-        )
+        V <- automate_folds(nrow(self$surv_data))
+        folds <- origami::make_folds(self$surv_data, cluster_ids = self$surv_data$survrctId, V = V)
+        cf <- origami::cross_validate(cv_fun = cf_rf_surv, folds = folds, self = self)
         fit_A <- glm(formula(paste(self$trt, "~", 1)), family = binomial(), data = self$at_risk_trt())
         self$nuisance <- list(
-          hzrd_fit = fit_H,
-          cens_fit = fit_R,
+          hzrd_fit = cf$hzrd_fit,
+          cens_fit = cf$cens_fit,
           trt_fit = fit_A,
-          hzrd_off = bound01(predict(fit_H, off, type = "prob")[, "X1"]),
-          hzrd_on = bound01(predict(fit_H, on, type = "prob")[, "X1"]),
-          cens_off = bound01(predict(fit_R, off, type = "prob")[, "X1"]),
-          cens_on = bound01(predict(fit_R, on, type = "prob")[, "X1"]),
+          hzrd_off = cf$hzrd_off[order(do.call("c", lapply(folds, function(x) x$validation_set)))],
+          hzrd_on = cf$hzrd_on[order(do.call("c", lapply(folds, function(x) x$validation_set)))],
+          cens_off = cf$cens_off[order(do.call("c", lapply(folds, function(x) x$validation_set)))],
+          cens_on = cf$cens_on[order(do.call("c", lapply(folds, function(x) x$validation_set)))],
           trt_off = as.vector(1 - predict(fit_A, type = "response")),
           trt_on = as.vector(predict(fit_A, type = "response"))
         )
@@ -227,3 +206,50 @@ Survival <- R6::R6Class(
     }
   )
 )
+
+cf_rf_surv <- function(fold, self) {
+  arH <- origami::training(self$risk_evnt)
+  train_H <- origami::training(self$surv_data)[arH == 1, ]
+  VH <- automate_folds(nrow(train_H))
+
+  arR <- origami::training(self$risk_cens)
+  train_R <- origami::training(self$surv_data)[arR == 1, ]
+  VR <- automate_folds(nrow(train_R))
+
+  on <- origami::validation(self$turn_on())
+  off <- origami::validation(self$turn_off())
+
+  fit_H <- caret::train(
+    x = train_H[, c("all_time", self$trt, self$covar)],
+    y = factor(make.names(train_H[["evnt"]])),
+    method = "ranger",
+    tuneLength = 5,
+    trControl = caret::trainControl(
+      method = "cv",
+      classProbs = TRUE,
+      search = "random",
+      index = lapply(1:VH, function(x) which(x != foldsids(nrow(train_H), train_H[["survrctId"]], VH)))
+    )
+  )
+
+  fit_R <- caret::train(
+    x = train_R[, c("all_time", self$trt, self$covar)],
+    y = factor(make.names(train_R[["cens"]])),
+    method = "ranger",
+    tuneLength = 5,
+    trControl = caret::trainControl(
+      method = "cv",
+      classProbs = TRUE,
+      search = "random",
+      index = lapply(1:VR, function(x) which(x != foldsids(nrow(train_R), train_R[["survrctId"]], VR)))
+    )
+  )
+
+  out <- list(hzrd_off = bound01(predict(fit_H, off, type = "prob")[, "X1"]),
+              hzrd_on = bound01(predict(fit_H, on, type = "prob")[, "X1"]),
+              cens_off = bound01(predict(fit_R, off, type = "prob")[, "X1"]),
+              cens_on = bound01(predict(fit_R, on, type = "prob")[, "X1"]),
+              hzrd_fit = fit_H,
+              cens_fit = fit_R)
+  return(out)
+}
