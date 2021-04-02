@@ -56,7 +56,7 @@ Survival <- R6::R6Class(
                                    all_time = self$all_time, evnt, cens)
       invisible(self)
     },
-    fit_nuis = function(algo) {
+    fit_nuis = function(algo, crossfit) {
       if (length(self$covar) < 2) algo <- "glm"
 
       if (algo == "glm") {
@@ -68,12 +68,12 @@ Survival <- R6::R6Class(
           hzrd_fit = fit_H,
           cens_fit = fit_R,
           trt_fit = fit_A,
-          hzrd_off = predict(fit_H, newdata = self$turn_off(), type = "response"),
-          hzrd_on = predict(fit_H, newdata = self$turn_on(), type = "response"),
-          cens_off = predict(fit_R, newdata = self$turn_off(), type = "response"),
-          cens_on = predict(fit_R, newdata = self$turn_on(), type = "response"),
-          trt_off = 1 - predict(fit_A, type = "response"),
-          trt_on = predict(fit_A, type = "response")
+          hzrd_off = bound01(predict(fit_H, newdata = self$turn_off(), type = "response")),
+          hzrd_on = bound01(predict(fit_H, newdata = self$turn_on(), type = "response")),
+          cens_off = bound01(predict(fit_R, newdata = self$turn_off(), type = "response")),
+          cens_on = bound01(predict(fit_R, newdata = self$turn_on(), type = "response")),
+          trt_off = bound01(1 - predict(fit_A, type = "response")),
+          trt_on = bound01(predict(fit_A, type = "response"))
         )
         return(invisible(self))
       }
@@ -83,51 +83,53 @@ Survival <- R6::R6Class(
 
       if (algo == "lasso") {
         H_m <- model.matrix(self$formula_hzrd(), self$at_risk_evnt())[, -1]
-        R_m <- model.matrix(self$formula_cens(), self$at_risk_cens())[, -1]
-        A_m <- model.matrix(self$formula_trt(), self$at_risk_trt())[, -1]
         H_mon <- model.matrix(self$formula_hzrd(), on)[, -1]
         H_moff <- model.matrix(self$formula_hzrd(), off)[, -1]
-        R_mon <- model.matrix(self$formula_cens(), on)[, -1]
-        R_moff <- model.matrix(self$formula_cens(), off)[, -1]
-        pen <- rep(1, ncol(R_m))
-        pen[grep("^as.factor\\(all_time\\)", colnames(R_m))] <- 0
         folds <- foldsids(nrow(self$surv_data), self$surv_data[["survrctId"]], 10)
         fit_H <- glmnet::cv.glmnet(H_m, as.matrix(self$at_risk_evnt()[["evnt"]]),
                                    family = "binomial", foldid = folds[self$risk_evnt == 1])
-        fit_R <- glmnet::cv.glmnet(R_m, self$at_risk_cens()[["cens"]],
-                                   family = "binomial", penalty.factor = pen,
-                                   foldid = folds[self$risk_cens == 1])
-        fit_A <- glmnet::cv.glmnet(A_m, self$at_risk_trt()[[self$trt]],
-                                   family = "binomial", foldid = folds[self$all_time == 1])
+
+        # for the paper, only the hazard will be estimated using variable selection
+        fit_R <- glm(self$formula_cens(), data = self$at_risk_cens(), family = binomial())
+        fit_A <- glm(self$formula_trt(), family = binomial(), data = self$at_risk_trt())
         self$nuisance <- list(
           hzrd_fit = fit_H,
           cens_fit = fit_R,
           trt_fit = fit_A,
           hzrd_off = bound01(as.vector(predict(fit_H, newx = H_moff, type = "response", s = "lambda.min"))),
           hzrd_on = bound01(as.vector(predict(fit_H, newx = H_mon, type = "response", s = "lambda.min"))),
-          cens_off = bound01(as.vector(predict(fit_R, newx = R_moff, type = "response", s = "lambda.min"))),
-          cens_on = bound01(as.vector(predict(fit_R, newx = R_mon, type = "response", s = "lambda.min"))),
-          trt_off = bound01(as.vector(1 - predict(fit_A, newx = A_m, type = "response", s = "lambda.min"))),
-          trt_on = bound01(as.vector(predict(fit_A, newx = A_m, type = "response", s = "lambda.min")))
+          cens_off = bound01(predict(fit_R, newdata = self$turn_off(), type = "response")),
+          cens_on = bound01(predict(fit_R, newdata = self$turn_on(), type = "response")),
+          trt_off = bound01(as.vector(1 - predict(fit_A, type = "response"))),
+          trt_on = bound01(as.vector(predict(fit_A, type = "response")))
         )
         return(invisible(self))
       }
 
-      if (algo == "rf") {
-        V <- automate_folds(nrow(self$surv_data))
-        folds <- origami::make_folds(self$surv_data, cluster_ids = self$surv_data$survrctId, V = V)
-        cf <- origami::cross_validate(cv_fun = cf_rf_surv, folds = folds, self = self)
-        fit_A <- glm(formula(paste(self$trt, "~", 1)), family = binomial(), data = self$at_risk_trt())
+      if (algo %in% c("rf", "xgboost", "earth")) {
+        if (crossfit) {
+          V <- automate_folds(nrow(self$surv_data))
+          folds <- origami::make_folds(self$surv_data, cluster_ids = self$surv_data$survrctId, V = V)
+          cf <- origami::cross_validate(cv_fun = cf_da_surv, algo = algo, folds = folds, self = self)
+        } else {
+          folds <- origami::make_folds(self$surv_data, cluster_ids = self$surv_data$survrctId, V = 1)
+          folds[[1]]$training_set <- folds[[1]]$validation_set
+          cf <- origami::cross_validate(cv_fun = cf_da_surv, algo = algo, folds = folds, self = self)
+        }
+
+        # for the paper, only the hazard will be estimated using variable selection
+        fit_R <- glm(self$formula_cens(), data = self$at_risk_cens(), family = binomial())
+        fit_A <- glm(self$formula_trt(), family = binomial(), data = self$at_risk_trt())
         self$nuisance <- list(
           hzrd_fit = cf$hzrd_fit,
-          cens_fit = cf$cens_fit,
+          cens_fit = fit_R,
           trt_fit = fit_A,
           hzrd_off = cf$hzrd_off[order(do.call("c", lapply(folds, function(x) x$validation_set)))],
           hzrd_on = cf$hzrd_on[order(do.call("c", lapply(folds, function(x) x$validation_set)))],
-          cens_off = cf$cens_off[order(do.call("c", lapply(folds, function(x) x$validation_set)))],
-          cens_on = cf$cens_on[order(do.call("c", lapply(folds, function(x) x$validation_set)))],
-          trt_off = as.vector(1 - predict(fit_A, type = "response")),
-          trt_on = as.vector(predict(fit_A, type = "response"))
+          cens_off = bound01(predict(fit_R, newdata = self$turn_off(), type = "response")),
+          cens_on = bound01(predict(fit_R, newdata = self$turn_on(), type = "response")),
+          trt_off = bound01(as.vector(1 - predict(fit_A, type = "response"))),
+          trt_on = bound01(as.vector(predict(fit_A, type = "response")))
         )
         return(invisible(self))
       }
@@ -176,15 +178,10 @@ Survival <- R6::R6Class(
       outer(self$all_time, 1:self$max_time, "<=")
     },
     formula_trt = function() {
-      if (length(self$covar) == 0) {
-        covar <- 1
-      } else {
-        covar <- self$covar
-      }
-      formula(paste(self$trt, "~", paste(covar, collapse = "+")))
+      formula(paste(self$trt, "~", 1))
     },
     formula_cens = function() {
-      formula(paste("cens ~", self$trt, "* (", paste(c("as.factor(all_time)", self$covar), collapse = "+"), ")"))
+      formula(paste("cens ~", self$trt, "* as.factor(all_time)"))
     },
     formula_hzrd = function() {
       formula(paste("evnt ~", self$trt, "* (", paste(c("all_time", self$covar), collapse = "+"), ")"))
@@ -207,49 +204,71 @@ Survival <- R6::R6Class(
   )
 )
 
-cf_rf_surv <- function(fold, self) {
+cf_da_surv <- function(algo, fold, self) {
   arH <- origami::training(self$risk_evnt)
   train_H <- origami::training(self$surv_data)[arH == 1, ]
   VH <- automate_folds(nrow(train_H))
 
-  arR <- origami::training(self$risk_cens)
-  train_R <- origami::training(self$surv_data)[arR == 1, ]
-  VR <- automate_folds(nrow(train_R))
-
   on <- origami::validation(self$turn_on())
   off <- origami::validation(self$turn_off())
 
-  fit_H <- caret::train(
-    x = train_H[, c("all_time", self$trt, self$covar)],
-    y = factor(make.names(train_H[["evnt"]])),
-    method = "ranger",
-    tuneLength = 5,
-    trControl = caret::trainControl(
-      method = "cv",
-      classProbs = TRUE,
-      search = "random",
-      index = lapply(1:VH, function(x) which(x != foldsids(nrow(train_H), train_H[["survrctId"]], VH)))
+  if (algo == "rf") {
+    fit_H <- caret::train(
+      x = train_H[, c("all_time", self$trt, self$covar)],
+      y = factor(make.names(train_H[["evnt"]])),
+      method = "ranger",
+      tuneLength = 5,
+      trControl = caret::trainControl(
+        method = "cv",
+        classProbs = TRUE,
+        search = "random",
+        index = lapply(1:VH, function(x) which(x != foldsids(nrow(train_H), train_H[["survrctId"]], VH)))
+      )
     )
-  )
 
-  fit_R <- caret::train(
-    x = train_R[, c("all_time", self$trt, self$covar)],
-    y = factor(make.names(train_R[["cens"]])),
-    method = "ranger",
-    tuneLength = 5,
-    trControl = caret::trainControl(
-      method = "cv",
-      classProbs = TRUE,
-      search = "random",
-      index = lapply(1:VR, function(x) which(x != foldsids(nrow(train_R), train_R[["survrctId"]], VR)))
+    out <- list(hzrd_off = bound01(predict(fit_H, off, type = "prob")[, "X1"]),
+                hzrd_on = bound01(predict(fit_H, on, type = "prob")[, "X1"]),
+                hzrd_fit = fit_H)
+    return(out)
+  }
+
+  if (algo == "xgboost") {
+    fit_H <- caret::train(
+      x = model.matrix(reformulate(c("all_time", self$trt, self$covar)), data = train_H),
+      y = factor(make.names(train_H[["evnt"]])),
+      method = "xgbTree",
+      tuneLength = 5,
+      trControl = caret::trainControl(
+        method = "cv",
+        classProbs = TRUE,
+        search = "random",
+        index = lapply(1:VH, function(x) which(x != foldsids(nrow(train_H), train_H[["survrctId"]], VH)))
+      )
     )
-  )
 
-  out <- list(hzrd_off = bound01(predict(fit_H, off, type = "prob")[, "X1"]),
-              hzrd_on = bound01(predict(fit_H, on, type = "prob")[, "X1"]),
-              cens_off = bound01(predict(fit_R, off, type = "prob")[, "X1"]),
-              cens_on = bound01(predict(fit_R, on, type = "prob")[, "X1"]),
-              hzrd_fit = fit_H,
-              cens_fit = fit_R)
-  return(out)
+    out <- list(hzrd_off = bound01(predict(fit_H, model.matrix(reformulate(c("all_time", self$trt, self$covar)), data = off), type = "prob")[, "X1"]),
+                hzrd_on = bound01(predict(fit_H, model.matrix(reformulate(c("all_time", self$trt, self$covar)), data = on), type = "prob")[, "X1"]),
+                hzrd_fit = fit_H)
+    return(out)
+  }
+
+  if (algo == "earth") {
+    fit_H <- caret::train(
+      x = train_H[, c("all_time", self$trt, self$covar)],
+      y = factor(make.names(train_H[["evnt"]])),
+      method = "earth",
+      tuneLength = 5,
+      trControl = caret::trainControl(
+        method = "cv",
+        classProbs = TRUE,
+        search = "random",
+        index = lapply(1:VH, function(x) which(x != foldsids(nrow(train_H), train_H[["survrctId"]], VH)))
+      )
+    )
+
+    out <- list(hzrd_off = bound01(predict(fit_H, off, type = "prob")[, "X1"]),
+                hzrd_on = bound01(predict(fit_H, on, type = "prob")[, "X1"]),
+                hzrd_fit = fit_H)
+    return(out)
+  }
 }

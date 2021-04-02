@@ -28,11 +28,12 @@
 #'         target = "trt", data = colon, coarsen = 30, estimator = "tmle")
 #' }
 survrct <- function(formula, target, data, coarsen = 1,
-                    estimator = c("tmle", "aipw"), algo = c("glm", "lasso", "rf")) {
+                    estimator = c("tmle", "aipw"), algo = c("glm", "lasso", "rf", "xgboost", "earth"),
+                    crossfit = TRUE) {
   Survival$
     new(formula, target, data, match.arg(estimator))$
     prepare_data(coarsen)$
-    fit_nuis(match.arg(algo))
+    fit_nuis(match.arg(algo), crossfit)
 }
 
 #' Estimate Restricted Mean Survival Time
@@ -126,11 +127,12 @@ survprob <- function(metadata, horizon = NULL) {
 #' @return An R6 object of class "Ordinal".
 #' @export
 ordinalrct <- function(formula, target, data,
-                       estimator = c("tmle", "aipw"), algo = c("glm", "lasso", "rf")) {
+                       estimator = c("tmle", "aipw"), algo = c("glm", "lasso", "rf", "xgboost", "earth"),
+                       crossfit = TRUE) {
   Ordinal$
     new(formula, target, data, match.arg(estimator))$
     prepare_data()$
-    fit_nuis(match.arg(algo))
+    fit_nuis(match.arg(algo), crossfit)
 }
 
 #' Estimate Average Log Odds Ratio

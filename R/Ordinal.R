@@ -41,7 +41,7 @@ Ordinal <- R6::R6Class(
       self$ordinal_data <- data.frame(ordinalrctId = self$id, atRisk = self$R, W, A, kl, Y = Yl)
       invisible(self)
     },
-    fit_nuis = function(algo) {
+    fit_nuis = function(algo, crossfit = TRUE) {
       if (length(self$covar) < 2) algo <- "glm"
 
       if (algo == "glm") {
@@ -53,8 +53,8 @@ Ordinal <- R6::R6Class(
           trt_fit = fit_A,
           H_off = bound01(as.vector(predict(fit_Q, newdata = self$turn_off(), type = "response"))),
           H_on = bound01(as.vector(predict(fit_Q, newdata = self$turn_on(), type = "response"))),
-          trt_off = as.vector(1 - predict(fit_A, type = "response")),
-          trt_on = as.vector(predict(fit_A, type = "response"))
+          trt_off = bound01(as.vector(1 - predict(fit_A, type = "response"))),
+          trt_on = bound01(as.vector(predict(fit_A, type = "response")))
         )
         return(invisible(self))
       }
@@ -64,39 +64,44 @@ Ordinal <- R6::R6Class(
 
       if (algo == "lasso") {
         H_m <- model.matrix(self$formula_y(), self$at_risk())[, -1, drop = FALSE]
-        A_m <- model.matrix(self$formula_trt(), self$data)[, -1, drop = FALSE]
         H_mon <- model.matrix(self$formula_y(), on)[, -1, drop = FALSE]
         H_moff <- model.matrix(self$formula_y(), off)[, -1, drop = FALSE]
-        A_o <- model.matrix(self$formula_trt(), self$data)[, -1, drop = FALSE]
 
         folds <- foldsids(nrow(self$ordinal_data), self$ordinal_data[["ordinalrctId"]], 10)
         fit_Q <- glmnet::cv.glmnet(H_m, as.matrix(self$at_risk()[["Y"]]),
                                    family = "binomial", foldid = folds[self$R == 1])
-        fit_A <- glmnet::cv.glmnet(A_m, self$data[[self$trt]],
-                                   family = "binomial", foldid = as.vector(tapply(folds, self$id, function(x) x[1])))
+
+        fit_A <- glm(self$formula_trt(), family = binomial(), data = self$data)
         self$nuisance <- list(
           hzrd_fit = fit_Q,
           trt_fit = fit_A,
           H_off = bound01(as.vector(predict(fit_Q, newx = H_moff, type = "response", s = "lambda.min"))),
           H_on = bound01(as.vector(predict(fit_Q, newx = H_mon, type = "response", s = "lambda.min"))),
-          trt_off = bound01(as.vector(1 - predict(fit_A, newx = A_o, type = "response", s = "lambda.min"))),
-          trt_on = bound01(as.vector(predict(fit_A, newx = A_o, type = "response", s = "lambda.min")))
+          trt_off = bound01(as.vector(1 - predict(fit_A, type = "response"))),
+          trt_on = bound01(as.vector(predict(fit_A, type = "response")))
         )
         return(invisible(self))
       }
 
-      if (algo == "rf") {
-        V <- automate_folds(nrow(self$ordinal_data))
-        folds <- origami::make_folds(self$ordinal_data, cluster_ids = self$ordinal_data$ordinalrctId, V = V)
-        cf <- origami::cross_validate(cv_fun = cf_rf_ord, folds = folds, self = self)
-        fit_A <- glm(formula(paste(self$trt, "~", 1)), family = binomial(), data = self$data)
+      if (algo %in% c("rf", "xgboost", "earth")) {
+        if (crossfit) {
+          V <- automate_folds(nrow(self$ordinal_data))
+          folds <- origami::make_folds(self$ordinal_data, cluster_ids = self$ordinal_data$ordinalrctId, V = V)
+          cf <- origami::cross_validate(cv_fun = cf_da_ord, algo = algo, folds = folds, self = self)
+        } else {
+          folds <- origami::make_folds(self$ordinal_data, cluster_ids = self$ordinal_data$ordinalrctId, V = 1)
+          folds[[1]]$training_set <- folds[[1]]$validation_set
+          cf <- origami::cross_validate(cv_fun = cf_da_ord, algo = algo, folds = folds, self = self)
+        }
+
+        fit_A <- glm(self$formula_trt(), family = binomial(), data = self$data)
         self$nuisance <- list(
           hzrd_fit = cf$hzrd_fit,
           trt_fit = fit_A,
           H_off = cf$H_off[order(do.call("c", lapply(folds, function(x) x$validation_set)))],
           H_on = cf$H_on[order(do.call("c", lapply(folds, function(x) x$validation_set)))],
-          trt_off = as.vector(1 - predict(fit_A, type = "response")),
-          trt_on = as.vector(predict(fit_A, type = "response"))
+          trt_off = bound01(as.vector(1 - predict(fit_A, type = "response"))),
+          trt_on = bound01(as.vector(predict(fit_A, type = "response")))
         )
         return(invisible(self))
       }
@@ -115,12 +120,7 @@ Ordinal <- R6::R6Class(
       return(out)
     },
     formula_trt = function() {
-      if (length(self$covar) == 0) {
-        covar <- 1
-      } else {
-        covar <- self$covar
-      }
-      formula(paste(self$trt, "~", paste(covar, collapse = "+")))
+      formula(paste(self$trt, "~", 1))
     },
     formula_y = function() {
       formula(paste("Y ~ -1 + kl*(", paste(c("A", self$covar), collapse = "+"), ")"))
@@ -144,28 +144,70 @@ Ordinal <- R6::R6Class(
   )
 )
 
-cf_rf_ord <- function(fold, self) {
+cf_da_ord <- function(algo, fold, self) {
   train <- origami::training(self$ordinal_data)
   train <- train[train$atRisk == 1, ]
   on <- origami::validation(self$turn_on())
   off <- origami::validation(self$turn_off())
   V <- automate_folds(nrow(train))
 
-  fit_Q <- caret::train(
-    x = train[, c("kl", self$trt, self$covar)],
-    y = factor(make.names(train[["Y"]])),
-    method = "ranger",
-    tuneLength = 5,
-    trControl = caret::trainControl(
-      method = "cv",
-      classProbs = TRUE,
-      search = "random",
-      index = lapply(1:V, function(x) which(x != foldsids(nrow(train), train[["ordinalrctId"]], V)))
+  if (algo == "xgboost") {
+    fit_Q <- caret::train(
+      x = model.matrix(reformulate(c("kl", self$trt, self$covar)), data = train),
+      y = factor(make.names(train[["Y"]])),
+      method = "xgbTree",
+      tuneLength = 5,
+      trControl = caret::trainControl(
+        method = "cv",
+        classProbs = TRUE,
+        search = "random",
+        index = lapply(1:V, function(x) which(x != foldsids(nrow(train), train[["ordinalrctId"]], V)))
+      )
     )
-  )
 
-  out <- list(H_off = bound01(predict(fit_Q, off, type = "prob")[, "X1"]),
-              H_on = bound01(predict(fit_Q, on, type = "prob")[, "X1"]),
-              hzrd_fit = fit_Q)
-  return(out)
+    out <- list(H_off = bound01(predict(fit_Q, model.matrix(reformulate(c("kl", self$trt, self$covar)), off), type = "prob")[, "X1"]),
+                H_on = bound01(predict(fit_Q, model.matrix(reformulate(c("kl", self$trt, self$covar)), on), type = "prob")[, "X1"]),
+                hzrd_fit = fit_Q)
+    return(out)
+  }
+
+  if (algo == "rf") {
+    fit_Q <- caret::train(
+      x = train[, c("kl", self$trt, self$covar)],
+      y = factor(make.names(train[["Y"]])),
+      method = "ranger",
+      tuneLength = 5,
+      trControl = caret::trainControl(
+        method = "cv",
+        classProbs = TRUE,
+        search = "random",
+        index = lapply(1:V, function(x) which(x != foldsids(nrow(train), train[["ordinalrctId"]], V)))
+      )
+    )
+
+    out <- list(H_off = bound01(predict(fit_Q, off, type = "prob")[, "X1"]),
+                H_on = bound01(predict(fit_Q, on, type = "prob")[, "X1"]),
+                hzrd_fit = fit_Q)
+    return(out)
+  }
+
+  if (algo == "earth") {
+    fit_Q <- caret::train(
+      x = model.matrix(reformulate(c("kl", self$trt, self$covar)), data = train),
+      y = factor(make.names(train[["Y"]])),
+      method = "earth",
+      tuneLength = 5,
+      trControl = caret::trainControl(
+        method = "cv",
+        classProbs = TRUE,
+        search = "random",
+        index = lapply(1:V, function(x) which(x != foldsids(nrow(train), train[["ordinalrctId"]], V)))
+      )
+    )
+
+    out <- list(H_off = bound01(predict(fit_Q, model.matrix(reformulate(c("kl", self$trt, self$covar)), off), type = "prob")[, "X1"]),
+                H_on = bound01(predict(fit_Q, model.matrix(reformulate(c("kl", self$trt, self$covar)), on), type = "prob")[, "X1"]),
+                hzrd_fit = fit_Q)
+    return(out)
+  }
 }

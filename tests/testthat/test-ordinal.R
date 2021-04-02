@@ -1,7 +1,8 @@
-metarf <- ordinalrct(Y ~ A + age + EnrollmentNIHSStotal, "A", mistie, "tmle", algo = "rf")
+metarf <- ordinalrct(Y ~ A + age + EnrollmentNIHSStotal, "A", mistie, "tmle",
+                     algo = "earth", crossfit = FALSE)
 
 log_or(metarf)
-mannwhitney(meta)
+mannwhitney(metarf)
 
 metaen <- ordinalrct(Y ~ A + age + EnrollmentNIHSStotal, "A", mistie, "tmle", algo = "lasso")
 
