@@ -206,69 +206,76 @@ Survival <- R6::R6Class(
 
 cf_da_surv <- function(algo, fold, self) {
   arH <- origami::training(self$risk_evnt)
-  train_H <- origami::training(self$surv_data)[arH == 1, ]
-  VH <- automate_folds(nrow(train_H))
+  train <- origami::training(self$surv_data)[arH == 1, ]
+  folds <- origami::make_folds(train, cluster_ids = train[["survrctId"]], V = automate_folds(nrow(train)))
 
   on <- origami::validation(self$turn_on())
   off <- origami::validation(self$turn_off())
 
   if (algo == "rf") {
-    fit_H <- caret::train(
-      x = train_H[, c("all_time", self$trt, self$covar)],
-      y = factor(make.names(train_H[["evnt"]])),
+    f <- reformulate(c("-1", self$trt, "all_time", self$covar))
+    fit <- caret::train(
+      x = model.matrix(f, data = train),
+      y = factor(make.names(train[["evnt"]])),
       method = "ranger",
       tuneLength = 5,
       trControl = caret::trainControl(
         method = "cv",
         classProbs = TRUE,
         search = "random",
-        index = lapply(1:VH, function(x) which(x != foldsids(nrow(train_H), train_H[["survrctId"]], VH)))
+        index = lapply(folds, function(x) x$training_set),
+        indexOut = lapply(folds, function(x) x$validation_set)
       )
     )
 
-    out <- list(hzrd_off = bound01(predict(fit_H, off, type = "prob")[, "X1"]),
-                hzrd_on = bound01(predict(fit_H, on, type = "prob")[, "X1"]),
-                hzrd_fit = fit_H)
+    out <- list(hzrd_off = bound01(predict(fit, model.matrix(f, data = off), type = "prob")[, "X1"]),
+                hzrd_on = bound01(predict(fit, model.matrix(f, data = on), type = "prob")[, "X1"]),
+                hzrd_fit = fit)
     return(out)
   }
 
   if (algo == "xgboost") {
-    fit_H <- caret::train(
-      x = model.matrix(reformulate(c("all_time", self$trt, self$covar)), data = train_H),
-      y = factor(make.names(train_H[["evnt"]])),
+    f <- reformulate(c("-1", self$trt, "all_time", self$covar))
+    fit <- caret::train(
+      x = model.matrix(f, data = train),
+      y = factor(make.names(train[["evnt"]])),
       method = "xgbTree",
       tuneLength = 5,
       trControl = caret::trainControl(
         method = "cv",
         classProbs = TRUE,
         search = "random",
-        index = lapply(1:VH, function(x) which(x != foldsids(nrow(train_H), train_H[["survrctId"]], VH)))
+        index = lapply(folds, function(x) x$training_set),
+        indexOut = lapply(folds, function(x) x$validation_set)
       )
     )
 
-    out <- list(hzrd_off = bound01(predict(fit_H, model.matrix(reformulate(c("all_time", self$trt, self$covar)), data = off), type = "prob")[, "X1"]),
-                hzrd_on = bound01(predict(fit_H, model.matrix(reformulate(c("all_time", self$trt, self$covar)), data = on), type = "prob")[, "X1"]),
-                hzrd_fit = fit_H)
+    out <- list(hzrd_off = bound01(predict(fit, model.matrix(f, data = off), type = "prob")[, "X1"]),
+                hzrd_on = bound01(predict(fit, model.matrix(f, data = on), type = "prob")[, "X1"]),
+                hzrd_fit = fit)
     return(out)
   }
 
   if (algo == "earth") {
-    fit_H <- caret::train(
-      x = train_H[, c("all_time", self$trt, self$covar)],
-      y = factor(make.names(train_H[["evnt"]])),
+    f <- formula(paste("~ ", self$trt, "* (", paste(c("all_time", self$covar), collapse = "+"), ")"))
+    fit <- caret::train(
+      x = model.matrix(f, data = train),
+      y = factor(make.names(train[["evnt"]])),
       method = "earth",
       tuneLength = 5,
+      glm = list(family = "binomial"),
       trControl = caret::trainControl(
         method = "cv",
         classProbs = TRUE,
         search = "random",
-        index = lapply(1:VH, function(x) which(x != foldsids(nrow(train_H), train_H[["survrctId"]], VH)))
+        index = lapply(folds, function(x) x$training_set),
+        indexOut = lapply(folds, function(x) x$validation_set)
       )
     )
 
-    out <- list(hzrd_off = bound01(predict(fit_H, off, type = "prob")[, "X1"]),
-                hzrd_on = bound01(predict(fit_H, on, type = "prob")[, "X1"]),
-                hzrd_fit = fit_H)
+    out <- list(hzrd_off = bound01(predict(fit, model.matrix(f, data = off), type = "prob")[, "X1"]),
+                hzrd_on = bound01(predict(fit, model.matrix(f, data = on), type = "prob")[, "X1"]),
+                hzrd_fit = fit)
     return(out)
   }
 }

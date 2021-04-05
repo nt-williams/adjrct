@@ -63,9 +63,9 @@ Ordinal <- R6::R6Class(
       off <- self$turn_off()
 
       if (algo == "lasso") {
-        H_m <- model.matrix(self$formula_y(), self$at_risk())[, -1, drop = FALSE]
-        H_mon <- model.matrix(self$formula_y(), on)[, -1, drop = FALSE]
-        H_moff <- model.matrix(self$formula_y(), off)[, -1, drop = FALSE]
+        H_m <- model.matrix(self$formula_y(), self$at_risk())
+        H_mon <- model.matrix(self$formula_y(), on)
+        H_moff <- model.matrix(self$formula_y(), off)
 
         folds <- foldsids(nrow(self$ordinal_data), self$ordinal_data[["ordinalrctId"]], 10)
         fit_Q <- glmnet::cv.glmnet(H_m, as.matrix(self$at_risk()[["Y"]]),
@@ -147,13 +147,15 @@ Ordinal <- R6::R6Class(
 cf_da_ord <- function(algo, fold, self) {
   train <- origami::training(self$ordinal_data)
   train <- train[train$atRisk == 1, ]
+
   on <- origami::validation(self$turn_on())
   off <- origami::validation(self$turn_off())
-  V <- automate_folds(nrow(train))
+  folds <- origami::make_folds(train, cluster_ids = train[["ordinalrctId"]], V = automate_folds(nrow(train)))
 
   if (algo == "xgboost") {
-    fit_Q <- caret::train(
-      x = model.matrix(reformulate(c("kl", self$trt, self$covar)), data = train),
+    f <- reformulate(c("-1", "kl", self$trt, self$covar))
+    fit <- caret::train(
+      x = model.matrix(f, data = train),
       y = factor(make.names(train[["Y"]])),
       method = "xgbTree",
       tuneLength = 5,
@@ -161,19 +163,21 @@ cf_da_ord <- function(algo, fold, self) {
         method = "cv",
         classProbs = TRUE,
         search = "random",
-        index = lapply(1:V, function(x) which(x != foldsids(nrow(train), train[["ordinalrctId"]], V)))
+        index = lapply(folds, function(x) x$training_set),
+        indexOut = lapply(folds, function(x) x$validation_set)
       )
     )
 
-    out <- list(H_off = bound01(predict(fit_Q, model.matrix(reformulate(c("kl", self$trt, self$covar)), off), type = "prob")[, "X1"]),
-                H_on = bound01(predict(fit_Q, model.matrix(reformulate(c("kl", self$trt, self$covar)), on), type = "prob")[, "X1"]),
-                hzrd_fit = fit_Q)
+    out <- list(H_off = bound01(predict(fit, model.matrix(f, off), type = "prob")[, "X1"]),
+                H_on = bound01(predict(fit, model.matrix(f, on), type = "prob")[, "X1"]),
+                hzrd_fit = fit)
     return(out)
   }
 
   if (algo == "rf") {
-    fit_Q <- caret::train(
-      x = train[, c("kl", self$trt, self$covar)],
+    f <- reformulate(c("-1", "kl", self$trt, self$covar))
+    fit <- caret::train(
+      x = model.matrix(f, data = train),
       y = factor(make.names(train[["Y"]])),
       method = "ranger",
       tuneLength = 5,
@@ -181,33 +185,37 @@ cf_da_ord <- function(algo, fold, self) {
         method = "cv",
         classProbs = TRUE,
         search = "random",
-        index = lapply(1:V, function(x) which(x != foldsids(nrow(train), train[["ordinalrctId"]], V)))
+        index = lapply(folds, function(x) x$training_set),
+        indexOut = lapply(folds, function(x) x$validation_set)
       )
     )
 
-    out <- list(H_off = bound01(predict(fit_Q, off, type = "prob")[, "X1"]),
-                H_on = bound01(predict(fit_Q, on, type = "prob")[, "X1"]),
-                hzrd_fit = fit_Q)
+    out <- list(H_off = bound01(predict(fit, model.matrix(f, data = off), type = "prob")[, "X1"]),
+                H_on = bound01(predict(fit, model.matrix(f, data = on), type = "prob")[, "X1"]),
+                hzrd_fit = fit)
     return(out)
   }
 
   if (algo == "earth") {
-    fit_Q <- caret::train(
-      x = model.matrix(reformulate(c("kl", self$trt, self$covar)), data = train),
+    f <- formula(paste("~ -1 + kl*(", paste(c("A", self$covar), collapse = "+"), ")"))
+    fit <- caret::train(
+      x = model.matrix(f, data = train),
       y = factor(make.names(train[["Y"]])),
       method = "earth",
       tuneLength = 5,
+      glm = list(family = "binomial"),
       trControl = caret::trainControl(
         method = "cv",
         classProbs = TRUE,
         search = "random",
-        index = lapply(1:V, function(x) which(x != foldsids(nrow(train), train[["ordinalrctId"]], V)))
+        index = lapply(folds, function(x) x$training_set),
+        indexOut = lapply(folds, function(x) x$validation_set)
       )
     )
 
-    out <- list(H_off = bound01(predict(fit_Q, model.matrix(reformulate(c("kl", self$trt, self$covar)), off), type = "prob")[, "X1"]),
-                H_on = bound01(predict(fit_Q, model.matrix(reformulate(c("kl", self$trt, self$covar)), on), type = "prob")[, "X1"]),
-                hzrd_fit = fit_Q)
+    out <- list(H_off = bound01(predict(fit, model.matrix(f, data = off), type = "prob")[, "X1"]),
+                H_on = bound01(predict(fit, model.matrix(f, data = on), type = "prob")[, "X1"]),
+                hzrd_fit = fit)
     return(out)
   }
 }
