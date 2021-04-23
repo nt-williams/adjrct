@@ -31,7 +31,8 @@ Imports:
     R6,
     origami,
     glmnet,
-    caret
+    caret,
+    fastglm
 URL: https://github.com/nt-williams/adjrct
 BugReports: https://github.com/nt-williams/adjrct/issues
 RoxygenNote: 7.1.1

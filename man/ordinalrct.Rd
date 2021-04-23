@@ -9,7 +9,8 @@ ordinalrct(
   target,
   data,
   estimator = c("tmle", "aipw"),
-  algo = c("glm", "lasso", "rf")
+  algo = c("glm", "lasso", "rf", "xgboost", "earth"),
+  crossfit = TRUE
 )
 }
 \arguments{

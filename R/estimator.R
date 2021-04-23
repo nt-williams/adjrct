@@ -3,19 +3,23 @@
 #' Create RCT survival metadata to be used for estimation of the
 #' restricted mean survival time and survival probability.
 #'
-#' @param formula An object of class "formula". The left hand side should be
+#' @param outcome.formula An object of class "formula". The left hand side should be
 #'   specified using \code{Surv(time, status)} where time is the name of the
 #'   variable containing follow-up time and status is the name of the indicator variable
 #'   with 0 = right censored and 1 = event at \code{time}. The right hand
 #'   side should contain the target variable of interest and baseline prognostic covariates.
-#' @param target The name of the target variable of interest; i.e., the randomized condition.
+#' @param trt.formula An object of class "formula". The left hand side should be the name
+#'   of the binary (coded as 0 and 1) treatment variable. The right hand side should specify the
+#'   names of variables used to estimate the propensity.
 #' @param data A data frame containing the variables in the model.
 #' @param coarsen An optional integer that specifies if and how \code{time} should
 #'   be categorized into coarser intervals.
-#' @param estimator The method to be used for computing estimands. Options are "tmle"
-#'   for Targeted Maximum Likelihood Estimation (the default) and "aipw" for Augmented IPW.
-#' @param algo Method to be used for fitting nuisance parameters. Automatically set to "glm" if
-#'   less than two covariates for adjustment are specified in \code{formula}.
+#' @param estimator The method to be used for computing estimands. Options are \code{"tmle"}
+#'   for Targeted Maximum Likelihood Estimation (the default) and \code{"aipw"} for Augmented IPW.
+#' @param algo Method to be used for fitting the hazard and censoring nuisance parameters.
+#'   Automatically set to \code{"glm"} if less than two covariates for adjustment are
+#'   specified in \code{outcome.formula}. The propensity is always estimated using a GLM.
+#' @crossfit Should the estimator be crossfit? Ignored if \code{algo} is \code{"glm"} or \code{"lasso"}.
 #'
 #' @family survrct functions
 #'
@@ -24,14 +28,16 @@
 #'
 #' @examples
 #' \donttest{
-#' survrct(Surv(time, status) ~ trt + age + sex + obstruct + perfor + adhere + surg,
-#'         target = "trt", data = colon, coarsen = 30, estimator = "tmle")
+#' survrct(Surv(days, event) ~ trt + age + sex + dyspnea + bmi,
+#'         trt ~ 1, data = c19.tte, estimator = "tmle", algo = "lasso")
 #' }
-survrct <- function(formula, target, data, coarsen = 1,
-                    estimator = c("tmle", "aipw"), algo = c("glm", "lasso", "rf", "xgboost", "earth"),
+survrct <- function(outcome.formula, trt.formula,
+                    data, coarsen = 1,
+                    estimator = c("tmle", "aipw"),
+                    algo = c("glm", "lasso", "rf", "xgboost"),
                     crossfit = TRUE) {
   Survival$
-    new(formula, target, data, match.arg(estimator))$
+    new(outcome.formula, trt.formula, data, match.arg(estimator))$
     prepare_data(coarsen)$
     fit_nuis(match.arg(algo), crossfit)
 }
@@ -224,3 +230,4 @@ mannwhitney <- function(metadata) {
   class(out) <- "mannwhit"
   out
 }
+
