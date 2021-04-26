@@ -200,9 +200,6 @@ Survival <- R6::R6Class(
     time_indicator = function() {
       outer(self$all_time, 1:self$max_time, "<=")
     },
-    formula_trt = function() {
-      formula(paste(self$trt, "~", 1))
-    },
     formula_cens = function() {
       formula(paste("cens ~", self$trt, "* (", paste(c("as.factor(all_time)", self$covar), collapse = "+"), ")"))
     },

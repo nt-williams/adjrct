@@ -63,10 +63,9 @@ survrct <- function(outcome.formula, trt.formula,
 #'
 #' @examples
 #' \donttest{
-#' surv <- survrct(Surv(time, status) ~ trt + age + sex + obstruct +
-#'                    perfor + adhere + surg,
-#'                 target = "trt", data = colon, coarsen = 30, estimator = "tmle")
-#' rmst(surv, 60)
+#' surv <- survrct(Surv(days, event) ~ trt + age + sex + dyspnea + bmi,
+#'                 trt ~ 1, data = c19.tte, estimator = "tmle", algo = "lasso")
+#' rmst(surv, 14)
 #' }
 rmst <- function(metadata, horizon = NULL) {
   metadata$evaluate_horizon(horizon, "rmst")
@@ -98,10 +97,9 @@ rmst <- function(metadata, horizon = NULL) {
 #'
 #' @examples
 #' \donttest{
-#' surv <- survrct(Surv(time, status) ~ trt + age + sex + obstruct +
-#'                    perfor + adhere + surg,
-#'                 target = "trt", data = colon, coarsen = 30, estimator = "tmle")
-#' survprob(surv, 60)
+#' surv <- survrct(Surv(days, event) ~ trt + age + sex + dyspnea + bmi,
+#'                 trt ~ 1, data = c19.tte, estimator = "tmle", algo = "lasso")
+#' survprob(surv, 14)
 #' }
 survprob <- function(metadata, horizon = NULL) {
   metadata$evaluate_horizon(horizon, "survprob")
@@ -132,11 +130,13 @@ survprob <- function(metadata, horizon = NULL) {
 #'
 #' @return An R6 object of class "Ordinal".
 #' @export
-ordinalrct <- function(formula, target, data,
-                       estimator = c("tmle", "aipw"), algo = c("glm", "lasso", "rf", "xgboost", "earth"),
+ordinalrct <- function(outcome.formula,
+                       trt.formula, data,
+                       estimator = c("tmle", "aipw"),
+                       algo = c("glm", "lasso", "rf", "xgboost"),
                        crossfit = TRUE) {
   Ordinal$
-    new(formula, target, data, match.arg(estimator))$
+    new(outcome.formula, trt.formula, data, match.arg(estimator))$
     prepare_data()$
     fit_nuis(match.arg(algo), crossfit)
 }

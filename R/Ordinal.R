@@ -1,7 +1,8 @@
 Ordinal <- R6::R6Class(
   "Ordinal",
   public = list(
-    formula = NULL,
+    outcome.formula = NULL,
+    trt.formula = NULL,
     data = NULL,
     ordinal_data = NULL,
     estimator = NULL,
@@ -13,21 +14,24 @@ Ordinal <- R6::R6Class(
     K = NULL,
     R = NULL,
     nuisance = list(),
-    initialize = function(formula, target, data, estimator) {
-      if (!all(unique(data[[target]]) %in% c(0, 1))) {
-        stop("`target` should be coded as 0 and 1.", call. = FALSE)
-      }
-
-      if (!is.ordered(data[[all.vars(formula[[2]])]])) {
-        stop("Outcome should be an ordered factor.", call. = FALSE)
-      }
-      self$formula <- formula
+    initialize = function(outcome.formula, trt.formula, data, estimator) {
+      self$outcome.formula <- outcome.formula
       self$data <- as.data.frame(data)
-      self$trt <- target
+      self$trt.formula <- trt.formula
       self$estimator <- estimator
     },
     prepare_data = function() {
-      self$Y <- all.vars(self$formula[[2]])
+      self$Y <- get_time(self$outcome.formula)
+      self$trt <- get_time(self$trt.formula)
+
+      if (!all(unique(self$data[[self$trt]]) %in% c(0, 1))) {
+        stop("The treatment should be coded as 0 and 1.", call. = FALSE)
+      }
+
+      if (!is.ordered(self$data[[self$Y]])) {
+        stop("The outcome should be an ordered factor.", call. = FALSE)
+      }
+
       self$covar <- get_covar(self$formula, self$trt)
       self$K <- length(unique(self$data[[self$Y]]))
       self$nobs <- nrow(self$data)
@@ -44,9 +48,10 @@ Ordinal <- R6::R6Class(
     fit_nuis = function(algo, crossfit = TRUE) {
       if (length(self$covar) < 2) algo <- "glm"
 
+      fit_A <- glm(self$trt.formula, family = binomial(), data = self$data)
+
       if (algo == "glm") {
         fit_Q <- glm(self$formula_y(), family = binomial(), data = self$at_risk())
-        fit_A <- glm(self$formula_trt(), family = binomial(), data = self$data)
 
         self$nuisance <- list(
           hzrd_fit = fit_Q,
@@ -71,7 +76,6 @@ Ordinal <- R6::R6Class(
         fit_Q <- glmnet::cv.glmnet(H_m, as.matrix(self$at_risk()[["Y"]]),
                                    family = "binomial", foldid = folds[self$R == 1])
 
-        fit_A <- glm(self$formula_trt(), family = binomial(), data = self$data)
         self$nuisance <- list(
           hzrd_fit = fit_Q,
           trt_fit = fit_A,
@@ -94,7 +98,6 @@ Ordinal <- R6::R6Class(
           cf <- origami::cross_validate(cv_fun = cf_da_ord, algo = algo, folds = folds, self = self)
         }
 
-        fit_A <- glm(self$formula_trt(), family = binomial(), data = self$data)
         self$nuisance <- list(
           hzrd_fit = cf$hzrd_fit,
           trt_fit = fit_A,
@@ -119,16 +122,16 @@ Ordinal <- R6::R6Class(
       out[[self$trt]] <- rep(0, nrow(self$ordinal_data))
       return(out)
     },
-    formula_trt = function() {
-      formula(paste(self$trt, "~", 1))
-    },
     formula_y = function() {
       formula(paste("Y ~ -1 + kl*(", paste(c("A", self$covar), collapse = "+"), ")"))
     },
     print = function(...) {
       cli::cli_text("{.strong ordinalrct} metadata")
       cat("\n")
-      print(self$formula)
+      cat("Outcome regression: ")
+      print(self$outcome.formula)
+      cat("        Propensity: ")
+      print(self$trt.formula)
       cat("\n")
       cli::cli_ul(c("Estimate log odds ratio with `log_or()`",
                     "Estimate Mann-Whitney with `mannwhitney()`",
@@ -139,7 +142,6 @@ Ordinal <- R6::R6Class(
       cli::cli_text(cat("         "), "Estimator: {self$estimator}")
       cli::cli_text(cat("   "), "Target variable: {self$trt}")
       cli::cli_text(cat("  "), "Outcome variable: {self$Y}")
-      cli::cli_text(cat("    "), "Adjustment set: {self$covar}")
     }
   )
 )
@@ -147,75 +149,26 @@ Ordinal <- R6::R6Class(
 cf_da_ord <- function(algo, fold, self) {
   train <- origami::training(self$ordinal_data)
   train <- train[train$atRisk == 1, ]
-
-  on <- origami::validation(self$turn_on())
-  off <- origami::validation(self$turn_off())
   folds <- origami::make_folds(train, cluster_ids = train[["ordinalrctId"]], V = automate_folds(nrow(train)))
+  f <- reformulate(c("-1", "kl", self$trt, self$covar))
 
-  if (algo == "xgboost") {
-    f <- reformulate(c("-1", "kl", self$trt, self$covar))
-    fit <- caret::train(
-      x = model.matrix(f, data = train),
-      y = factor(make.names(train[["Y"]])),
-      method = "xgbTree",
-      tuneLength = 5,
-      trControl = caret::trainControl(
-        method = "cv",
-        classProbs = TRUE,
-        search = "random",
-        index = lapply(folds, function(x) x$training_set),
-        indexOut = lapply(folds, function(x) x$validation_set)
-      )
+  fit <- caret::train(
+    x = model.matrix(f, data = train),
+    y = factor(make.names(train[["Y"]])),
+    method = method <- ifelse(algo == "rf", "ranger", "xgbTree"),
+    tuneLength = 5,
+    trControl = caret::trainControl(
+      method = "cv",
+      classProbs = TRUE,
+      search = "random",
+      index = lapply(folds, function(x) x$training_set),
+      indexOut = lapply(folds, function(x) x$validation_set)
     )
+  )
 
-    out <- list(H_off = bound01(predict(fit, model.matrix(f, off), type = "prob")[, "X1"]),
-                H_on = bound01(predict(fit, model.matrix(f, on), type = "prob")[, "X1"]),
-                hzrd_fit = fit)
-    return(out)
-  }
-
-  if (algo == "rf") {
-    f <- reformulate(c("-1", "kl", self$trt, self$covar))
-    fit <- caret::train(
-      x = model.matrix(f, data = train),
-      y = factor(make.names(train[["Y"]])),
-      method = "ranger",
-      tuneLength = 5,
-      trControl = caret::trainControl(
-        method = "cv",
-        classProbs = TRUE,
-        search = "random",
-        index = lapply(folds, function(x) x$training_set),
-        indexOut = lapply(folds, function(x) x$validation_set)
-      )
-    )
-
-    out <- list(H_off = bound01(predict(fit, model.matrix(f, data = off), type = "prob")[, "X1"]),
-                H_on = bound01(predict(fit, model.matrix(f, data = on), type = "prob")[, "X1"]),
-                hzrd_fit = fit)
-    return(out)
-  }
-
-  if (algo == "earth") {
-    f <- formula(paste("~ -1 + kl*(", paste(c("A", self$covar), collapse = "+"), ")"))
-    fit <- caret::train(
-      x = model.matrix(f, data = train),
-      y = factor(make.names(train[["Y"]])),
-      method = "earth",
-      tuneLength = 5,
-      glm = list(family = "binomial"),
-      trControl = caret::trainControl(
-        method = "cv",
-        classProbs = TRUE,
-        search = "random",
-        index = lapply(folds, function(x) x$training_set),
-        indexOut = lapply(folds, function(x) x$validation_set)
-      )
-    )
-
-    out <- list(H_off = bound01(predict(fit, model.matrix(f, data = off), type = "prob")[, "X1"]),
-                H_on = bound01(predict(fit, model.matrix(f, data = on), type = "prob")[, "X1"]),
-                hzrd_fit = fit)
-    return(out)
-  }
+  list(H_off = bound01(predict(fit, model.matrix(f, data = origami::validation(self$turn_off())),
+                               type = "prob")[, "X1"]),
+       H_on = bound01(predict(fit, model.matrix(f, data = origami::validation(self$turn_on())),
+                              type = "prob")[, "X1"]),
+       hzrd_fit = fit)
 }
