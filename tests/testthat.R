@@ -1,4 +1,4 @@
 library(testthat)
-library(survrct)
+library(adjrct)
 
-test_check("survrct")
+test_check("adjrct")

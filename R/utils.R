@@ -13,12 +13,9 @@
 #' @export
 #'
 #' @examples
-#' \donttest{
-#' surv <- survrct(Surv(time, status) ~ trt + age + sex + obstruct +
-#'                    perfor + adhere + surg,
-#'                 target = "trt", data = colon, coarsen = 30, estimator = "tmle")
+#' surv <- survrct(Surv(days, event) ~ A + age + sex + dyspnea + bmi,
+#'                 A ~ 1, data = c19.tte)
 #' get_fits(surv)
-#' }
 get_fits <- function(metadata) {
   list(Hazard = metadata$nuisance$hzrd_fit,
        Censoring = metadata$nuisance$cens_fit,

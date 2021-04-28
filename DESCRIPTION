@@ -32,13 +32,13 @@ Imports:
     origami,
     glmnet,
     caret,
-    fastglm
+    fastglm,
+    generics
 URL: https://github.com/nt-williams/adjrct
 BugReports: https://github.com/nt-williams/adjrct/issues
 RoxygenNote: 7.1.1
 Suggests: 
     survival,
-    covr,
     testthat
 Depends: 
     R (>= 2.10)

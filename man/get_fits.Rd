@@ -20,12 +20,9 @@ A list containing the following components:
 Return Nuisance Parameter Model Fits
 }
 \examples{
-\donttest{
-surv <- survrct(Surv(time, status) ~ trt + age + sex + obstruct +
-                   perfor + adhere + surg,
-                target = "trt", data = colon, coarsen = 30, estimator = "tmle")
+surv <- survrct(Surv(days, event) ~ A + age + sex + dyspnea + bmi,
+                A ~ 1, data = c19.tte)
 get_fits(surv)
-}
 }
 \seealso{
 \code{\link{survrct}} for creating \code{metadata}.

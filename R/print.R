@@ -7,7 +7,6 @@ print.rmst <- function(x, ...) {
     cat("          Mult. Bootstrap C:", x$estimates$mbcv_theta, "\n")
     cat("\n")
     print(head(format_est(x)))
-    cli::cli_text(cli::col_red("Access all estimates with `all_estimates()`"))
   } else {
     cat("\n")
     cli::cli_text("{.strong Marginal RMST:} E(min[T, {x$horizon}] | A = a)")
@@ -37,7 +36,6 @@ print.survprob <- function(x, ...) {
     cat("          Mult. Bootstrap C:", x$estimates$mbcv_theta, "\n")
     cat("\n")
     print(head(format_est(x)))
-    cli::cli_text(cli::col_red("Access all estimates with `all_estimates()`"))
   } else {
     cat("\n")
     cli::cli_text("{.strong Marginal Survival Probability:} Pr(T > {x$horizon} | A = a)")
@@ -110,49 +108,6 @@ print.mannwhit <- function(x, ...) {
   cli::cli_text(cat("      "), "{.strong Estimate}: {round(x$estimates$theta, 2)}")
   cli::cli_text(cat("    "), "{.strong Std. error}: {round(x$estimates$std.error, 2)}")
   cli::cli_text(cat("        "), "{.strong 95% CI}: ({round(x$estimates$ci[1], 2)}, {round(x$estimates$ci[2], 2)})")
-}
-
-#' Extract RMST And Survival Probability Estimates
-#'
-#' @param x An object of class "rmst" or "survprob".
-#'
-#' @seealso \code{\link{rmst}} and \code{\link{survprob}} for creating \code{x}.
-#'
-#' @return A data frame containing the estimates.
-#' @export
-#'
-#' @examples
-#' \donttest{
-#' surv <- survrct(Surv(time, status) ~ trt + age + sex + obstruct +
-#'                    perfor + adhere + surg,
-#'                 target = "trt", data = colon, coarsen = 30, estimator = "tmle")
-#' est <- rmst(surv, 105:111)
-#' all_estimates(est)
-#' }
-all_estimates <- function(x) {
-  out <- do.call(
-    "rbind",
-    lapply(x$estimates[-which(names(x$estimates) %in%
-                                c("mbcv_theta", "mbcv_treatment", "mbcv_control"))],
-           function(x) {
-             data.frame(treatment = x$arm1,
-                        treatment.conf.low = x$arm1.conf.low,
-                        treatment.conf.high = x$arm1.conf.high,
-                        treatment.unif.low = x$arm1.unif.low,
-                        treatment.unif.high = x$arm1.unif.high,
-                        control = x$arm0,
-                        control.conf.low = x$arm0.conf.low,
-                        control.conf.high = x$arm0.conf.high,
-                        control.unif.low = x$arm0.unif.low,
-                        control.unif.high = x$arm0.unif.high,
-                        theta = x$theta,
-                        theta.conf.low = x$theta.conf.low,
-                        theta.conf.high = x$theta.conf.high,
-                        theta.unif.low = x$theta.unif.low,
-                        theta.unif.high = x$theta.unif.high)
-           }))
-  out$horizon <- x$horizon
-  out[, c(16, 1:15)]
 }
 
 format_est <- function(x) {
