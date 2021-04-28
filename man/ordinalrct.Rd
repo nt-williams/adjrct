@@ -5,20 +5,22 @@
 \title{Create RCT Ordinal Metadata}
 \usage{
 ordinalrct(
-  formula,
-  target,
+  outcome.formula,
+  trt.formula,
   data,
   estimator = c("tmle", "aipw"),
-  algo = c("glm", "lasso", "rf", "xgboost", "earth"),
+  algo = c("glm", "lasso", "rf", "xgboost"),
   crossfit = TRUE
 )
 }
 \arguments{
-\item{formula}{An object of class "formula". The left hand side should be
+\item{outcome.formula}{An object of class "formula". The left hand side should be
 the outcome variable. The right hand
 side should contain the target variable of interest and baseline prognostic covariates.}
 
-\item{target}{The name of the target variable of interest; i.e., the randomized condition.}
+\item{trt.formula}{An object of class "formula". The left hand side should be the name
+of the binary (coded as 0 and 1) treatment variable. The right hand side should specify the
+names of variables used to estimate the propensity.}
 
 \item{data}{A data frame containing the variables in the model.}
 
@@ -28,12 +30,19 @@ and "unadjusted" for the unadjusted estimator.}
 
 \item{algo}{Method to be used for fitting nuisance parameters. Automatically set to "glm" if
 less than two covariates for adjustment are specified in \code{formula}.}
+
+\item{crossfit}{Should the estimator be crossfit? Ignored if \code{algo} is \code{"glm"} or \code{"lasso"}}
 }
 \value{
 An R6 object of class "Ordinal".
 }
 \description{
-Create RCT ordinal metadata to be used for estimation of the
-average log odds ratio, counterfactual marginal CDFs, and Mann-Whitney statistic.
+Compute metadata to be used for estimation of model-robust covariate adjusted
+average log odds ratio, Mann-Whitney statistic, and counterfactual marginal CDF
+and PMF in a two-arm randomized controlled trial. Estimation may be done using
+targeted maximum likelihood estimation or augmented inverse probability weighting.
+}
+\examples{
+ordinalrct(state_ordinal ~ A + age, A ~ 1, data = c19.ordinal)
 }
 \concept{ordinal functions}

@@ -20,6 +20,10 @@ A list of class \code{cdf} containing the following components:
 \description{
 Estimate the Cumulative Distribution Function
 }
+\examples{
+rct <- ordinalrct(state_ordinal ~ A + age, A ~ 1, data = c19.ordinal)
+cdf(rct)
+}
 \seealso{
 \code{\link{ordinalrct}} for creating \code{metadata}.
 

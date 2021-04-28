@@ -1,7 +1,9 @@
 #' Create RCT Survival Metadata
 #'
-#' Create RCT survival metadata to be used for estimation of the
-#' restricted mean survival time and survival probability.
+#' Compute metadata to be used for estimation of model-robust covariate adjusted
+#' restricted mean survival time and survival probability in a two-arm randomized
+#' controlled trial. Estimation may be done using targeted maximum likelihood estimation
+#' or augmented inverse probability weighting.
 #'
 #' @param outcome.formula An object of class "formula". The left hand side should be
 #'   specified using \code{Surv(time, status)} where time is the name of the
@@ -19,7 +21,7 @@
 #' @param algo Method to be used for fitting the hazard and censoring nuisance parameters.
 #'   Automatically set to \code{"glm"} if less than two covariates for adjustment are
 #'   specified in \code{outcome.formula}. The propensity is always estimated using a GLM.
-#' @crossfit Should the estimator be crossfit? Ignored if \code{algo} is \code{"glm"} or \code{"lasso"}.
+#' @param crossfit Should the estimator be crossfit? Ignored if \code{algo} is \code{"glm"} or \code{"lasso"}.
 #'
 #' @family survrct functions
 #'
@@ -27,19 +29,18 @@
 #' @export
 #'
 #' @examples
-#' \donttest{
-#' survrct(Surv(days, event) ~ trt + age + sex + dyspnea + bmi,
-#'         trt ~ 1, data = c19.tte, estimator = "tmle", algo = "lasso")
-#' }
+#' survrct(Surv(days, event) ~ A + age + sex + dyspnea + bmi,
+#'         A ~ 1, data = c19.tte)
 survrct <- function(outcome.formula, trt.formula,
                     data, coarsen = 1,
                     estimator = c("tmle", "aipw"),
                     algo = c("glm", "lasso", "rf", "xgboost"),
                     crossfit = TRUE) {
-  Survival$
+  out <- Survival$
     new(outcome.formula, trt.formula, data, match.arg(estimator))$
     prepare_data(coarsen)$
     fit_nuis(match.arg(algo), crossfit)
+  return(out)
 }
 
 #' Estimate Restricted Mean Survival Time
@@ -62,11 +63,9 @@ survrct <- function(outcome.formula, trt.formula,
 #' @export
 #'
 #' @examples
-#' \donttest{
-#' surv <- survrct(Surv(days, event) ~ trt + age + sex + dyspnea + bmi,
-#'                 trt ~ 1, data = c19.tte, estimator = "tmle", algo = "lasso")
+#' surv <- survrct(Surv(days, event) ~ A + age + sex + dyspnea + bmi,
+#'                 A ~ 1, data = c19.tte)
 #' rmst(surv, 14)
-#' }
 rmst <- function(metadata, horizon = NULL) {
   metadata$evaluate_horizon(horizon, "rmst")
   out <- list(estimator = metadata$estimator,
@@ -96,11 +95,9 @@ rmst <- function(metadata, horizon = NULL) {
 #' @export
 #'
 #' @examples
-#' \donttest{
-#' surv <- survrct(Surv(days, event) ~ trt + age + sex + dyspnea + bmi,
-#'                 trt ~ 1, data = c19.tte, estimator = "tmle", algo = "lasso")
+#' surv <- survrct(Surv(days, event) ~ A + age + sex + dyspnea + bmi,
+#'                 A ~ 1, data = c19.tte)
 #' survprob(surv, 14)
-#' }
 survprob <- function(metadata, horizon = NULL) {
   metadata$evaluate_horizon(horizon, "survprob")
   out <- list(estimator = metadata$estimator,
@@ -112,33 +109,42 @@ survprob <- function(metadata, horizon = NULL) {
 
 #' Create RCT Ordinal Metadata
 #'
-#' Create RCT ordinal metadata to be used for estimation of the
-#' average log odds ratio, counterfactual marginal CDFs, and Mann-Whitney statistic.
+#' Compute metadata to be used for estimation of model-robust covariate adjusted
+#' average log odds ratio, Mann-Whitney statistic, and counterfactual marginal CDF
+#' and PMF in a two-arm randomized controlled trial. Estimation may be done using
+#' targeted maximum likelihood estimation or augmented inverse probability weighting.
 #'
-#' @param formula An object of class "formula". The left hand side should be
+#' @param outcome.formula An object of class "formula". The left hand side should be
 #'   the outcome variable. The right hand
 #'   side should contain the target variable of interest and baseline prognostic covariates.
-#' @param target The name of the target variable of interest; i.e., the randomized condition.
+#' @param trt.formula An object of class "formula". The left hand side should be the name
+#'   of the binary (coded as 0 and 1) treatment variable. The right hand side should specify the
+#'   names of variables used to estimate the propensity.
 #' @param data A data frame containing the variables in the model.
 #' @param estimator The method to be used for computing estimands. Options are "tmle"
 #'   for Targeted Maximum Likelihood Estimation (the default), "aipw" for Augmented IPW,
 #'   and "unadjusted" for the unadjusted estimator.
 #' @param algo Method to be used for fitting nuisance parameters. Automatically set to "glm" if
 #'   less than two covariates for adjustment are specified in \code{formula}.
+#' @param crossfit Should the estimator be crossfit? Ignored if \code{algo} is \code{"glm"} or \code{"lasso"}
 #'
 #' @family ordinal functions
 #'
 #' @return An R6 object of class "Ordinal".
 #' @export
+#'
+#' @examples
+#' ordinalrct(state_ordinal ~ A + age, A ~ 1, data = c19.ordinal)
 ordinalrct <- function(outcome.formula,
                        trt.formula, data,
                        estimator = c("tmle", "aipw"),
                        algo = c("glm", "lasso", "rf", "xgboost"),
                        crossfit = TRUE) {
-  Ordinal$
+  out <- Ordinal$
     new(outcome.formula, trt.formula, data, match.arg(estimator))$
     prepare_data()$
     fit_nuis(match.arg(algo), crossfit)
+  return(out)
 }
 
 #' Estimate Average Log Odds Ratio
@@ -156,6 +162,9 @@ ordinalrct <- function(outcome.formula,
 #'                       and confidence intervals.}
 #'
 #' @export
+#' @examples
+#' rct <- ordinalrct(state_ordinal ~ A + age, A ~ 1, data = c19.ordinal)
+#' log_or(rct)
 log_or <- function(metadata) {
   out <- list(estimator = metadata$estimator,
               estimates = compute_lor(metadata))
@@ -178,6 +187,9 @@ log_or <- function(metadata) {
 #'                       and confidence intervals.}
 #'
 #' @export
+#' @examples
+#' rct <- ordinalrct(state_ordinal ~ A + age, A ~ 1, data = c19.ordinal)
+#' cdf(rct)
 cdf <- function(metadata) {
   out <- list(levels = levels(metadata$data[[metadata$Y]]),
               estimator = metadata$estimator,
@@ -201,6 +213,9 @@ cdf <- function(metadata) {
 #'                       and confidence intervals.}
 #'
 #' @export
+#' @examples
+#' rct <- ordinalrct(state_ordinal ~ A + age, A ~ 1, data = c19.ordinal)
+#' pmf(rct)
 pmf <- function(metadata) {
   out <- list(levels = levels(metadata$data[[metadata$Y]]),
               estimator = metadata$estimator,
@@ -209,7 +224,11 @@ pmf <- function(metadata) {
   out
 }
 
-#' Estimate the Mann-Whitney Estimand
+#' Estimate the Mann-Whitney Statistic
+#'
+#' Computes the Mann-Whitney estimand; the probability that a randomly drawn patient
+#' from the treated arm has a better outcome than a randomly drawn patient from
+#' the control arm, with ties broken at random
 #'
 #' @param metadata An object of class "Ordinal" generated by a call to \code{ordinalrct()}.
 #'
@@ -224,6 +243,9 @@ pmf <- function(metadata) {
 #'                       and confidence intervals.}
 #'
 #' @export
+#' @examples
+#' rct <- ordinalrct(state_ordinal ~ A + age, A ~ 1, data = c19.ordinal)
+#' mannwhitney(rct)
 mannwhitney <- function(metadata) {
   out <- list(estimator = metadata$estimator,
               estimates = compute_mw(metadata))

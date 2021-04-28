@@ -1,3 +1,11 @@
+#' Synthetic COVID-19 Data
+#'
+#' TODO
+#'
+"c19.tte"
 
-#' Chemotherapy for Stage B/C colon cancer
-"colon"
+#' Synthetic COVID-19 Data
+#'
+#' TODO
+#'
+"c19.ordinal"

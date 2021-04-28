@@ -20,6 +20,10 @@ A list of class \code{lor} containing the following components:
 \description{
 Estimate Average Log Odds Ratio
 }
+\examples{
+rct <- ordinalrct(state_ordinal ~ A + age, A ~ 1, data = c19.ordinal)
+log_or(rct)
+}
 \seealso{
 \code{\link{ordinalrct}} for creating \code{metadata}.
 

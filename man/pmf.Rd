@@ -20,6 +20,10 @@ A list of class \code{pmf} containing the following components:
 \description{
 Estimate the Probability Mass Function
 }
+\examples{
+rct <- ordinalrct(state_ordinal ~ A + age, A ~ 1, data = c19.ordinal)
+pmf(rct)
+}
 \seealso{
 \code{\link{ordinalrct}} for creating \code{metadata}.
 

@@ -25,12 +25,9 @@ A list of class \code{rmst} containing the following components:
 Estimate Restricted Mean Survival Time
 }
 \examples{
-\donttest{
-surv <- survrct(Surv(time, status) ~ trt + age + sex + obstruct +
-                   perfor + adhere + surg,
-                target = "trt", data = colon, coarsen = 30, estimator = "tmle")
-rmst(surv, 60)
-}
+surv <- survrct(Surv(days, event) ~ A + age + sex + dyspnea + bmi,
+                A ~ 1, data = c19.tte)
+rmst(surv, 14)
 }
 \seealso{
 \code{\link{survrct}} for creating \code{metadata}.

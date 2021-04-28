@@ -36,19 +36,21 @@ for Targeted Maximum Likelihood Estimation (the default) and \code{"aipw"} for A
 \item{algo}{Method to be used for fitting the hazard and censoring nuisance parameters.
 Automatically set to \code{"glm"} if less than two covariates for adjustment are
 specified in \code{outcome.formula}. The propensity is always estimated using a GLM.}
+
+\item{crossfit}{Should the estimator be crossfit? Ignored if \code{algo} is \code{"glm"} or \code{"lasso"}.}
 }
 \value{
 An R6 object of class "Survival".
 }
 \description{
-Create RCT survival metadata to be used for estimation of the
-restricted mean survival time and survival probability.
+Compute metadata to be used for estimation of model-robust covariate adjusted
+restricted mean survival time and survival probability in a two-arm randomized
+controlled trial. Estimation may be done using targeted maximum likelihood estimation
+or augmented inverse probability weighting.
 }
 \examples{
-\donttest{
-survrct(Surv(days, event) ~ trt + age + sex + dyspnea + bmi,
-        trt ~ 1, data = c19.tte, estimator = "tmle", algo = "lasso")
-}
+survrct(Surv(days, event) ~ A + age + sex + dyspnea + bmi,
+        A ~ 1, data = c19.tte)
 }
 \seealso{
 Other survrct functions: 

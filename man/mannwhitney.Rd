@@ -2,7 +2,7 @@
 % Please edit documentation in R/estimator.R
 \name{mannwhitney}
 \alias{mannwhitney}
-\title{Estimate the Mann-Whitney Estimand}
+\title{Estimate the Mann-Whitney Statistic}
 \usage{
 mannwhitney(metadata)
 }
@@ -18,7 +18,13 @@ A list of class \code{mannwhit} containing the following components:
                       and confidence intervals.}
 }
 \description{
-Estimate the Mann-Whitney Estimand
+Computes the Mann-Whitney estimand; the probability that a randomly drawn patient
+from the treated arm has a better outcome than a randomly drawn patient from
+the control arm, with ties broken at random
+}
+\examples{
+rct <- ordinalrct(state_ordinal ~ A + age, A ~ 1, data = c19.ordinal)
+mannwhitney(rct)
 }
 \seealso{
 \code{\link{ordinalrct}} for creating \code{metadata}.
