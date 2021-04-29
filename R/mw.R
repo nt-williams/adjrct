@@ -17,7 +17,7 @@ mw_tmle <- function(meta) {
   eif <- cbind(CDF$eif$theta0, PMF$eif$theta1, PMF$eif$theta0)
   grad <- mw_gradient(CDF, PMF)
   std.error <- sqrt(t(grad) %*% cov(eif) %*% grad / meta$nobs)
-  list(theta = mw,
+  list(mann.whitney = mw,
        std.error = std.error,
        ci = mw + qnorm(c(0.05 / 2, 1 - 0.05 / 2)) * c(std.error),
        eif = eif)
