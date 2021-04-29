@@ -6,7 +6,7 @@ print.rmst <- function(x, ...) {
     cat("           Confidence level: 95%\n")
     cat("          Mult. Bootstrap C:", x$estimates$mbcv_theta, "\n")
     cat("\n")
-    print(head(format_est(x)))
+    print(format_est(x))
   } else {
     cat("\n")
     cli::cli_text("{.strong Marginal RMST:} E(min[T, {x$horizon}] | A = a)")
@@ -35,7 +35,7 @@ print.survprob <- function(x, ...) {
     cat("           Confidence level: 95%\n")
     cat("          Mult. Bootstrap C:", x$estimates$mbcv_theta, "\n")
     cat("\n")
-    print(head(format_est(x)))
+    print(format_est(x))
   } else {
     cat("\n")
     cli::cli_text("{.strong Marginal Survival Probability:} Pr(T > {x$horizon} | A = a)")
@@ -111,13 +111,32 @@ print.mannwhit <- function(x, ...) {
 }
 
 format_est <- function(x) {
-  x <- all_estimates(x)
-  x$`treatment` <- format_digits(x$treatment, 2)
-  x$`control` <- format_digits(x$control, 2)
-  x$theta <- format_digits(x$theta, 2)
-  x$`point-wise 95% CI` <- paste0("(", paste(format_digits(x$theta.conf.low, 2), "to", format_digits(x$theta.conf.high, 2)), ")")
-  x$`uniform 95% CI` <- paste0("(", paste(format_digits(x$theta.unif.low, 2), "to", format_digits(x$theta.unif.high, 2)), ")")
-  x[, c(1:2, 7, 12, 17:18)]
+  tidied <- tidy(x)
+  if (class(x) == "rmst") {
+    treatment <- format_digits(tidied$trt.rmst, 2)
+    control <- format_digits(tidied$control.rmst, 2)
+  } else {
+    treatment <- format_digits(tidied$trt.survprob, 2)
+    control <- format_digits(tidied$control.survprob, 2)
+  }
+  data.frame(
+    horizon = x$horizon,
+    treatment = treatment,
+    control = control,
+    theta = format_digits(tidied$theta, 2),
+    `point-wise 95% CI` =
+      paste0("(", paste(
+        format_digits(tidied$theta.conf.low, 2),
+        "to",
+        format_digits(tidied$theta.conf.high, 2)
+      ), ")"),
+    `uniform 95% CI` = paste0("(", paste(
+      format_digits(tidied$theta.unif.low, 2),
+      "to",
+      format_digits(tidied$theta.unif.high, 2)
+    ), ")"),
+    check.names = FALSE
+  )
 }
 
 format_dist <- function(dist, std.error, ci, levels, type = c("cdf", "pmf")) {
