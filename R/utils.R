@@ -66,12 +66,12 @@ get_covar <- function(formula, target) {
   setdiff(all.vars(formula[[3]]), target)
 }
 
-dist_ci <- function(estim, std.error) {
+dist_ci <- function(estim, std.error, cv = qnorm(1 - 0.05 / 2)) {
   out <- matrix(ncol = 2, nrow = length(std.error))
   for (i in 1:length(std.error)) {
-    out[i, ] <- estim[i] + std.error[i]*c(qnorm(0.05 / 2), qnorm(1 - 0.05 / 2))
+    out[i, ] <- estim[i] + std.error[i]*c(-cv, cv)
   }
-  out
+  pmin(pmax(out, 0), 1)
 }
 
 automate_folds <- function(n) {

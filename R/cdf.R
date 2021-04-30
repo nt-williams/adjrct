@@ -68,12 +68,26 @@ cdf_tmle <- function(meta) {
 
   dist <- compute_theta(H_on, H_off, K, id)
   std.error <- sqrt(sapply(Dnl, function(x) diag(var(x))) / n)
+
+  mbcv1 <- simul::simul(as.list(dist["theta1", ]),
+                        apply(sapply(Dnl, function(x) x[, 1]), 2,
+                              function(x) x,
+                              simplify = FALSE), meta$nobs)
+
+  mbcv0 <- simul::simul(as.list(dist["theta0", ]),
+                        apply(sapply(Dnl, function(x) x[, 2]), 2,
+                              function(x) x,
+                              simplify = FALSE), meta$nobs)
+
   ci <- list(theta1 = dist_ci(dist[1, ], std.error[1, ]),
-             theta0 = dist_ci(dist[2, ], std.error[2, ]))
+             theta0 = dist_ci(dist[2, ], std.error[2, ]),
+             unif1 = dist_ci(dist[1, ], std.error[1, ], mbcv1),
+             unif0 = dist_ci(dist[2, ], std.error[2, ], mbcv0))
 
   list(dist = dist,
        std.error = std.error,
        ci = ci,
        eif = list(theta1 = sapply(Dnl, function(x) x[, 1]),
-                  theta0 = sapply(Dnl, function(x) x[, 2])))
+                  theta0 = sapply(Dnl, function(x) x[, 2])),
+       mbcv = c("theta1" = mbcv1, "theta0" = mbcv0))
 }

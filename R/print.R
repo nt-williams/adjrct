@@ -82,10 +82,10 @@ print.cdf <- function(x, ...) {
   cat("\n")
   cli::cli_text("{.strong Arm-specific CDF:} Pr(K <= k | A = a)")
   cli::cli_text(cli::col_blue(cli::style_italic("Treatment Arm")))
-  print(format_dist(x$estimates$dist[1, ], x$estimates$std.error[1, ], x$estimates$ci$theta1, levels = x$levels, "cdf"))
+  print(format_dist(x$estimates$dist[1, ], x$estimates$std.error[1, ], x$estimates$ci$theta1, x$estimates$ci$unif1, levels = x$levels, "cdf"))
   cat("\n")
   cli::cli_text(cli::col_red(cli::style_italic("Control Arm")))
-  print(format_dist(x$estimates$dist[2, ], x$estimates$std.error[2, ], x$estimates$ci$theta0, levels = x$levels, "cdf"))
+  print(format_dist(x$estimates$dist[2, ], x$estimates$std.error[2, ], x$estimates$ci$theta0, x$estimates$ci$unif0, levels = x$levels, "cdf"))
 }
 
 #' @export
@@ -94,10 +94,10 @@ print.pmf <- function(x, ...) {
   cat("\n")
   cli::cli_text("{.strong Arm-specific PMF:} Pr(K = k | A = a)")
   cli::cli_text(cli::col_blue(cli::style_italic("Treatment Arm")))
-  print(format_dist(x$estimates$dist[1, ], x$estimates$std.error[1, ], x$estimates$ci$theta1, levels = x$levels, "pmf"))
+  print(format_dist(x$estimates$dist[1, ], x$estimates$std.error[1, ], x$estimates$ci$theta1, x$estimates$ci$unif1, levels = x$levels, "pmf"))
   cat("\n")
   cli::cli_text(cli::col_red(cli::style_italic("Control Arm")))
-  print(format_dist(x$estimates$dist[2, ], x$estimates$std.error[2, ], x$estimates$ci$theta0, levels = x$levels, "pmf"))
+  print(format_dist(x$estimates$dist[2, ], x$estimates$std.error[2, ], x$estimates$ci$theta0, x$estimates$ci$unif0, levels = x$levels, "pmf"))
 }
 
 #' @export
@@ -139,18 +139,20 @@ format_est <- function(x) {
   )
 }
 
-format_dist <- function(dist, std.error, ci, levels, type = c("cdf", "pmf")) {
+format_dist <- function(dist, std.error, ci, unif, levels, type = c("cdf", "pmf")) {
   if (match.arg(type) == "cdf") {
     out <- data.frame(k = levels,
                       Estimate = c(format_digits(dist, 3), "1.000"),
                       std.error = c(format_digits(std.error, 3), "-"),
-                      ci = c(paste0("(", paste(format_digits(ci[, 1], 2), "to", format_digits(ci[, 2], 2)), ")"), "-"))
+                      ci = c(paste0("(", paste(format_digits(ci[, 1], 2), "to", format_digits(ci[, 2], 2)), ")"), "-"),
+                      unif = c(paste0("(", paste(format_digits(unif[, 1], 2), "to", format_digits(unif[, 2], 2)), ")"), "-"))
   } else {
     out <- data.frame(k = levels,
                       Estimate = format_digits(dist, 3),
                       std.error = format_digits(std.error, 3),
-                      ci = paste0("(", paste(format_digits(ci[, 1], 2), "to", format_digits(ci[, 2], 2)), ")"))
+                      ci = paste0("(", paste(format_digits(ci[, 1], 2), "to", format_digits(ci[, 2], 2)), ")"),
+                      unif = paste0("(", paste(format_digits(unif[, 1], 2), "to", format_digits(unif[, 2], 2)), ")"))
   }
-  names(out) <- c("k", "Estimate", "Std. error", "95% CI")
+  names(out) <- c("k", "Estimate", "Std. error", "95% CI", "Uniform 95% CI")
   out
 }
