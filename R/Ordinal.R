@@ -32,7 +32,7 @@ Ordinal <- R6::R6Class(
         stop("The outcome should be an ordered factor.", call. = FALSE)
       }
 
-      self$covar <- get_covar(self$formula, self$trt)
+      self$covar <- get_covar(self$outcome.formula, self$trt)
       self$K <- length(unique(self$data[[self$Y]]))
       self$nobs <- nrow(self$data)
       self$id <- rep(1:self$nobs, each = self$K - 1)
@@ -114,12 +114,12 @@ Ordinal <- R6::R6Class(
     },
     turn_on = function() {
       out <- self$ordinal_data
-      out[[self$trt]] <- rep(1, nrow(self$ordinal_data))
+      out[["A"]] <- rep(1, nrow(self$ordinal_data))
       return(out)
     },
     turn_off = function() {
       out <- self$ordinal_data
-      out[[self$trt]] <- rep(0, nrow(self$ordinal_data))
+      out[["A"]] <- rep(0, nrow(self$ordinal_data))
       return(out)
     },
     formula_y = function() {
