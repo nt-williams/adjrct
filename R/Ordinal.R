@@ -137,7 +137,7 @@ Ordinal <- R6::R6Class(
                     "Estimate with `pmf()`",
                     "Inspect nuisance parameter models with `get_fits()`"))
       cat("\n")
-      cli::cli_text(cat("         "), "Estimator: {self$estimator}")
+      cli::cli_text(cat("         "), "Estimator: TMLE")
       cli::cli_text(cat("   "), "Target variable: {self$trt}")
       cli::cli_text(cat("  "), "Outcome variable: {self$Y}")
     }

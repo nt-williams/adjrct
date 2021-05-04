@@ -207,16 +207,18 @@ Survival <- R6::R6Class(
     print = function(...) {
       cli::cli_text("{.strong survrct} metadata")
       cat("\n")
+      cat("Outcome regression: ")
       print(self$outcome.formula)
+      cat("        Propensity: ")
+      print(self$trt.formula)
       cat("\n")
       cli::cli_ul(c("Estimate RMST with `rmst()`",
                     "Estimate survival probability with `survprob()`",
                     "Inspect nuisance parameter models with `get_fits()`"))
       cat("\n")
-      cli::cli_text(cat("         "), "Estimator: {self$estimator}")
+      cli::cli_text(cat("         "), "Estimator: TMLE")
       cli::cli_text(cat("   "), "Target variable: {self$trt}")
       cli::cli_text(cat("  "), "Status Indicator: {self$status}")
-      cli::cli_text(cat("    "), "Adjustment set: {self$covar}")
       cli::cli_text("Max coarsened time: {self$max_time}")
     }
   )
