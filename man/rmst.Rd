@@ -13,13 +13,10 @@ rmst(metadata, horizon = NULL)
 RMST at all possible time horizons.}
 }
 \value{
-A list of class \code{rmst} containing the following components:
-
-\item{estimator}{The estimation method used.}
-\item{horizon}{The time horizons RMST was evaluated at.}
-\item{estimates}{The computed estimates for each time horizon including
-                      the efficient influence function, standard errors, and
-                      confidence intervals.}
+A list of class \code{rmst} containing the
+  computed estimates for each time horizon including
+  the efficient influence function, standard errors, and
+  confidence intervals.
 }
 \description{
 Estimate Restricted Mean Survival Time

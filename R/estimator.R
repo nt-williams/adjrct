@@ -2,8 +2,7 @@
 #'
 #' Compute metadata to be used for estimation of model-robust covariate adjusted
 #' restricted mean survival time and survival probability in a two-arm randomized
-#' controlled trial. Estimation may be done using targeted maximum likelihood estimation
-#' or augmented inverse probability weighting.
+#' controlled trial using targeted maximum likelihood estimation.
 #'
 #' @param outcome.formula An object of class "formula". The left hand side should be
 #'   specified using \code{Surv(time, status)} where time is the name of the
@@ -16,8 +15,6 @@
 #' @param data A data frame containing the variables in the model.
 #' @param coarsen An optional integer that specifies if and how \code{time} should
 #'   be categorized into coarser intervals.
-#' @param estimator The method to be used for computing estimands. Options are \code{"tmle"}
-#'   for Targeted Maximum Likelihood Estimation (the default) and \code{"aipw"} for Augmented IPW.
 #' @param algo Method to be used for fitting the hazard and censoring nuisance parameters.
 #'   Automatically set to \code{"glm"} if less than two covariates for adjustment are
 #'   specified in \code{outcome.formula}. The propensity is always estimated using a GLM.
@@ -33,11 +30,10 @@
 #'         A ~ 1, data = c19.tte)
 survrct <- function(outcome.formula, trt.formula,
                     data, coarsen = 1,
-                    estimator = c("tmle", "aipw"),
                     algo = c("glm", "lasso", "rf", "xgboost"),
                     crossfit = TRUE) {
   out <- Survival$
-    new(outcome.formula, trt.formula, data, match.arg(estimator))$
+    new(outcome.formula, trt.formula, data)$
     prepare_data(coarsen)$
     fit_nuis(match.arg(algo), crossfit)
   return(out)
@@ -52,13 +48,10 @@ survrct <- function(outcome.formula, trt.formula,
 #' @family survrct functions
 #' @seealso \code{\link{survrct}} for creating \code{metadata}.
 #'
-#' @return A list of class \code{rmst} containing the following components:
-#'
-#' \item{estimator}{The estimation method used.}
-#' \item{horizon}{The time horizons RMST was evaluated at.}
-#' \item{estimates}{The computed estimates for each time horizon including
-#'                       the efficient influence function, standard errors, and
-#'                       confidence intervals.}
+#' @return A list of class \code{rmst} containing the
+#'   computed estimates for each time horizon including
+#'   the efficient influence function, standard errors, and
+#'   confidence intervals.
 #'
 #' @export
 #'
@@ -68,7 +61,7 @@ survrct <- function(outcome.formula, trt.formula,
 #' rmst(surv, 14)
 rmst <- function(metadata, horizon = NULL) {
   metadata$evaluate_horizon(horizon, "rmst")
-  out <- list(estimator = metadata$estimator,
+  out <- list(estimator = "TMLE",
               horizon = metadata$horizon,
               estimates = compute_rmst(metadata))
   class(out) <- "rmst"
@@ -84,13 +77,9 @@ rmst <- function(metadata, horizon = NULL) {
 #' @family survrct functions
 #' @seealso \code{\link{survrct}} for creating \code{metadata}.
 #'
-#' @return A list of class \code{survprob} containing the following components:
-#'
-#' \item{estimator}{The estimation method used.}
-#' \item{horizon}{The time horizons the survival probability was evaluated at.}
-#' \item{estimates}{The computed estimates for each time horizon including the
-#'                       efficient influence function, standard errors,
-#'                       and confidence intervals.}
+#' @return A list of class \code{survprob} containing the computed estimates
+#'   for each time horizon including the efficient influence function, standard errors,
+#'   and confidence intervals.
 #'
 #' @export
 #'
@@ -100,7 +89,7 @@ rmst <- function(metadata, horizon = NULL) {
 #' survprob(surv, 14)
 survprob <- function(metadata, horizon = NULL) {
   metadata$evaluate_horizon(horizon, "survprob")
-  out <- list(estimator = metadata$estimator,
+  out <- list(estimator = "TMLE",
               horizon = metadata$horizon,
               estimates = compute_survprob(metadata))
   class(out) <- "survprob"
@@ -111,8 +100,8 @@ survprob <- function(metadata, horizon = NULL) {
 #'
 #' Compute metadata to be used for estimation of model-robust covariate adjusted
 #' average log odds ratio, Mann-Whitney statistic, and counterfactual marginal CDF
-#' and PMF in a two-arm randomized controlled trial. Estimation may be done using
-#' targeted maximum likelihood estimation or augmented inverse probability weighting.
+#' and PMF in a two-arm randomized controlled trial using
+#' targeted maximum likelihood estimation.
 #'
 #' @param outcome.formula An object of class "formula". The left hand side should be
 #'   the outcome variable. The right hand
@@ -121,9 +110,6 @@ survprob <- function(metadata, horizon = NULL) {
 #'   of the binary (coded as 0 and 1) treatment variable. The right hand side should specify the
 #'   names of variables used to estimate the propensity.
 #' @param data A data frame containing the variables in the model.
-#' @param estimator The method to be used for computing estimands. Options are "tmle"
-#'   for Targeted Maximum Likelihood Estimation (the default), "aipw" for Augmented IPW,
-#'   and "unadjusted" for the unadjusted estimator.
 #' @param algo Method to be used for fitting nuisance parameters. Automatically set to "glm" if
 #'   less than two covariates for adjustment are specified in \code{formula}.
 #' @param crossfit Should the estimator be crossfit? Ignored if \code{algo} is \code{"glm"} or \code{"lasso"}
@@ -137,11 +123,10 @@ survprob <- function(metadata, horizon = NULL) {
 #' ordinalrct(state_ordinal ~ A + age, A ~ 1, data = c19.ordinal)
 ordinalrct <- function(outcome.formula,
                        trt.formula, data,
-                       estimator = c("tmle", "aipw"),
                        algo = c("glm", "lasso", "rf", "xgboost"),
                        crossfit = TRUE) {
   out <- Ordinal$
-    new(outcome.formula, trt.formula, data, match.arg(estimator))$
+    new(outcome.formula, trt.formula, data)$
     prepare_data()$
     fit_nuis(match.arg(algo), crossfit)
   return(out)
@@ -154,19 +139,15 @@ ordinalrct <- function(outcome.formula,
 #' @family ordinalrct functions
 #' @seealso \code{\link{ordinalrct}} for creating \code{metadata}.
 #'
-#' @return A list of class \code{lor} containing the following components:
-#'
-#' \item{estimator}{The estimation method used.}
-#' \item{estimates}{The computed estimates including the
-#'                       efficient influence function, standard errors,
-#'                       and confidence intervals.}
+#' @return A list of class \code{lor} containing the computed estimates including the
+#'   efficient influence function, standard errors, and confidence intervals.
 #'
 #' @export
 #' @examples
 #' rct <- ordinalrct(state_ordinal ~ A + age, A ~ 1, data = c19.ordinal)
 #' log_or(rct)
 log_or <- function(metadata) {
-  out <- list(estimator = metadata$estimator,
+  out <- list(estimator = "TMLE",
               estimates = compute_lor(metadata))
   class(out) <- "lor"
   out
@@ -179,12 +160,9 @@ log_or <- function(metadata) {
 #' @family ordinalrct functions
 #' @seealso \code{\link{ordinalrct}} for creating \code{metadata}.
 #'
-#' @return A list of class \code{cdf} containing the following components:
-#'
-#' \item{estimator}{The estimation method used.}
-#' \item{estimates}{The computed estimates including the
-#'                       efficient influence function, standard errors,
-#'                       and confidence intervals.}
+#' @return A list of class \code{cdf} containing the computed estimates
+#'   including the efficient influence function, standard errors,
+#'   and confidence intervals.
 #'
 #' @export
 #' @examples
@@ -192,7 +170,7 @@ log_or <- function(metadata) {
 #' cdf(rct)
 cdf <- function(metadata) {
   out <- list(levels = levels(metadata$data[[metadata$Y]]),
-              estimator = metadata$estimator,
+              estimator = "TMLE",
               estimates = compute_cdf(metadata))
   class(out) <- "cdf"
   out
@@ -205,12 +183,9 @@ cdf <- function(metadata) {
 #' @family ordinalrct functions
 #' @seealso \code{\link{ordinalrct}} for creating \code{metadata}.
 #'
-#' @return A list of class \code{pmf} containing the following components:
-#'
-#' \item{estimator}{The estimation method used.}
-#' \item{estimates}{The computed estimates including the
-#'                       efficient influence function, standard errors,
-#'                       and confidence intervals.}
+#' @return A list of class \code{pmf} containing the computed estimates
+#'   including the efficient influence function, standard errors,
+#'   and confidence intervals.
 #'
 #' @export
 #' @examples
@@ -218,7 +193,7 @@ cdf <- function(metadata) {
 #' pmf(rct)
 pmf <- function(metadata) {
   out <- list(levels = levels(metadata$data[[metadata$Y]]),
-              estimator = metadata$estimator,
+              estimator = "TMLE",
               estimates = compute_pmf(metadata))
   class(out) <- "pmf"
   out
@@ -235,21 +210,17 @@ pmf <- function(metadata) {
 #' @family ordinalrct functions
 #' @seealso \code{\link{ordinalrct}} for creating \code{metadata}.
 #'
-#' @return A list of class \code{mannwhit} containing the following components:
-#'
-#' \item{estimator}{The estimation method used.}
-#' \item{estimates}{The computed estimates including the
-#'                       efficient influence function, standard errors,
-#'                       and confidence intervals.}
+#' @return A list of class \code{mannwhit} containing the computed estimates
+#'   including the efficient influence function, standard errors,
+#'   and confidence intervals.
 #'
 #' @export
 #' @examples
 #' rct <- ordinalrct(state_ordinal ~ A + age, A ~ 1, data = c19.ordinal)
 #' mannwhitney(rct)
 mannwhitney <- function(metadata) {
-  out <- list(estimator = metadata$estimator,
+  out <- list(estimator = "TMLE",
               estimates = compute_mw(metadata))
   class(out) <- "mannwhit"
   out
 }
-

@@ -8,7 +8,6 @@ ordinalrct(
   outcome.formula,
   trt.formula,
   data,
-  estimator = c("tmle", "aipw"),
   algo = c("glm", "lasso", "rf", "xgboost"),
   crossfit = TRUE
 )
@@ -24,10 +23,6 @@ names of variables used to estimate the propensity.}
 
 \item{data}{A data frame containing the variables in the model.}
 
-\item{estimator}{The method to be used for computing estimands. Options are "tmle"
-for Targeted Maximum Likelihood Estimation (the default), "aipw" for Augmented IPW,
-and "unadjusted" for the unadjusted estimator.}
-
 \item{algo}{Method to be used for fitting nuisance parameters. Automatically set to "glm" if
 less than two covariates for adjustment are specified in \code{formula}.}
 
@@ -39,8 +34,8 @@ An R6 object of class "Ordinal".
 \description{
 Compute metadata to be used for estimation of model-robust covariate adjusted
 average log odds ratio, Mann-Whitney statistic, and counterfactual marginal CDF
-and PMF in a two-arm randomized controlled trial. Estimation may be done using
-targeted maximum likelihood estimation or augmented inverse probability weighting.
+and PMF in a two-arm randomized controlled trial using
+targeted maximum likelihood estimation.
 }
 \examples{
 ordinalrct(state_ordinal ~ A + age, A ~ 1, data = c19.ordinal)
