@@ -13,6 +13,7 @@ Ordinal <- R6::R6Class(
     nobs = NULL,
     K = NULL,
     R = NULL,
+    estimator = "tmle",
     nuisance = list(),
     initialize = function(outcome.formula, trt.formula, data, estimator) {
       self$outcome.formula <- outcome.formula
