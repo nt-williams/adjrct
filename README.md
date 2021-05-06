@@ -68,16 +68,16 @@ surv <- survrct(Surv(days, event) ~ A + age + sex + bmi + dyspnea,
 surv
 #> survrct metadata
 #> 
-#> Surv(days, event) ~ A + age + sex + bmi + dyspnea
+#> Outcome regression: Surv(days, event) ~ A + age + sex + bmi + dyspnea
+#>         Propensity: A ~ 1
 #> 
 #> • Estimate RMST with `rmst()`
 #> • Estimate survival probability with `survprob()`
 #> • Inspect nuisance parameter models with `get_fits()`
 #> 
-#>          Estimator: tmle
+#>          Estimator: TMLE
 #>    Target variable: A
 #>   Status Indicator: event
-#>     Adjustment set: age, sex, bmi, and dyspnea
 #> Max coarsened time: 15
 ```
 
@@ -187,20 +187,20 @@ cdf(ord)
 #> Arm-specific CDF: Pr(K <= k | A = a)
 #> Treatment Arm
 #>   k Estimate Std. error         95% CI Uniform 95% CI
-#> 1 0    0.599      0.018 (0.56 to 0.63) (0.44 to 0.76)
-#> 2 1    0.684      0.017 (0.65 to 0.72) (0.53 to 0.84)
-#> 3 2    0.741      0.016 (0.71 to 0.77) (0.60 to 0.89)
-#> 4 3    0.903      0.011 (0.88 to 0.92) (0.80 to 1.00)
-#> 5 4    0.975      0.006 (0.96 to 0.99) (0.92 to 1.00)
+#> 1 0    0.602      0.018 (0.57 to 0.64) (0.56 to 0.65)
+#> 2 1    0.685      0.017 (0.65 to 0.72) (0.64 to 0.73)
+#> 3 2    0.742      0.016 (0.71 to 0.77) (0.70 to 0.78)
+#> 4 3    0.903      0.011 (0.88 to 0.92) (0.88 to 0.93)
+#> 5 4    0.975      0.006 (0.96 to 0.99) (0.96 to 0.99)
 #> 6 5    1.000          -              -              -
 #> 
 #> Control Arm
 #>   k Estimate Std. error         95% CI Uniform 95% CI
-#> 1 0    0.557      0.018 (0.52 to 0.59) (0.47 to 0.64)
-#> 2 1    0.613      0.018 (0.58 to 0.65) (0.53 to 0.70)
-#> 3 2    0.687      0.017 (0.65 to 0.72) (0.61 to 0.77)
-#> 4 3    0.715      0.016 (0.68 to 0.75) (0.64 to 0.79)
-#> 5 4    0.879      0.012 (0.86 to 0.90) (0.82 to 0.94)
+#> 1 0    0.554      0.018 (0.52 to 0.59) (0.51 to 0.60)
+#> 2 1    0.610      0.017 (0.58 to 0.64) (0.57 to 0.65)
+#> 3 2    0.686      0.017 (0.65 to 0.72) (0.65 to 0.73)
+#> 4 3    0.714      0.016 (0.68 to 0.75) (0.68 to 0.75)
+#> 5 4    0.877      0.011 (0.86 to 0.90) (0.85 to 0.90)
 #> 6 5    1.000          -              -              -
 pmf(ord)
 #> PMF Estimator: tmle
@@ -208,21 +208,21 @@ pmf(ord)
 #> Arm-specific PMF: Pr(K = k | A = a)
 #> Treatment Arm
 #>   k Estimate Std. error         95% CI Uniform 95% CI
-#> 1 0    0.599      0.018 (0.56 to 0.63) (0.44 to 0.76)
-#> 2 1    0.084      0.010 (0.06 to 0.10) (0.00 to 0.18)
-#> 3 2    0.057      0.009 (0.04 to 0.07) (0.00 to 0.13)
-#> 4 3    0.162      0.013 (0.14 to 0.19) (0.04 to 0.28)
-#> 5 4    0.072      0.009 (0.05 to 0.09) (0.00 to 0.16)
-#> 6 5    0.025      0.006 (0.01 to 0.04) (0.00 to 0.08)
+#> 1 0    0.602      0.018 (0.57 to 0.64) (0.56 to 0.65)
+#> 2 1    0.083      0.010 (0.06 to 0.10) (0.06 to 0.11)
+#> 3 2    0.057      0.008 (0.04 to 0.07) (0.04 to 0.08)
+#> 4 3    0.161      0.013 (0.13 to 0.19) (0.13 to 0.19)
+#> 5 4    0.072      0.010 (0.05 to 0.09) (0.05 to 0.10)
+#> 6 5    0.025      0.006 (0.01 to 0.04) (0.01 to 0.04)
 #> 
 #> Control Arm
 #>   k Estimate Std. error         95% CI Uniform 95% CI
-#> 1 0    0.557      0.018 (0.52 to 0.59) (0.47 to 0.64)
-#> 2 1    0.056      0.008 (0.04 to 0.07) (0.02 to 0.10)
-#> 3 2    0.075      0.010 (0.06 to 0.09) (0.03 to 0.12)
-#> 4 3    0.028      0.006 (0.02 to 0.04) (0.00 to 0.06)
-#> 5 4    0.164      0.014 (0.14 to 0.19) (0.10 to 0.23)
-#> 6 5    0.121      0.012 (0.10 to 0.14) (0.06 to 0.18)
+#> 1 0    0.554      0.018 (0.52 to 0.59) (0.51 to 0.60)
+#> 2 1    0.056      0.008 (0.04 to 0.07) (0.04 to 0.08)
+#> 3 2    0.075      0.010 (0.06 to 0.09) (0.05 to 0.10)
+#> 4 3    0.028      0.006 (0.02 to 0.04) (0.01 to 0.04)
+#> 5 4    0.163      0.014 (0.14 to 0.19) (0.13 to 0.20)
+#> 6 5    0.123      0.011 (0.10 to 0.14) (0.10 to 0.15)
 ```
 
 # References
