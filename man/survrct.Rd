@@ -9,7 +9,6 @@ survrct(
   trt.formula,
   data,
   coarsen = 1,
-  estimator = c("tmle", "aipw"),
   algo = c("glm", "lasso", "rf", "xgboost"),
   crossfit = TRUE
 )
@@ -30,9 +29,6 @@ names of variables used to estimate the propensity.}
 \item{coarsen}{An optional integer that specifies if and how \code{time} should
 be categorized into coarser intervals.}
 
-\item{estimator}{The method to be used for computing estimands. Options are \code{"tmle"}
-for Targeted Maximum Likelihood Estimation (the default) and \code{"aipw"} for Augmented IPW.}
-
 \item{algo}{Method to be used for fitting the hazard and censoring nuisance parameters.
 Automatically set to \code{"glm"} if less than two covariates for adjustment are
 specified in \code{outcome.formula}. The propensity is always estimated using a GLM.}
@@ -45,8 +41,7 @@ An R6 object of class "Survival".
 \description{
 Compute metadata to be used for estimation of model-robust covariate adjusted
 restricted mean survival time and survival probability in a two-arm randomized
-controlled trial. Estimation may be done using targeted maximum likelihood estimation
-or augmented inverse probability weighting.
+controlled trial using targeted maximum likelihood estimation.
 }
 \examples{
 survrct(Surv(days, event) ~ A + age + sex + dyspnea + bmi,

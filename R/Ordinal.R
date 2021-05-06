@@ -5,7 +5,6 @@ Ordinal <- R6::R6Class(
     trt.formula = NULL,
     data = NULL,
     ordinal_data = NULL,
-    estimator = NULL,
     trt = NULL,
     Y = NULL,
     covar = NULL,
@@ -15,11 +14,10 @@ Ordinal <- R6::R6Class(
     R = NULL,
     estimator = "tmle",
     nuisance = list(),
-    initialize = function(outcome.formula, trt.formula, data, estimator) {
+    initialize = function(outcome.formula, trt.formula, data) {
       self$outcome.formula <- outcome.formula
       self$data <- as.data.frame(data)
       self$trt.formula <- trt.formula
-      self$estimator <- estimator
     },
     prepare_data = function() {
       self$Y <- get_time(self$outcome.formula)
@@ -140,7 +138,7 @@ Ordinal <- R6::R6Class(
                     "Estimate with `pmf()`",
                     "Inspect nuisance parameter models with `get_fits()`"))
       cat("\n")
-      cli::cli_text(cat("         "), "Estimator: {self$estimator}")
+      cli::cli_text(cat("         "), "Estimator: TMLE")
       cli::cli_text(cat("   "), "Target variable: {self$trt}")
       cli::cli_text(cat("  "), "Outcome variable: {self$Y}")
     }

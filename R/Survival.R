@@ -5,7 +5,6 @@ Survival <- R6::R6Class(
     trt.formula = NULL,
     data = NULL,
     surv_data = NULL,
-    estimator = NULL,
     trt = NULL,
     status = NULL,
     covar = NULL,
@@ -18,11 +17,10 @@ Survival <- R6::R6Class(
     risk_evnt = NULL,
     risk_cens = NULL,
     nuisance = list(),
-    initialize = function(outcome.formula, trt.formula, data, estimator) {
+    initialize = function(outcome.formula, trt.formula, data) {
       self$outcome.formula <- outcome.formula
       self$trt.formula <- trt.formula
       self$data <- data
-      self$estimator <- estimator
     },
     prepare_data = function(coarsen = 1) {
       self$trt <- get_time(self$trt.formula)
@@ -209,16 +207,18 @@ Survival <- R6::R6Class(
     print = function(...) {
       cli::cli_text("{.strong survrct} metadata")
       cat("\n")
+      cat("Outcome regression: ")
       print(self$outcome.formula)
+      cat("        Propensity: ")
+      print(self$trt.formula)
       cat("\n")
       cli::cli_ul(c("Estimate RMST with `rmst()`",
                     "Estimate survival probability with `survprob()`",
                     "Inspect nuisance parameter models with `get_fits()`"))
       cat("\n")
-      cli::cli_text(cat("         "), "Estimator: {self$estimator}")
+      cli::cli_text(cat("         "), "Estimator: TMLE")
       cli::cli_text(cat("   "), "Target variable: {self$trt}")
       cli::cli_text(cat("  "), "Status Indicator: {self$status}")
-      cli::cli_text(cat("    "), "Adjustment set: {self$covar}")
       cli::cli_text("Max coarsened time: {self$max_time}")
     }
   )

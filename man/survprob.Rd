@@ -13,13 +13,9 @@ survprob(metadata, horizon = NULL)
 survival probabilities at all time points.}
 }
 \value{
-A list of class \code{survprob} containing the following components:
-
-\item{estimator}{The estimation method used.}
-\item{horizon}{The time horizons the survival probability was evaluated at.}
-\item{estimates}{The computed estimates for each time horizon including the
-                      efficient influence function, standard errors,
-                      and confidence intervals.}
+A list of class \code{survprob} containing the computed estimates
+  for each time horizon including the efficient influence function, standard errors,
+  and confidence intervals.
 }
 \description{
 Estimate Survival Probabilities
