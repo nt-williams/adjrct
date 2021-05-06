@@ -61,7 +61,7 @@ survrct <- function(outcome.formula, trt.formula,
 #' rmst(surv, 14)
 rmst <- function(metadata, horizon = NULL) {
   metadata$evaluate_horizon(horizon, "rmst")
-  out <- list(estimator = "TMLE",
+  out <- list(estimator = metadata$estimator,
               horizon = metadata$horizon,
               estimates = compute_rmst(metadata))
   class(out) <- "rmst"
@@ -89,7 +89,7 @@ rmst <- function(metadata, horizon = NULL) {
 #' survprob(surv, 14)
 survprob <- function(metadata, horizon = NULL) {
   metadata$evaluate_horizon(horizon, "survprob")
-  out <- list(estimator = "TMLE",
+  out <- list(estimator = metadata$estimator,
               horizon = metadata$horizon,
               estimates = compute_survprob(metadata))
   class(out) <- "survprob"
@@ -147,7 +147,7 @@ ordinalrct <- function(outcome.formula,
 #' rct <- ordinalrct(state_ordinal ~ A + age, A ~ 1, data = c19.ordinal)
 #' log_or(rct)
 log_or <- function(metadata) {
-  out <- list(estimator = "TMLE",
+  out <- list(estimator = metadata$estimator,
               estimates = compute_lor(metadata))
   class(out) <- "lor"
   out
@@ -170,7 +170,7 @@ log_or <- function(metadata) {
 #' cdf(rct)
 cdf <- function(metadata) {
   out <- list(levels = levels(metadata$data[[metadata$Y]]),
-              estimator = "TMLE",
+              estimator = metadata$estimator,
               estimates = compute_cdf(metadata))
   class(out) <- "cdf"
   out
@@ -193,7 +193,7 @@ cdf <- function(metadata) {
 #' pmf(rct)
 pmf <- function(metadata) {
   out <- list(levels = levels(metadata$data[[metadata$Y]]),
-              estimator = "TMLE",
+              estimator = metadata$estimator,
               estimates = compute_pmf(metadata))
   class(out) <- "pmf"
   out
@@ -219,7 +219,7 @@ pmf <- function(metadata) {
 #' rct <- ordinalrct(state_ordinal ~ A + age, A ~ 1, data = c19.ordinal)
 #' mannwhitney(rct)
 mannwhitney <- function(metadata) {
-  out <- list(estimator = "TMLE",
+  out <- list(estimator = metadata$estimator,
               estimates = compute_mw(metadata))
   class(out) <- "mannwhit"
   out

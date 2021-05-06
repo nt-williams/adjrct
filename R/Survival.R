@@ -16,6 +16,7 @@ Survival <- R6::R6Class(
     max_time = NULL,
     risk_evnt = NULL,
     risk_cens = NULL,
+    estimator = "tmle",
     nuisance = list(),
     initialize = function(outcome.formula, trt.formula, data) {
       self$outcome.formula <- outcome.formula
