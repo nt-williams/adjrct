@@ -70,10 +70,13 @@ cdf_tmle <- function(meta) {
   std.error <- sqrt(sapply(Dnl, function(x) diag(var(x))) / n)
 
   mbcv1 <- simul::simul(as.list(dist["theta1", ]),
-                        sapply(Dnl, function(x) x[, 1] + 1, simplify = FALSE), meta$nobs)
+                        sapply(Dnl, function(x) x[, 1] + 1, simplify = FALSE),
+                        meta$nobs,
+                        1e4)
 
   mbcv0 <- simul::simul(as.list(dist["theta0", ]),
-                        sapply(Dnl, function(x) x[, 2] + 1, simplify = FALSE), meta$nobs)
+                        sapply(Dnl, function(x) x[, 2] + 1, simplify = FALSE), meta$nobs,
+                        1e4)
 
   ci <- list(theta1 = dist_ci(dist[1, ], std.error[1, ]),
              theta0 = dist_ci(dist[2, ], std.error[2, ]),

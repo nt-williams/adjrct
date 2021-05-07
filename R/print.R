@@ -108,6 +108,8 @@ print.mannwhit <- function(x, ...) {
   cli::cli_text(cat("      "), "{.strong Estimate}: {round(x$estimates$mann.whitney, 2)}")
   cli::cli_text(cat("    "), "{.strong Std. error}: {round(x$estimates$std.error, 2)}")
   cli::cli_text(cat("        "), "{.strong 95% CI}: ({round(x$estimates$ci[1], 2)}, {round(x$estimates$ci[2], 2)})")
+  cat("\n")
+  cat(cli::cli_text(cli::col_green("The probability that a randomly drawn patient from the treatment arm has a greater outcome level than a randomly drawn patient from the control arm, with ties broken at random.")))
 }
 
 format_est <- function(x) {
