@@ -16,11 +16,11 @@ status](https://github.com/nt-williams/rctSurv/workflows/R-CMD-check/badge.svg)]
 <!-- badges: end -->
 
 > Efficient Estimators for Survival and Ordinal Outcomes in RCTs Without
-> Proportional Hazards and Odds Assumptions
+> Proportional Hazards and Odds Assumptions with Variable Selection
 
 Nick Williams and Iván Díaz
 
------
+------------------------------------------------------------------------
 
 # Installation
 
@@ -56,29 +56,29 @@ re-estimate nuisance parameters we first create a Survival metadata
 object using the `survrct()` function. We specify the model
 parameterization using a typical `R` formula with `Surv()` (based on the
 [**survival**](https://CRAN.R-project.org/package=survival) package)
-specifying the left-hand side of the formula.
-
-We also specify the target variable of interest, an optional time
-coarsener, and the estimator.
+specifying the left-hand side of the formula. We also specify a formula
+for the propensity.
 
 ``` r
 library(adjrct)
 
-data(colon)
-surv <- survrct(Surv(time, status) ~ trt + age + sex, target = "trt", data = colon, coarsen = 30)
+data("c19.tte")
+surv <- survrct(Surv(days, event) ~ A + age + sex + bmi + dyspnea, 
+                A ~ 1, data = c19.tte)
+surv
 #> survrct metadata
 #> 
-#> Surv(time, status) ~ trt + age + sex
+#> Outcome regression: Surv(days, event) ~ A + age + sex + bmi + dyspnea
+#>         Propensity: A ~ 1
 #> 
-#> ● Estimate RMST with `rmst()`
-#> ● Estimate survival probability with `survprob()`
-#> ● Inspect nuisance parameter models with `get_fits()`
+#> • Estimate RMST with `rmst()`
+#> • Estimate survival probability with `survprob()`
+#> • Inspect nuisance parameter models with `get_fits()`
 #> 
-#>          Estimator: tmle
-#>    Target variable: trt
-#>   Status Indicator: status
-#>     Adjustment set: age and sex
-#> Max coarsened time: 111
+#>          Estimator: TMLE
+#>    Target variable: A
+#>   Status Indicator: event
+#> Max coarsened time: 15
 ```
 
 Using the metadata from the previous step we can now estimate the
@@ -88,42 +88,42 @@ bands are returned: 95% point-wise intervals as well as 95% uniform
 confidence bands based on the multiplier-bootstrap from Kennedy (2019).
 
 ``` r
-rmst(surv, 60)
+rmst(surv, 14)
 #> RMST Estimator: tmle
 #> 
-#> Marginal RMST: E(min[T, 60] | A = a)
+#> Marginal RMST: E(min[T, 14] | A = a)
 #> Treatment Arm
-#>       Estimate: 45.33
-#>     Std. error: 1.23
-#>         95% CI: (42.91, 47.74)
+#>       Estimate: 12.43
+#>     Std. error: 0.12
+#>         95% CI: (12.2, 12.66)
 #> Control Arm
-#>       Estimate: 37.83
-#>     Std. error: 1.39
-#>         95% CI: (35.12, 40.55)
+#>       Estimate: 11.37
+#>     Std. error: 0.17
+#>         95% CI: (11.04, 11.7)
 #> 
-#> Treatment Effect: E(min[T, 60] | A = 1) - E(min[T, 60] | A = 0)
+#> Treatment Effect: E(min[T, 14] | A = 1) - E(min[T, 14] | A = 0)
 #> Additive effect
-#>       Estimate: 7.49
-#>     Std. error: 1.85
-#>         95% CI: (3.86, 11.12)
-survprob(surv, 60)
+#>       Estimate: 1.06
+#>     Std. error: 0.2
+#>         95% CI: (0.66, 1.46)
+survprob(surv, 14)
 #> Survival Probability Estimator: tmle
 #> 
-#> Marginal Survival Probability: Pr(T > 60 | A = a)
+#> Marginal Survival Probability: Pr(T > 14 | A = a)
 #> Treatment Arm
-#>       Estimate: 0.65
-#>     Std. error: 0.03
-#>         95% CI: (0.6, 0.7)
+#>       Estimate: 0.76
+#>     Std. error: 0.02
+#>         95% CI: (0.73, 0.79)
 #> Control Arm
-#>       Estimate: 0.51
-#>     Std. error: 0.03
-#>         95% CI: (0.45, 0.57)
+#>       Estimate: 0.73
+#>     Std. error: 0.02
+#>         95% CI: (0.7, 0.76)
 #> 
-#> Treatment Effect: Pr(T > 60 | A = 1) - Pr(T > 60 | A = 0)
+#> Treatment Effect: Pr(T > 14 | A = 1) - Pr(T > 14 | A = 0)
 #> Additive effect
-#>       Estimate: 0.14
-#>     Std. error: 0.04
-#>         95% CI: (0.06, 0.22)
+#>       Estimate: 0.03
+#>     Std. error: 0.02
+#>         95% CI: (-0.02, 0.07)
 ```
 
 ### Ordinal outcome
@@ -132,24 +132,25 @@ We can similarly create an Ordinal metadata object using the
 `ordinalrct()` function.
 
 ``` r
-data(mistie)
+data("c19.ordinal")
 
-ord <- ordinalrct(Y ~ A + age, "A", mistie, "tmle", lasso = FALSE)
+ord <- ordinalrct(state_ordinal ~ A + age + dyspnea + sex, 
+                  A ~ 1, data = c19.ordinal)
 ord
 #> ordinalrct metadata
 #> 
-#> Y ~ A + age
+#> Outcome regression: state_ordinal ~ A + age + dyspnea + sex
+#>         Propensity: A ~ 1
 #> 
-#> ● Estimate log odds ratio with `log_or()`
-#> ● Estimate Mann-Whitney with `mannwhitney()`
-#> ● Estimate with `cdf()`
-#> ● Estimate with `pmf()`
-#> ● Inspect nuisance parameter models with `get_fits()`
+#> • Estimate log odds ratio with `log_or()`
+#> • Estimate Mann-Whitney with `mannwhitney()`
+#> • Estimate with `cdf()`
+#> • Estimate with `pmf()`
+#> • Inspect nuisance parameter models with `get_fits()`
 #> 
 #>          Estimator: tmle
 #>    Target variable: A
-#>   Outcome variable: Y
-#>     Adjustment set: age
+#>   Outcome variable: state_ordinal
 ```
 
 The average log odds ratio, Mann-Whitney statistic, CDF, and PMF can
@@ -161,63 +162,67 @@ log_or(ord)
 #> 
 #> Arm-specific log odds:
 #> Treatment Arm
-#>       Estimate: -0.24
-#>     Std. error: 0.22
-#>         95% CI: (-0.68, 0.19)
+#>       Estimate: 1.62
+#>     Std. error: 0.09
+#>         95% CI: (1.44, 1.8)
 #> Control Arm
-#>       Estimate: -0.5
-#>     Std. error: 0.31
-#>         95% CI: (-1.1, 0.11)
+#>       Estimate: 0.87
+#>     Std. error: 0.07
+#>         95% CI: (0.73, 1.02)
 #> 
 #> Average log odds ratio:
-#>       Estimate: 0.25
-#>     Std. error: 0.38
-#>         95% CI: (-0.48, 0.99)
+#>       Estimate: 0.75
+#>     Std. error: 0.11
+#>         95% CI: (0.52, 0.97)
 mannwhitney(ord)
 #> Mann-Whitney Estimand
 #> 
 #>      Estimator: tmle
-#>       Estimate: 0.46
-#>     Std. error: 0.06
-#>         95% CI: (0.34, 0.57)
+#>       Estimate: 0.45
+#>     Std. error: 0.01
+#>         95% CI: (0.42, 0.47)
 cdf(ord)
 #> CDF Estimator: tmle
 #> 
 #> Arm-specific CDF: Pr(K <= k | A = a)
 #> Treatment Arm
-#>   k Estimate Std. error         95% CI
-#> 1 1    0.121      0.040 (0.04 to 0.20)
-#> 2 2    0.364      0.059 (0.25 to 0.48)
-#> 3 3    0.606      0.060 (0.49 to 0.72)
-#> 4 4    0.757      0.053 (0.65 to 0.86)
-#> 5 5    1.000          -              -
+#>   k Estimate Std. error         95% CI Uniform 95% CI
+#> 1 0    0.602      0.018 (0.57 to 0.64) (0.56 to 0.65)
+#> 2 1    0.685      0.017 (0.65 to 0.72) (0.64 to 0.73)
+#> 3 2    0.742      0.016 (0.71 to 0.77) (0.70 to 0.78)
+#> 4 3    0.903      0.011 (0.88 to 0.92) (0.88 to 0.93)
+#> 5 4    0.975      0.006 (0.96 to 0.99) (0.96 to 0.99)
+#> 6 5    1.000          -              -              -
 #> 
 #> Control Arm
-#>   k Estimate Std. error         95% CI
-#> 1 1    0.108      0.051 (0.01 to 0.21)
-#> 2 2    0.243      0.070 (0.11 to 0.38)
-#> 3 3    0.566      0.082 (0.41 to 0.73)
-#> 4 4    0.730      0.073 (0.59 to 0.87)
-#> 5 5    1.000          -              -
+#>   k Estimate Std. error         95% CI Uniform 95% CI
+#> 1 0    0.554      0.018 (0.52 to 0.59) (0.51 to 0.60)
+#> 2 1    0.610      0.017 (0.58 to 0.64) (0.57 to 0.65)
+#> 3 2    0.686      0.017 (0.65 to 0.72) (0.65 to 0.73)
+#> 4 3    0.714      0.016 (0.68 to 0.75) (0.68 to 0.75)
+#> 5 4    0.877      0.011 (0.86 to 0.90) (0.85 to 0.90)
+#> 6 5    1.000          -              -              -
 pmf(ord)
 #> PMF Estimator: tmle
 #> 
 #> Arm-specific PMF: Pr(K = k | A = a)
 #> Treatment Arm
-#>   k Estimate Std. error         95% CI
-#> 1 1    0.121      0.040 (0.04 to 0.20)
-#> 2 2    0.242      0.053 (0.14 to 0.35)
-#> 3 3    0.242      0.053 (0.14 to 0.35)
-#> 4 4    0.151      0.045 (0.06 to 0.24)
-#> 5 5    0.243      0.053 (0.14 to 0.35)
+#>   k Estimate Std. error         95% CI Uniform 95% CI
+#> 1 0    0.602      0.018 (0.57 to 0.64) (0.56 to 0.65)
+#> 2 1    0.083      0.010 (0.06 to 0.10) (0.06 to 0.11)
+#> 3 2    0.057      0.008 (0.04 to 0.07) (0.04 to 0.08)
+#> 4 3    0.161      0.013 (0.13 to 0.19) (0.13 to 0.19)
+#> 5 4    0.072      0.010 (0.05 to 0.09) (0.05 to 0.10)
+#> 6 5    0.025      0.006 (0.01 to 0.04) (0.01 to 0.04)
 #> 
 #> Control Arm
-#>   k Estimate Std. error         95% CI
-#> 1 1    0.108      0.051 (0.01 to 0.21)
-#> 2 2    0.135      0.056 (0.02 to 0.25)
-#> 3 3    0.323      0.076 (0.17 to 0.47)
-#> 4 4    0.163      0.061 (0.04 to 0.28)
-#> 5 5    0.270      0.073 (0.13 to 0.41)
+#>   k Estimate Std. error         95% CI Uniform 95% CI
+#> 1 0    0.554      0.018 (0.52 to 0.59) (0.51 to 0.60)
+#> 2 1    0.056      0.008 (0.04 to 0.07) (0.04 to 0.08)
+#> 3 2    0.075      0.010 (0.06 to 0.09) (0.05 to 0.10)
+#> 4 3    0.028      0.006 (0.02 to 0.04) (0.01 to 0.04)
+#> 5 4    0.163      0.014 (0.14 to 0.19) (0.13 to 0.20)
+#> 6 5    0.123      0.011 (0.10 to 0.14) (0.10 to 0.15)
 ```
 
 # References

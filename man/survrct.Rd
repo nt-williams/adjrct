@@ -5,46 +5,47 @@
 \title{Create RCT Survival Metadata}
 \usage{
 survrct(
-  formula,
-  target,
+  outcome.formula,
+  trt.formula,
   data,
   coarsen = 1,
-  estimator = c("tmle", "aipw", "km"),
-  lasso = FALSE
+  algo = c("glm", "lasso", "rf", "xgboost"),
+  crossfit = TRUE
 )
 }
 \arguments{
-\item{formula}{An object of class "formula". The left hand side should be
+\item{outcome.formula}{An object of class "formula". The left hand side should be
 specified using \code{Surv(time, status)} where time is the name of the
 variable containing follow-up time and status is the name of the indicator variable
 with 0 = right censored and 1 = event at \code{time}. The right hand
 side should contain the target variable of interest and baseline prognostic covariates.}
 
-\item{target}{The name of the target variable of interest; i.e., the randomized condition.}
+\item{trt.formula}{An object of class "formula". The left hand side should be the name
+of the binary (coded as 0 and 1) treatment variable. The right hand side should specify the
+names of variables used to estimate the propensity.}
 
 \item{data}{A data frame containing the variables in the model.}
 
 \item{coarsen}{An optional integer that specifies if and how \code{time} should
 be categorized into coarser intervals.}
 
-\item{estimator}{The method to be used for computing estimands. Options are "tmle"
-for Targeted Maximum Likelihood Estimation (the default), "aipw" for Augmented IPW,
-and "km" for Kaplan-Meier.}
+\item{algo}{Method to be used for fitting the hazard and censoring nuisance parameters.
+Automatically set to \code{"glm"} if less than two covariates for adjustment are
+specified in \code{outcome.formula}. The propensity is always estimated using a GLM.}
 
-\item{lasso}{Should LASSO be used for fitting? Default is \code{FALSE}.}
+\item{crossfit}{Should the estimator be crossfit? Ignored if \code{algo} is \code{"glm"} or \code{"lasso"}.}
 }
 \value{
 An R6 object of class "Survival".
 }
 \description{
-Create RCT survival metadata to be used for estimation of the
-restricted mean survival time and survival probability.
+Compute metadata to be used for estimation of model-robust covariate adjusted
+restricted mean survival time and survival probability in a two-arm randomized
+controlled trial using targeted maximum likelihood estimation.
 }
 \examples{
-\donttest{
-survrct(Surv(time, status) ~ trt + age + sex + obstruct + perfor + adhere + surg,
-        target = "trt", data = colon, coarsen = 30, estimator = "tmle")
-}
+survrct(Surv(days, event) ~ A + age + sex + dyspnea + bmi,
+        A ~ 1, data = c19.tte)
 }
 \seealso{
 Other survrct functions: 

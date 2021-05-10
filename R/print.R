@@ -6,8 +6,7 @@ print.rmst <- function(x, ...) {
     cat("           Confidence level: 95%\n")
     cat("          Mult. Bootstrap C:", x$estimates$mbcv_theta, "\n")
     cat("\n")
-    print(head(format_est(x)))
-    cli::cli_text(cli::col_red("Access all estimates with `all_estimates()`"))
+    print(format_est(x))
   } else {
     cat("\n")
     cli::cli_text("{.strong Marginal RMST:} E(min[T, {x$horizon}] | A = a)")
@@ -36,8 +35,7 @@ print.survprob <- function(x, ...) {
     cat("           Confidence level: 95%\n")
     cat("          Mult. Bootstrap C:", x$estimates$mbcv_theta, "\n")
     cat("\n")
-    print(head(format_est(x)))
-    cli::cli_text(cli::col_red("Access all estimates with `all_estimates()`"))
+    print(format_est(x))
   } else {
     cat("\n")
     cli::cli_text("{.strong Marginal Survival Probability:} Pr(T > {x$horizon} | A = a)")
@@ -84,10 +82,10 @@ print.cdf <- function(x, ...) {
   cat("\n")
   cli::cli_text("{.strong Arm-specific CDF:} Pr(K <= k | A = a)")
   cli::cli_text(cli::col_blue(cli::style_italic("Treatment Arm")))
-  print(format_dist(x$estimates$dist[1, ], x$estimates$std.error[1, ], x$estimates$ci$theta1, levels = x$levels, "cdf"))
+  print(format_dist(x$estimates$dist[1, ], x$estimates$std.error[1, ], x$estimates$ci$theta1, x$estimates$ci$unif1, levels = x$levels, "cdf"))
   cat("\n")
   cli::cli_text(cli::col_red(cli::style_italic("Control Arm")))
-  print(format_dist(x$estimates$dist[2, ], x$estimates$std.error[2, ], x$estimates$ci$theta0, levels = x$levels, "cdf"))
+  print(format_dist(x$estimates$dist[2, ], x$estimates$std.error[2, ], x$estimates$ci$theta0, x$estimates$ci$unif0, levels = x$levels, "cdf"))
 }
 
 #' @export
@@ -96,10 +94,10 @@ print.pmf <- function(x, ...) {
   cat("\n")
   cli::cli_text("{.strong Arm-specific PMF:} Pr(K = k | A = a)")
   cli::cli_text(cli::col_blue(cli::style_italic("Treatment Arm")))
-  print(format_dist(x$estimates$dist[1, ], x$estimates$std.error[1, ], x$estimates$ci$theta1, levels = x$levels, "pmf"))
+  print(format_dist(x$estimates$dist[1, ], x$estimates$std.error[1, ], x$estimates$ci$theta1, x$estimates$ci$unif1, levels = x$levels, "pmf"))
   cat("\n")
   cli::cli_text(cli::col_red(cli::style_italic("Control Arm")))
-  print(format_dist(x$estimates$dist[2, ], x$estimates$std.error[2, ], x$estimates$ci$theta0, levels = x$levels, "pmf"))
+  print(format_dist(x$estimates$dist[2, ], x$estimates$std.error[2, ], x$estimates$ci$theta0, x$estimates$ci$unif0, levels = x$levels, "pmf"))
 }
 
 #' @export
@@ -107,76 +105,56 @@ print.mannwhit <- function(x, ...) {
   cli::cli_text("{.strong Mann-Whitney Estimand}")
   cat("\n")
   cli::cli_text(cat("     "), "{.strong Estimator}: {x$estimator}")
-  cli::cli_text(cat("      "), "{.strong Estimate}: {round(x$estimates$theta, 2)}")
+  cli::cli_text(cat("      "), "{.strong Estimate}: {round(x$estimates$mann.whitney, 2)}")
   cli::cli_text(cat("    "), "{.strong Std. error}: {round(x$estimates$std.error, 2)}")
   cli::cli_text(cat("        "), "{.strong 95% CI}: ({round(x$estimates$ci[1], 2)}, {round(x$estimates$ci[2], 2)})")
-}
-
-#' Extract RMST And Survival Probability Estimates
-#'
-#' @param x An object of class "rmst" or "survprob".
-#'
-#' @seealso \code{\link{rmst}} and \code{\link{survprob}} for creating \code{x}.
-#'
-#' @return A data frame containing the estimates.
-#' @export
-#'
-#' @examples
-#' \donttest{
-#' surv <- survrct(Surv(time, status) ~ trt + age + sex + obstruct +
-#'                    perfor + adhere + surg,
-#'                 target = "trt", data = colon, coarsen = 30, estimator = "tmle")
-#' est <- rmst(surv, 105:111)
-#' all_estimates(est)
-#' }
-all_estimates <- function(x) {
-  out <- do.call(
-    "rbind",
-    lapply(x$estimates[-which(names(x$estimates) %in%
-                                c("mbcv_theta", "mbcv_treatment", "mbcv_control"))],
-           function(x) {
-             data.frame(treatment = x$arm1,
-                        treatment.conf.low = x$arm1.conf.low,
-                        treatment.conf.high = x$arm1.conf.high,
-                        treatment.unif.low = x$arm1.unif.low,
-                        treatment.unif.high = x$arm1.unif.high,
-                        control = x$arm0,
-                        control.conf.low = x$arm0.conf.low,
-                        control.conf.high = x$arm0.conf.high,
-                        control.unif.low = x$arm0.unif.low,
-                        control.unif.high = x$arm0.unif.high,
-                        theta = x$theta,
-                        theta.conf.low = x$theta.conf.low,
-                        theta.conf.high = x$theta.conf.high,
-                        theta.unif.low = x$theta.unif.low,
-                        theta.unif.high = x$theta.unif.high)
-           }))
-  out$horizon <- x$horizon
-  out[, c(16, 1:15)]
+  cat("\n")
+  cat(cli::cli_text(cli::col_green("The probability that a randomly drawn patient from the treatment arm has a greater outcome level than a randomly drawn patient from the control arm, with ties broken at random.")))
 }
 
 format_est <- function(x) {
-  x <- all_estimates(x)
-  x$`treatment` <- format_digits(x$treatment, 2)
-  x$`control` <- format_digits(x$control, 2)
-  x$theta <- format_digits(x$theta, 2)
-  x$`point-wise 95% CI` <- paste0("(", paste(format_digits(x$theta.conf.low, 2), "to", format_digits(x$theta.conf.high, 2)), ")")
-  x$`uniform 95% CI` <- paste0("(", paste(format_digits(x$theta.unif.low, 2), "to", format_digits(x$theta.unif.high, 2)), ")")
-  x[, c(1:2, 7, 12, 17:18)]
+  tidied <- tidy(x)
+  if (class(x) == "rmst") {
+    treatment <- format_digits(tidied$trt.rmst, 2)
+    control <- format_digits(tidied$control.rmst, 2)
+  } else {
+    treatment <- format_digits(tidied$trt.survprob, 2)
+    control <- format_digits(tidied$control.survprob, 2)
+  }
+  data.frame(
+    horizon = x$horizon,
+    treatment = treatment,
+    control = control,
+    theta = format_digits(tidied$theta, 2),
+    `point-wise 95% CI` =
+      paste0("(", paste(
+        format_digits(tidied$theta.conf.low, 2),
+        "to",
+        format_digits(tidied$theta.conf.high, 2)
+      ), ")"),
+    `uniform 95% CI` = paste0("(", paste(
+      format_digits(tidied$theta.unif.low, 2),
+      "to",
+      format_digits(tidied$theta.unif.high, 2)
+    ), ")"),
+    check.names = FALSE
+  )
 }
 
-format_dist <- function(dist, std.error, ci, levels, type = c("cdf", "pmf")) {
+format_dist <- function(dist, std.error, ci, unif, levels, type = c("cdf", "pmf")) {
   if (match.arg(type) == "cdf") {
     out <- data.frame(k = levels,
                       Estimate = c(format_digits(dist, 3), "1.000"),
                       std.error = c(format_digits(std.error, 3), "-"),
-                      ci = c(paste0("(", paste(format_digits(ci[, 1], 2), "to", format_digits(ci[, 2], 2)), ")"), "-"))
+                      ci = c(paste0("(", paste(format_digits(ci[, 1], 2), "to", format_digits(ci[, 2], 2)), ")"), "-"),
+                      unif = c(paste0("(", paste(format_digits(unif[, 1], 2), "to", format_digits(unif[, 2], 2)), ")"), "-"))
   } else {
     out <- data.frame(k = levels,
                       Estimate = format_digits(dist, 3),
                       std.error = format_digits(std.error, 3),
-                      ci = paste0("(", paste(format_digits(ci[, 1], 2), "to", format_digits(ci[, 2], 2)), ")"))
+                      ci = paste0("(", paste(format_digits(ci[, 1], 2), "to", format_digits(ci[, 2], 2)), ")"),
+                      unif = paste0("(", paste(format_digits(unif[, 1], 2), "to", format_digits(unif[, 2], 2)), ")"))
   }
-  names(out) <- c("k", "Estimate", "Std. error", "95% CI")
+  names(out) <- c("k", "Estimate", "Std. error", "95% CI", "Uniform 95% CI")
   out
 }

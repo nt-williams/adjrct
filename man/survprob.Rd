@@ -13,24 +13,17 @@ survprob(metadata, horizon = NULL)
 survival probabilities at all time points.}
 }
 \value{
-A list of class \code{survprob} containing the following components:
-
-\item{estimator}{The estimation method used.}
-\item{horizon}{The time horizons the survival probability was evaluated at.}
-\item{estimates}{The computed estimates for each time horizon including the
-                      efficient influence function, standard errors,
-                      and confidence intervals.}
+A list of class \code{survprob} containing the computed estimates
+  for each time horizon including the efficient influence function, standard errors,
+  and confidence intervals.
 }
 \description{
 Estimate Survival Probabilities
 }
 \examples{
-\donttest{
-surv <- survrct(Surv(time, status) ~ trt + age + sex + obstruct +
-                   perfor + adhere + surg,
-                target = "trt", data = colon, coarsen = 30, estimator = "tmle")
-survprob(surv, 60)
-}
+surv <- survrct(Surv(days, event) ~ A + age + sex + dyspnea + bmi,
+                A ~ 1, data = c19.tte)
+survprob(surv, 14)
 }
 \seealso{
 \code{\link{survrct}} for creating \code{metadata}.
