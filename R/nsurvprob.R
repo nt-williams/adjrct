@@ -61,12 +61,14 @@ survprob_tmle <- function(meta) {
         H <- trt * H1 - (1-trt) * H0
 
         eps <- coef(glm2::glm2(evnt[risk_evnt == 1] ~ 0 + offset(qlogis(h[risk_evnt == 1])) + I(trt[risk_evnt == 1] * Z1[risk_evnt == 1]) + I((1-trt[risk_evnt == 1]) * Z0[risk_evnt == 1]), family = binomial()))
-        gamma <- coef(glm2::glm2(cens[risk_cens == 1] ~ 0 + offset(qlogis(gR[risk_cens == 1])) + H[risk_cens == 1], family = binomial()))
-        nu <- coef(glm2::glm2(trt[all_time == 1] ~ 0 + offset(qlogis(gA1)) + M, family = binomial()))
+        # gamma <- coef(glm2::glm2(cens[risk_cens == 1] ~ 0 + offset(qlogis(gR[risk_cens == 1])) + H[risk_cens == 1], family = binomial()))
+        # nu <- coef(glm2::glm2(trt[all_time == 1] ~ 0 + offset(qlogis(gA1)) + M, family = binomial()))
 
         eps[is.na(eps)] <- 0
-        gamma[is.na(gamma)] <- 0
-        nu[is.na(nu)] <- 0
+        # gamma[is.na(gamma)] <- 0
+        # nu[is.na(nu)] <- 0
+        gamma <- 0
+        nu <- 0
 
         h1 <- bound01(plogis(qlogis(h1) + eps[1] * Z1))
         h0 <- bound01(plogis(qlogis(h0) + eps[2] * Z0))
@@ -105,85 +107,6 @@ survprob_tmle <- function(meta) {
       eif1 <- as.vector(DT1 + DW1)
       eif0 <- as.vector(DT0 + DW0)
       eif <- eif1 - eif0
-
-      se1 <- sqrt(var(eif1) / nobs)
-      se0 <- sqrt(var(eif0) / nobs)
-      se <- sqrt(var(eif) / nobs)
-
-      list(arm1 = theta1,
-           eif1 = eif1,
-           arm1.std.error = se1,
-           arm1.conf.low = theta1 - qnorm(0.975)*se1,
-           arm1.conf.high = theta1 + qnorm(0.975)*se1,
-           arm0 = theta0,
-           eif0 = eif0,
-           arm0.std.error = se0,
-           arm0.conf.low = theta0 - qnorm(0.975)*se0,
-           arm0.conf.high = theta0 + qnorm(0.975)*se0,
-           theta = theta1 - theta0,
-           eif = eif,
-           std.error = se,
-           theta.conf.low  = (theta1 - theta0) - qnorm(0.975)*se,
-           theta.conf.high = (theta1 - theta0) + qnorm(0.975)*se)
-    }
-  }
-  # as.list(res)
-  simul_ci(as.list(res), nobs)
-}
-
-survprob_aipw <- function(meta) {
-  nobs <- meta$nobs
-  id <- meta$surv_data[["survrctId"]]
-  trt <- meta$get_var("trt")
-  ind <- meta$time_indicator()
-  evnt <- meta$surv_data[["evnt"]]
-  cens <- meta$surv_data[["cens"]]
-  risk_evnt <- meta$risk_evnt
-  risk_cens <- meta$risk_cens
-  all_time <- meta$all_time
-  nuis <- meta$nuisance
-  res <- listenv::listenv()
-
-  gA1 <- nuis$trt_on[all_time == 1]
-  gA0 <- 1 - gA1
-
-  h1 <- nuis$hzrd_on
-  h0 <- nuis$hzrd_off
-  gR1 <- nuis$cens_on
-  gR0 <- nuis$cens_off
-
-  h <- trt*h1 + (1 - trt)*h0
-  gR <- trt*gR1 + (1 - trt)*gR0
-
-  S1 <- tapply(1 - h1, id, cumprod, simplify = FALSE)
-  S0 <- tapply(1 - h0, id, cumprod, simplify = FALSE)
-  St1 <- do.call('rbind', S1[id])
-  St0 <- do.call('rbind', S0[id])
-  Sm1 <- unlist(S1)
-  Sm0 <- unlist(S0)
-
-  G1 <- tapply(1 - gR1, id, cumprod, simplify = FALSE)
-  G0 <- tapply(1 - gR0, id, cumprod, simplify = FALSE)
-  Gm1 <- unlist(G1)
-  Gm0 <- unlist(G0)
-
-  for (j in 1:length(meta$horizon)) {
-    res[[j]] %<-% {
-      tau <- meta$horizon[j]
-      Z1 <- -(ind * St1)[, tau] / bound(Sm1 * gA1[id] * Gm1)
-      Z0 <- -(ind * St0)[, tau] / bound(Sm0 * gA0[id] * Gm0)
-
-      DT1 <- tapply(risk_evnt*trt*Z1*(evnt - h), id, sum)
-      DT0 <- tapply(risk_evnt*(1 - trt)*Z0*(evnt - h), id, sum)
-      DW1 <- St1[all_time == 1, tau]
-      DW0 <- St0[all_time == 1, tau]
-
-      eif1 <- as.vector(DT1 + DW1)
-      eif0 <- as.vector(DT0 + DW0)
-      eif <- eif1 - eif0
-
-      theta1 <- mean(eif1)
-      theta0 <- mean(eif0)
 
       se1 <- sqrt(var(eif1) / nobs)
       se0 <- sqrt(var(eif0) / nobs)

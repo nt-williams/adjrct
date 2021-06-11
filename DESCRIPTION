@@ -1,7 +1,7 @@
 Package: adjrct
 Type: Package
 Title: Efficient Estimators for Survival and Ordinal Outcomes in RCTs Without Proportional Hazards and Odds Assumptions
-Version: 0.1.0.9000
+Version: 0.1.0.2000
 Authors@R: 
     c(person(given = "Iván", 
              family = "Díaz", 
