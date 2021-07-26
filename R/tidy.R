@@ -23,7 +23,7 @@ tidy.rmst <- function(x, ...) {
   out <- cbind(horizon = x$horizon, out)
   names(out) <- gsub("arm0", "control.rmst", gsub("arm1", "trt.rmst", names(out)))
   class(out) <- c("tbl_df", "tbl", "data.frame")
-  return(out)
+  out
 }
 
 #' Tidy a(n) survprob object
@@ -41,7 +41,7 @@ tidy.rmst <- function(x, ...) {
 tidy.survprob <- function(x, ...) {
   out <- tidy.rmst(x)
   names(out) <- gsub("rmst", "survprob", names(out))
-  return(out)
+  out
 }
 
 #' Tidy a(n) lor object
@@ -64,7 +64,7 @@ tidy.lor <- function(x, ...) {
   out <- as.data.frame(c(tmp, as.list(unlist(cis))))
   names(out) <- gsub("ci.", "", gsub("lo0", "control.logodds", gsub("lo1", "trt.logodds", names(out))))
   class(out) <- c("tbl_df", "tbl", "data.frame")
-  return(out)
+  out
 }
 
 #' Tidy a(n) cdf object
@@ -91,7 +91,7 @@ tidy.cdf <- function(x, ...) {
                as.data.frame(t(std.error)), as.data.frame(do.call("cbind", ci)))
   names(out) <- gsub("theta0", "control.cdf", gsub("theta1", "trt.cdf", names(out)))
   class(out) <- c("tbl_df", "tbl", "data.frame")
-  return(out)
+  out
 }
 
 #' Tidy a(n) pmf object
@@ -118,7 +118,7 @@ tidy.pmf <- function(x, ...) {
                as.data.frame(t(std.error)), as.data.frame(do.call("cbind", ci)))
   names(out) <- gsub("theta0", "control.pmf", gsub("theta1", "trt.pmf", names(out)))
   class(out) <- c("tbl_df", "tbl", "data.frame")
-  return(out)
+  out
 }
 
 #' Tidy a(n) mannwhit object
@@ -133,10 +133,12 @@ tidy.pmf <- function(x, ...) {
 #'
 #' @export
 tidy.mannwhit <- function(x, ...) {
-  out <- data.frame(mann.whitney = x$estimates$mann.whitney,
-                    std.error = x$estimates$std.error[1, 1],
-                    conf.low = x$estimates$ci[1],
-                    conf.high = x$estimates$ci[2])
+  out <- data.frame(
+    mann.whitney = x$estimates$mann.whitney,
+    std.error = x$estimates$std.error[1, 1],
+    conf.low = x$estimates$ci[1],
+    conf.high = x$estimates$ci[2]
+  )
   class(out) <- c("tbl_df", "tbl", "data.frame")
-  return(out)
+  out
 }

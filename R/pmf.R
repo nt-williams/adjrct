@@ -18,7 +18,7 @@ calc_pmf_k <- function(cdf) {
     }
   }
   pmf[1] <- cdf[1]
-  return(pmf)
+  pmf
 }
 
 pmf_tmle <- function(meta) {
@@ -27,16 +27,20 @@ pmf_tmle <- function(meta) {
   eif <- lapply(CDF$eif, pmf_eif)
   std.error <- t(sapply(eif, function(x) sqrt(diag(var(x)) / meta$nobs)))
 
-  ci <- list(theta1 = dist_ci(PMF[1, ], std.error[1, ]),
-             theta0 = dist_ci(PMF[2, ], std.error[2, ]),
-             unif1 = dist_ci(PMF[1, ], std.error[1, ], CDF$mbcv["theta1"]),
-             unif0 = dist_ci(PMF[2, ], std.error[2, ], CDF$mbcv["theta0"]))
+  ci <- list(
+    theta1 = dist_ci(PMF[1, ], std.error[1, ]),
+    theta0 = dist_ci(PMF[2, ], std.error[2, ]),
+    unif1 = dist_ci(PMF[1, ], std.error[1, ], CDF$mbcv["theta1"]),
+    unif0 = dist_ci(PMF[2, ], std.error[2, ], CDF$mbcv["theta0"])
+  )
 
-  list(dist = PMF,
-       std.error = std.error,
-       ci = ci,
-       eif = eif,
-       mbcv = CDF$mbcv)
+  list(
+    dist = PMF,
+    std.error = std.error,
+    ci = ci,
+    eif = eif,
+    mbcv = CDF$mbcv
+  )
 }
 
 pmf_eif <- function(x) {
@@ -49,5 +53,5 @@ pmf_eif <- function(x) {
     }
   }
   out[, 1] <- x[, 1]
-  return(out)
+  out
 }
