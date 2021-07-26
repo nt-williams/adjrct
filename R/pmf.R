@@ -51,3 +51,30 @@ pmf_eif <- function(x) {
   out[, 1] <- x[, 1]
   return(out)
 }
+
+dist_data <- function(obj, type = c("cdf", "pmf")) {
+  if (match.arg(type) == "cdf") {
+    out <- data.frame(
+      arm = rep(c("trt", "control"), each = length(obj$levels)),
+      k = rep(ordered(obj$levels, levels = obj$levels), 2),
+      estimate = c(obj$estimates$dist[1, ], 1, obj$estimates$dist[2, ], 1),
+      std.error = c(obj$estimates$std.error[1, ], NA_real_, obj$estimates$std.error[2, ], NA_real_),
+      conf.low = c(obj$estimates$ci$theta1[, 1], NA_real_, obj$estimates$ci$theta0[, 1], NA_real_),
+      conf.high = c(obj$estimates$ci$theta1[, 2], NA_real_, obj$estimates$ci$theta0[, 2], NA_real_),
+      conf.unif.low = c(obj$estimates$ci$unif1[, 1], NA_real_, obj$estimates$ci$unif0[, 1], NA_real_),
+      conf.unif.high = c(obj$estimates$ci$unif1[, 2], NA_real_, obj$estimates$ci$unif0[, 2], NA_real_)
+    )
+    return(out)
+  }
+
+  data.frame(
+    arm = rep(c("trt", "control"), each = length(obj$levels)),
+    k = rep(ordered(obj$levels, levels = obj$levels), 2),
+    estimate = c(obj$estimates$dist[1, ], obj$estimates$dist[2, ]),
+    std.error = c(obj$estimates$std.error[1, ], obj$estimates$std.error[2, ]),
+    conf.low = c(obj$estimates$ci$theta1[, 1], obj$estimates$ci$theta0[, 1]),
+    conf.high = c(obj$estimates$ci$theta1[, 2], obj$estimates$ci$theta0[, 2]),
+    conf.unif.low = c(obj$estimates$ci$unif1[, 1], obj$estimates$ci$unif0[, 1]),
+    conf.unif.high = c(obj$estimates$ci$unif1[, 2], obj$estimates$ci$unif0[, 2])
+  )
+}
